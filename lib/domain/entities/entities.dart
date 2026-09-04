@@ -21,6 +21,7 @@ export 'cost_code_entity.dart';
 export 'receiving_entity.dart';
 export 'purchase_order_entity.dart';
 export 'activity_log_entity.dart';
+export 'adjustment_reason_entity.dart';
 export 'category_entity.dart';
 export 'mechanic_entity.dart';
 export 'tag_entity.dart';

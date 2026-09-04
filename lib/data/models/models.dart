@@ -6,6 +6,7 @@
 /// ```
 library;
 
+export 'adjustment_reason_model.dart';
 export 'activity_log_model.dart';
 export 'category_model.dart';
 export 'cost_code_model.dart';
