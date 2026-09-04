@@ -239,16 +239,18 @@ class ActivityLogger {
     required String sku,
     required int oldQuantity,
     required int newQuantity,
-    String? reason,
+    required String reasonName,
+    String? note,
   }) async {
     final change = newQuantity - oldQuantity;
     final changeStr = change >= 0 ? '+$change' : '$change';
+    final detailsStr =
+        '$oldQuantity → $newQuantity ($changeStr) · $reasonName${note != null && note.isNotEmpty ? ' · $note' : ''}';
 
     await log(
       type: ActivityType.stockAdjustment,
       action: 'Adjusted stock for $productName',
-      details:
-          '$oldQuantity → $newQuantity ($changeStr)${reason != null ? ', Reason: $reason' : ''}',
+      details: detailsStr,
       userId: user.id,
       userName: user.displayName,
       userRole: user.role.value,
@@ -259,7 +261,8 @@ class ActivityLogger {
         'oldQuantity': oldQuantity,
         'newQuantity': newQuantity,
         'change': change,
-        'reason': reason,
+        'reasonName': reasonName,
+        'note': note,
       },
     );
   }

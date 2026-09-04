@@ -336,6 +336,7 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
         // and then discarded it. Logging never throws (ActivityLogger.log
         // swallows failures), so a failed write cannot undo the adjustment.
         final note = _noteController.text.trim();
+        // TODO: Task 12 rebuilds this dialog with reason selection UI.
         await ref.read(activityLoggerProvider).logStockAdjustment(
               user: currentUser,
               productId: widget.product.id,
@@ -343,7 +344,8 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
               sku: widget.product.sku,
               oldQuantity: widget.product.quantity,
               newQuantity: _newQuantity,
-              reason: note.isEmpty ? null : note,
+              reasonName: 'Adjustment',
+              note: note.isEmpty ? null : note,
             );
       }
 
