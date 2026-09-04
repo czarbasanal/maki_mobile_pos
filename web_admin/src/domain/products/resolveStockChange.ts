@@ -47,7 +47,7 @@ export function adjustmentValidity(d: AdjustmentDraft): string | null {
   // Validate quantity is present
   if (d.qty === null) return 'Enter a quantity';
 
-  // Validate quantity is positive for add/remove, and set is within bounds
+  // Validate quantity is positive for add/remove modes
   if ((d.mode === 'add' || d.mode === 'remove') && d.qty <= 0) {
     return 'Quantity must be greater than 0';
   }
@@ -55,12 +55,13 @@ export function adjustmentValidity(d: AdjustmentDraft): string | null {
   // Calculate what the stock would be after this adjustment
   const after = resolveStockChange(d.mode, d.onHand, d.qty);
 
-  // Reject negative results
+  // Reject negative results. remove mode shows the guide's sentence;
+  // other modes (unreachable in normal UI) return plain message.
   if (after < 0) {
     if (d.mode === 'remove') {
       return `Removing ${d.qty} would leave ${after}. Stock cannot go negative.`;
     } else {
-      return `Setting to ${d.qty} would leave that quantity. Stock cannot go negative.`;
+      return 'Stock cannot go negative.';
     }
   }
 

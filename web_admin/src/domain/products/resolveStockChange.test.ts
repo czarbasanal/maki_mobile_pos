@@ -97,7 +97,7 @@ describe('adjustmentValidity', () => {
     expect(result).toBe('Removing 10 would leave -5. Stock cannot go negative.');
   });
 
-  it('rejects when set would go negative', () => {
+  it('rejects when set would go negative (plain message for non-remove modes)', () => {
     const result = adjustmentValidity({
       mode: 'set',
       qty: -2,
@@ -106,7 +106,7 @@ describe('adjustmentValidity', () => {
       requiresNote: false,
       note: '',
     });
-    expect(result).toBe('Setting to -2 would leave that quantity. Stock cannot go negative.');
+    expect(result).toBe('Stock cannot go negative.');
   });
 
   it('rejects when no reason is picked', () => {
