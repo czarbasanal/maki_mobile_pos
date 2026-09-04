@@ -61,6 +61,7 @@ export const RoutePaths = {
   manageLists: '/settings/lists',
   mechanics: '/settings/mechanics',
   productTags: '/settings/tags',
+  adjustmentReasons: '/settings/adjustment-reasons',
   about: '/settings/about',
 
   userLogs: '/logs',

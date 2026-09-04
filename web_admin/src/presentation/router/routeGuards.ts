@@ -53,6 +53,7 @@ const protectedRoutes: ReadonlyMap<string, Permission> = new Map<string, Permiss
   [RoutePaths.manageLists, Permission.editLists],
   [RoutePaths.mechanics, Permission.editLists],
   [RoutePaths.productTags, Permission.editLists],
+  [RoutePaths.adjustmentReasons, Permission.editLists],
   [RoutePaths.userLogs, Permission.viewUserLogs],
   [RoutePaths.hr, Permission.manageHr],
   [RoutePaths.hrEmployees, Permission.manageHr],

@@ -5,6 +5,7 @@ import { useEffect, useState, type ComponentType, type SVGProps } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ChevronRightIcon,
+  ClipboardDocumentListIcon,
   ClockIcon,
   CodeBracketSquareIcon,
   InformationCircleIcon,
@@ -133,6 +134,15 @@ export function SettingsPage() {
             tone="orange"
             title="Product tags"
             subtitle="Color-coded markers shown on inventory"
+          />
+        ) : null}
+        {can(Permission.editLists) ? (
+          <Row
+            to={RoutePaths.adjustmentReasons}
+            icon={ClipboardDocumentListIcon}
+            tone="yellow"
+            title="Adjustment reasons"
+            subtitle="Why stock was corrected — shown in the adjust-stock dialog"
           />
         ) : null}
       </Section>

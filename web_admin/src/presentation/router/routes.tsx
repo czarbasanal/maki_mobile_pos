@@ -35,6 +35,7 @@ import { ProductModal } from '@/presentation/features/inventory/ProductModal';
 import { ManageListsPage } from '@/presentation/features/settings/ManageListsPage';
 import { MechanicsPage } from '@/presentation/features/settings/MechanicsPage';
 import { ProductTagsPage } from '@/presentation/features/settings/ProductTagsPage';
+import { AdjustmentReasonsPage } from '@/presentation/features/settings/AdjustmentReasonsPage';
 import { SuppliersListPage } from '@/presentation/features/suppliers/SuppliersListPage';
 import { SupplierModal } from '@/presentation/features/suppliers/SupplierModal';
 import { PosPage } from '@/presentation/features/pos/PosPage';
@@ -378,6 +379,14 @@ export const router = createBrowserRouter(
           handle: {
             title: 'Product tags',
             subtitle: 'Color-coded markers shown on inventory rows.',
+          } satisfies PageChrome,
+        },
+        {
+          path: RoutePaths.adjustmentReasons,
+          element: <AdjustmentReasonsPage />,
+          handle: {
+            title: 'Adjustment reasons',
+            subtitle: 'Why stock was corrected — shown in the adjust-stock dialog.',
           } satisfies PageChrome,
         },
         {
