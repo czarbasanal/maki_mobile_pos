@@ -6,7 +6,6 @@
 /// ```
 library;
 
-export 'adjustment_reason_model.dart';
 export 'activity_log_model.dart';
 export 'category_model.dart';
 export 'cost_code_model.dart';
@@ -19,6 +18,7 @@ export 'job_order_model.dart';
 export 'labor_line_model.dart';
 export 'mechanic_model.dart';
 export 'tag_model.dart';
+export 'adjustment_reason_model.dart';
 export 'motorcycle_model_model.dart';
 export 'payslip_model.dart';
 export 'price_history_model.dart';
