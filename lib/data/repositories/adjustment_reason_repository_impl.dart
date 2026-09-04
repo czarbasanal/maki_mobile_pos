@@ -176,8 +176,17 @@ class AdjustmentReasonRepositoryImpl implements AdjustmentReasonRepository {
   @override
   Future<void> seedDefaults(String createdBy) async {
     try {
+      final snapshot = await _ref.get();
+      final existingNames = snapshot.docs
+          .map((doc) => (doc.data()['name'] as String?) ?? '')
+          .toSet();
+      final toSeed = kSeedAdjustmentReasons
+          .where((seed) => !existingNames.contains(seed.name))
+          .toList();
+      if (toSeed.isEmpty) return;
+
       final batch = _firestore.batch();
-      for (final seed in kSeedAdjustmentReasons) {
+      for (final seed in toSeed) {
         final docRef = _ref.doc();
         final model = AdjustmentReasonModel(
           id: docRef.id,

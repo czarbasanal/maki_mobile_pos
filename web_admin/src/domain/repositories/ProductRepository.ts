@@ -80,8 +80,6 @@ export interface ProductRepository {
    *  branch permits (cashier included). Used by quick-attach on both list
    *  surfaces so a tag toggle can never clobber a concurrent field edit. */
   updateTags(id: string, tagIds: string[], actorId: string, actorName: string | null): Promise<void>;
-  adjustStock(id: string, delta: number, actorId: string, actorName: string | null): Promise<void>;
-  setStock(id: string, quantity: number, actorId: string, actorName: string | null): Promise<void>;
   /**
    * Transactional stock adjustment (spec 2026-09-04). Aborts — in order —
    * when the product is inactive (`ProductInactiveError`), when the current

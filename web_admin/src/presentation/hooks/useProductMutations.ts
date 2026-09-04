@@ -181,6 +181,7 @@ export function useApplyStockAdjustment() {
         metadata: {
           sku,
           reasonId: input.reasonId,
+          mode: input.mode,
           before,
           after,
           change: delta,

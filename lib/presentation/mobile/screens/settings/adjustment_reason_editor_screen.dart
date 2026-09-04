@@ -159,8 +159,9 @@ class _AdjustmentReasonEditorScreenState
     );
   }
 
-  /// Inserts the default reason set. Idempotent — the repository skips
-  /// anything that already exists by name.
+  /// Inserts the default reason set. The repository reads the collection
+  /// once and skips any default whose name already exists, so repeated
+  /// taps never create duplicates.
   Future<void> _seedDefaults() async {
     final ops = ref.read(adjustmentReasonOperationsProvider.notifier);
     final ok = await context.runWithWaiting(

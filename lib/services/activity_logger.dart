@@ -240,6 +240,7 @@ class ActivityLogger {
     required int oldQuantity,
     required int newQuantity,
     required String reasonName,
+    required String mode,
     String? note,
   }) async {
     final change = newQuantity - oldQuantity;
@@ -262,6 +263,7 @@ class ActivityLogger {
         'newQuantity': newQuantity,
         'change': change,
         'reasonName': reasonName,
+        'mode': mode,
         'note': note,
       },
     );

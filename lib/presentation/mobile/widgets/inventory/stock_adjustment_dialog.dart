@@ -525,6 +525,7 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
             oldQuantity: result.before,
             newQuantity: result.after,
             reasonName: selectedReason.name,
+            mode: _mode.name,
             note: note.isEmpty ? null : note,
           );
 

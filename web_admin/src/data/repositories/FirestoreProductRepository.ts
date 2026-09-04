@@ -8,7 +8,6 @@ import {
   doc,
   getDoc,
   getDocs,
-  increment,
   limit,
   onSnapshot,
   orderBy,
@@ -514,14 +513,6 @@ export class FirestoreProductRepository implements ProductRepository {
     });
   }
 
-  async adjustStock(id: string, delta: number, actorId: string, actorName: string | null): Promise<void> {
-    await updateDoc(doc(this.db, FirestoreCollections.products, id), {
-      quantity: increment(delta),
-      updatedBy: actorId,
-      updatedByName: actorName,
-      updatedAt: serverTimestamp(),
-    });
-  }
   /**
    * Transactional stock adjustment (spec 2026-09-04): reads the product,
    * aborts on inactive / stale-on-hand / would-go-negative (see
@@ -570,14 +561,6 @@ export class FirestoreProductRepository implements ProductRepository {
     });
   }
 
-  async setStock(id: string, quantity: number, actorId: string, actorName: string | null): Promise<void> {
-    await updateDoc(doc(this.db, FirestoreCollections.products, id), {
-      quantity,
-      updatedBy: actorId,
-      updatedByName: actorName,
-      updatedAt: serverTimestamp(),
-    });
-  }
   async deactivate(id: string, actorId: string, actorName: string | null): Promise<void> {
     await updateDoc(doc(this.db, FirestoreCollections.products, id), {
       isActive: false,
