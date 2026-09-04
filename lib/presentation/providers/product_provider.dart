@@ -315,31 +315,6 @@ class ProductOperationsNotifier extends StateNotifier<AsyncValue<void>> {
     return null;
   }
 
-  /// Updates product stock.
-  Future<ProductEntity?> updateStock({
-    required String productId,
-    required int quantityChange,
-    required String updatedBy,
-    String? updatedByName,
-  }) async {
-    state = const AsyncValue.loading();
-    try {
-      final updated = await _repository.updateStock(
-        productId: productId,
-        quantityChange: quantityChange,
-        updatedBy: updatedBy,
-        updatedByName: updatedByName,
-      );
-      state = const AsyncValue.data(null);
-      _ref.invalidate(productByIdProvider(productId));
-      _ref.invalidate(lowStockProductsProvider);
-      return updated;
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-      return null;
-    }
-  }
-
   /// Deactivates a product (admin-only via use case).
   Future<bool> deactivateProduct({
     required UserEntity actor,

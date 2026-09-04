@@ -816,36 +816,6 @@ class ProductRepositoryImpl implements ProductRepository {
   }
 
   @override
-  Future<ProductEntity> setStock({
-    required String productId,
-    required int newQuantity,
-    required String updatedBy,
-    String? updatedByName,
-  }) async {
-    try {
-      await _productsRef.doc(productId).update({
-        'quantity': newQuantity,
-        'updatedAt': FieldValue.serverTimestamp(),
-        'updatedBy': updatedBy,
-        if (updatedByName != null) 'updatedByName': updatedByName,
-      });
-
-      final updated = await getProductById(productId);
-      if (updated == null) {
-        throw const DatabaseException(
-            message: 'Product not found after stock set');
-      }
-      return updated;
-    } on FirebaseException catch (e) {
-      throw DatabaseException(
-        message: 'Failed to set stock: ${e.message}',
-        code: e.code,
-        originalError: e,
-      );
-    }
-  }
-
-  @override
   Future<void> deactivateProduct({
     required String productId,
     required String updatedBy,

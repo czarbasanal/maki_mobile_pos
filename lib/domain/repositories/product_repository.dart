@@ -161,21 +161,6 @@ abstract class ProductRepository {
     String? updatedByName,
   });
 
-  /// Sets product stock to a specific quantity.
-  ///
-  /// [productId] - The product ID
-  /// [newQuantity] - The new stock quantity
-  /// [updatedBy] - The ID of the user making the update
-  /// [updatedByName] - Display name of the editor (denormalized for audit info).
-  ///
-  /// Returns the updated product.
-  Future<ProductEntity> setStock({
-    required String productId,
-    required int newQuantity,
-    required String updatedBy,
-    String? updatedByName,
-  });
-
   /// Deactivates a product (soft delete).
   ///
   /// [productId] - The product ID
