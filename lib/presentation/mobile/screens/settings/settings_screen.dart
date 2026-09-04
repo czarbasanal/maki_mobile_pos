@@ -139,6 +139,12 @@ class SettingsScreen extends ConsumerWidget {
                   subtitle: 'Color-coded markers shown on inventory',
                   onTap: () => context.push(RoutePaths.productTags),
                 ),
+                SettingsTile(
+                  icon: LucideIcons.clipboardList,
+                  title: 'Adjustment Reasons',
+                  subtitle: 'Why stock was corrected',
+                  onTap: () => context.push(RoutePaths.adjustmentReasons),
+                ),
               ],
             ),
           ],

@@ -68,6 +68,7 @@ abstract class RouteGuards {
     '/settings/categories': Permission.editLists,
     '/settings/mechanics': Permission.editLists,
     '/settings/tags': Permission.editLists,
+    '/settings/adjustment-reasons': Permission.editLists,
     '/hr': Permission.manageHr,
     '/hr/settings': Permission.manageHr,
     '/settings/shop-fees': Permission.editLists,
