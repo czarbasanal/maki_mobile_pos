@@ -19,3 +19,4 @@ export * from './VoidRequest';
 export * from './PurchaseOrder';
 export * from './DrawerState';
 export * from './Tag';
+export * from './AdjustmentReason';

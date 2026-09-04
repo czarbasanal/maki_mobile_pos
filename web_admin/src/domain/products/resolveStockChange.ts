@@ -27,3 +27,50 @@ export function validateStockAdjustment(
   if (mode === 'remove' && qty > current) return 'Cannot remove more than current stock';
   return null;
 }
+
+/** Complete draft data for a stock adjustment, combining the parsed quantity,
+ *  on-hand before the adjustment, the selected reason (if any), and a note. */
+export interface AdjustmentDraft {
+  mode: StockMode;
+  qty: number | null;          // from parseStockQty
+  onHand: number;
+  reasonId: string | null;
+  requiresNote: boolean;       // the picked reason's flag (false when none picked)
+  note: string;
+}
+
+/** Validation message for an adjustment draft, or null when the draft can be
+ *  applied. Combines quantity validation, reason selection, and note requirement.
+ *  Negative results reuse the guide's copy:
+ *  `Removing ${qty} would leave ${after}. Stock cannot go negative.` */
+export function adjustmentValidity(d: AdjustmentDraft): string | null {
+  // Validate quantity is present
+  if (d.qty === null) return 'Enter a quantity';
+
+  // Validate quantity is positive for add/remove, and set is within bounds
+  if ((d.mode === 'add' || d.mode === 'remove') && d.qty <= 0) {
+    return 'Quantity must be greater than 0';
+  }
+
+  // Calculate what the stock would be after this adjustment
+  const after = resolveStockChange(d.mode, d.onHand, d.qty);
+
+  // Reject negative results
+  if (after < 0) {
+    if (d.mode === 'remove') {
+      return `Removing ${d.qty} would leave ${after}. Stock cannot go negative.`;
+    } else {
+      return `Setting to ${d.qty} would leave that quantity. Stock cannot go negative.`;
+    }
+  }
+
+  // Require a reason to be selected
+  if (d.reasonId === null) return 'Pick a reason';
+
+  // Require a note if the reason's requiresNote flag is set
+  if (d.requiresNote && d.note.trim() === '') {
+    return 'A note is required for this reason';
+  }
+
+  return null;
+}

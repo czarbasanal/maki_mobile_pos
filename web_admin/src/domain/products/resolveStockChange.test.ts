@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseStockQty, resolveStockChange, validateStockAdjustment } from './resolveStockChange';
+import { parseStockQty, resolveStockChange, validateStockAdjustment, adjustmentValidity } from './resolveStockChange';
 
 describe('resolveStockChange', () => {
   it('adds to current', () => {
@@ -45,5 +45,163 @@ describe('validateStockAdjustment', () => {
   it('passes a valid adjustment', () => {
     expect(validateStockAdjustment('add', 5, 3)).toBeNull();
     expect(validateStockAdjustment('remove', 5, 5)).toBeNull();
+  });
+});
+
+describe('adjustmentValidity', () => {
+  it('rejects when qty is null', () => {
+    const result = adjustmentValidity({
+      mode: 'add',
+      qty: null,
+      onHand: 5,
+      reasonId: 'ar1',
+      requiresNote: false,
+      note: '',
+    });
+    expect(result).toBe('Enter a quantity');
+  });
+
+  it('rejects add/remove when qty <= 0', () => {
+    expect(
+      adjustmentValidity({
+        mode: 'add',
+        qty: 0,
+        onHand: 5,
+        reasonId: 'ar1',
+        requiresNote: false,
+        note: '',
+      }),
+    ).toBe('Quantity must be greater than 0');
+
+    expect(
+      adjustmentValidity({
+        mode: 'remove',
+        qty: 0,
+        onHand: 5,
+        reasonId: 'ar1',
+        requiresNote: false,
+        note: '',
+      }),
+    ).toBe('Quantity must be greater than 0');
+  });
+
+  it('rejects when remove would go negative', () => {
+    const result = adjustmentValidity({
+      mode: 'remove',
+      qty: 10,
+      onHand: 5,
+      reasonId: 'ar1',
+      requiresNote: false,
+      note: '',
+    });
+    expect(result).toBe('Removing 10 would leave -5. Stock cannot go negative.');
+  });
+
+  it('rejects when set would go negative', () => {
+    const result = adjustmentValidity({
+      mode: 'set',
+      qty: -2,
+      onHand: 5,
+      reasonId: 'ar1',
+      requiresNote: false,
+      note: '',
+    });
+    expect(result).toBe('Setting to -2 would leave that quantity. Stock cannot go negative.');
+  });
+
+  it('rejects when no reason is picked', () => {
+    const result = adjustmentValidity({
+      mode: 'add',
+      qty: 3,
+      onHand: 5,
+      reasonId: null,
+      requiresNote: false,
+      note: '',
+    });
+    expect(result).toBe('Pick a reason');
+  });
+
+  it('rejects when a note is required but missing', () => {
+    const result = adjustmentValidity({
+      mode: 'add',
+      qty: 3,
+      onHand: 5,
+      reasonId: 'ar1',
+      requiresNote: true,
+      note: '',
+    });
+    expect(result).toBe('A note is required for this reason');
+  });
+
+  it('rejects when a note is required but only whitespace', () => {
+    const result = adjustmentValidity({
+      mode: 'add',
+      qty: 3,
+      onHand: 5,
+      reasonId: 'ar1',
+      requiresNote: true,
+      note: '   ',
+    });
+    expect(result).toBe('A note is required for this reason');
+  });
+
+  it('passes a fully valid draft', () => {
+    const result = adjustmentValidity({
+      mode: 'add',
+      qty: 3,
+      onHand: 5,
+      reasonId: 'ar1',
+      requiresNote: false,
+      note: '',
+    });
+    expect(result).toBeNull();
+  });
+
+  it('passes when note is not required even if empty', () => {
+    const result = adjustmentValidity({
+      mode: 'remove',
+      qty: 3,
+      onHand: 10,
+      reasonId: 'ar1',
+      requiresNote: false,
+      note: '',
+    });
+    expect(result).toBeNull();
+  });
+
+  it('passes when note is required and provided', () => {
+    const result = adjustmentValidity({
+      mode: 'add',
+      qty: 3,
+      onHand: 5,
+      reasonId: 'ar1',
+      requiresNote: true,
+      note: 'Found extra units in storage',
+    });
+    expect(result).toBeNull();
+  });
+
+  it('allows set to 0', () => {
+    const result = adjustmentValidity({
+      mode: 'set',
+      qty: 0,
+      onHand: 5,
+      reasonId: 'ar1',
+      requiresNote: false,
+      note: '',
+    });
+    expect(result).toBeNull();
+  });
+
+  it('allows large positive set', () => {
+    const result = adjustmentValidity({
+      mode: 'set',
+      qty: 100,
+      onHand: 5,
+      reasonId: 'ar1',
+      requiresNote: false,
+      note: '',
+    });
+    expect(result).toBeNull();
   });
 });
