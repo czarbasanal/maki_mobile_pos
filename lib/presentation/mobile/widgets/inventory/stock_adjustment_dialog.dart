@@ -103,6 +103,7 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final dark = theme.brightness == Brightness.dark;
     final muted = theme.colorScheme.onSurfaceVariant;
     final currentUser = ref.watch(currentUserProvider).valueOrNull;
     final isAdmin = ref.hasPermission(Permission.editProduct);
@@ -150,192 +151,192 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
       onClose: _isProcessing ? null : () => Navigator.pop(context),
       bodyExpands: true,
       body: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Preview strip — the whole point of the sheet: show the
-              // number the user will land on, not just the delta typed.
-              AppCard(
-                radius: 16,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md, vertical: AppSpacing.sm + 4),
-                child: Row(
-                  children: [
-                    _buildStockColumn('On hand', '$_onHand',
-                        theme.colorScheme.onSurface, muted),
-                    Icon(LucideIcons.arrowRight, color: muted, size: 18),
-                    Expanded(
-                      child: _buildStockColumn(
-                        'New quantity',
-                        qty == null ? '—' : '${result.after}',
-                        qty != null && result.after < 0
-                            ? AppColors.error
-                            : theme.colorScheme.onSurface,
-                        muted,
-                      ),
-                    ),
-                    _buildDeltaChip(qty == null ? 0 : result.delta,
-                        show: qty != null),
-                  ],
-                ),
-              ),
-              const SizedBox(height: AppSpacing.lg - 4),
-              // Mode — three (or two, for non-admins) equal chips.
-              Row(
+        padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Preview strip — the whole point of the sheet: show the
+            // number the user will land on, not just the delta typed.
+            AppCard(
+              radius: 16,
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md, vertical: AppSpacing.sm + 4),
+              child: Row(
                 children: [
-                  for (final mode in availableModes) ...[
-                    if (mode != availableModes.first)
-                      const SizedBox(width: 8),
-                    Expanded(
-                      child: ChoiceChip(
-                        label: Text(_modeLabels[mode]!),
-                        selected: _mode == mode,
+                  _buildStockColumn('On hand', '$_onHand',
+                      theme.colorScheme.onSurface, muted),
+                  Icon(LucideIcons.arrowRight, color: muted, size: 18),
+                  Expanded(
+                    child: _buildStockColumn(
+                      'New quantity',
+                      qty == null ? '—' : '${result.after}',
+                      qty != null && result.after < 0
+                          ? AppColors.errorText(dark)
+                          : theme.colorScheme.onSurface,
+                      muted,
+                    ),
+                  ),
+                  _buildDeltaChip(qty == null ? 0 : result.delta,
+                      show: qty != null, dark: dark),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg - 4),
+            // Mode — three (or two, for non-admins) equal chips.
+            Row(
+              children: [
+                for (final mode in availableModes) ...[
+                  if (mode != availableModes.first) const SizedBox(width: 8),
+                  Expanded(
+                    child: ChoiceChip(
+                      label: Text(_modeLabels[mode]!),
+                      selected: _mode == mode,
+                      showCheckmark: false,
+                      onSelected: _isProcessing
+                          ? null
+                          : (_) {
+                              setState(() {
+                                _mode = mode;
+                                _errorMessage = null;
+                              });
+                            },
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 20),
+            // Quantity — stepper flanking a digits-only field.
+            Text(
+              isCountedQuantity ? 'Counted quantity' : 'Quantity',
+              style: theme.textTheme.labelLarge
+                  ?.copyWith(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Row(
+              children: [
+                IconButton.outlined(
+                  tooltip: 'Decrease quantity',
+                  onPressed: _isProcessing ? null : () => _step(-1),
+                  icon: const Icon(LucideIcons.minus),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    style: AppTextStyles.fieldInput,
+                    controller: _qtyController,
+                    textAlign: TextAlign.center,
+                    enabled: !_isProcessing,
+                    decoration: InputDecoration(
+                      hintText: 'Enter quantity',
+                    ),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    onChanged: (_) {
+                      setState(() {
+                        _errorMessage = null;
+                      });
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton.outlined(
+                  tooltip: 'Increase quantity',
+                  onPressed: _isProcessing ? null : () => _step(1),
+                  icon: const Icon(LucideIcons.plus),
+                ),
+                const SizedBox(width: 8),
+                Text(widget.product.unit,
+                    style: theme.textTheme.bodyMedium?.copyWith(color: muted)),
+              ],
+            ),
+            if (qty != null && result.after < 0) ...[
+              const SizedBox(height: 6),
+              Text(
+                validity ?? '',
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: AppColors.errorText(dark)),
+              ),
+            ],
+            const SizedBox(height: 20),
+            // Reason — required.
+            Text(
+              'Reason',
+              style: theme.textTheme.labelLarge
+                  ?.copyWith(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            reasonsAsync.isLoading && reasons.isEmpty
+                ? const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  )
+                : Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: reasons.map((reason) {
+                      return ChoiceChip(
+                        label: Text(reason.name),
+                        selected: _reasonId == reason.id,
                         showCheckmark: false,
                         onSelected: _isProcessing
                             ? null
                             : (_) {
                                 setState(() {
-                                  _mode = mode;
+                                  _reasonId = reason.id;
                                   _errorMessage = null;
                                 });
                               },
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-              const SizedBox(height: 20),
-              // Quantity — stepper flanking a digits-only field.
-              Text(
-                isCountedQuantity ? 'Counted quantity' : 'Quantity',
-                style: theme.textTheme.labelLarge
-                    ?.copyWith(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Row(
-                children: [
-                  IconButton.outlined(
-                    tooltip: 'Decrease quantity',
-                    onPressed: _isProcessing ? null : () => _step(-1),
-                    icon: const Icon(LucideIcons.minus),
+                      );
+                    }).toList(),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      style: AppTextStyles.fieldInput,
-                      controller: _qtyController,
-                      textAlign: TextAlign.center,
-                      enabled: !_isProcessing,
-                      decoration: InputDecoration(
-                        hintText: 'Enter quantity',
-                      ),
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      onChanged: (_) {
-                        setState(() {
-                          _errorMessage = null;
-                        });
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton.outlined(
-                    tooltip: 'Increase quantity',
-                    onPressed: _isProcessing ? null : () => _step(1),
-                    icon: const Icon(LucideIcons.plus),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(widget.product.unit,
-                      style: theme.textTheme.bodyMedium?.copyWith(color: muted)),
-                ],
+            const SizedBox(height: 20),
+            // Note — required only for reasons that demand one; the
+            // requirement is visible before submit, not announced by an
+            // error.
+            Text(
+              requiresNote ? 'Note' : 'Note (optional)',
+              style: theme.textTheme.labelLarge
+                  ?.copyWith(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            TextField(
+              style: AppTextStyles.fieldInput,
+              controller: _noteController,
+              enabled: !_isProcessing,
+              decoration: InputDecoration(
+                hintText: 'e.g., Received shipment, Damaged items',
+                prefixIcon: const Icon(LucideIcons.fileText),
               ),
-              if (qty != null && result.after < 0) ...[
-                const SizedBox(height: 6),
-                Text(
-                  validity ?? '',
-                  style: theme.textTheme.bodySmall
-                      ?.copyWith(color: AppColors.error),
-                ),
-              ],
-              const SizedBox(height: 20),
-              // Reason — required.
-              Text(
-                'Reason',
-                style: theme.textTheme.labelLarge
-                    ?.copyWith(fontWeight: FontWeight.w600),
+              maxLines: 2,
+            ),
+            if (_staleNotice != null) ...[
+              const SizedBox(height: 16),
+              _buildNotice(
+                _staleNotice!,
+                background: AppColors.warningBannerFill(dark),
+                foreground: AppColors.warningBannerText(dark),
+                icon: LucideIcons.alertTriangle,
               ),
-              const SizedBox(height: AppSpacing.sm),
-              reasonsAsync.isLoading && reasons.isEmpty
-                  ? const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 8),
-                      child: SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                    )
-                  : Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: reasons.map((reason) {
-                        return ChoiceChip(
-                          label: Text(reason.name),
-                          selected: _reasonId == reason.id,
-                          showCheckmark: false,
-                          onSelected: _isProcessing
-                              ? null
-                              : (_) {
-                                  setState(() {
-                                    _reasonId = reason.id;
-                                    _errorMessage = null;
-                                  });
-                                },
-                        );
-                      }).toList(),
-                    ),
-              const SizedBox(height: 20),
-              // Note — required only for reasons that demand one; the
-              // requirement is visible before submit, not announced by an
-              // error.
-              Text(
-                requiresNote ? 'Note' : 'Note (optional)',
-                style: theme.textTheme.labelLarge
-                    ?.copyWith(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              TextField(
-                style: AppTextStyles.fieldInput,
-                controller: _noteController,
-                enabled: !_isProcessing,
-                decoration: InputDecoration(
-                  hintText: 'e.g., Received shipment, Damaged items',
-                  prefixIcon: const Icon(LucideIcons.fileText),
-                ),
-                maxLines: 2,
-              ),
-              if (_staleNotice != null) ...[
-                const SizedBox(height: 16),
-                _buildNotice(
-                  _staleNotice!,
-                  background: AppColors.warningLight,
-                  foreground: AppColors.warningDark,
-                  icon: LucideIcons.alertTriangle,
-                ),
-              ],
-              if (_errorMessage != null) ...[
-                const SizedBox(height: 16),
-                _buildNotice(
-                  _errorMessage!,
-                  background: AppColors.errorLight,
-                  foreground: AppColors.errorDark,
-                  icon: LucideIcons.alertCircle,
-                ),
-              ],
             ],
-          ),
+            if (_errorMessage != null) ...[
+              const SizedBox(height: 16),
+              _buildNotice(
+                _errorMessage!,
+                background:
+                    AppColors.error.withValues(alpha: dark ? 0.18 : 0.12),
+                foreground: AppColors.errorText(dark),
+                icon: LucideIcons.alertCircle,
+              ),
+            ],
+          ],
         ),
+      ),
       footer: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -416,19 +417,19 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
     );
   }
 
-  Widget _buildDeltaChip(int delta, {required bool show}) {
+  Widget _buildDeltaChip(int delta, {required bool show, required bool dark}) {
     final label = !show ? '—' : (delta >= 0 ? '+$delta' : '$delta');
     final Color background;
     final Color foreground;
     if (!show || delta == 0) {
-      background = AppColors.lightHairline;
+      background = AppColors.neutralTileFill(dark);
       foreground = Theme.of(context).colorScheme.onSurfaceVariant;
     } else if (delta > 0) {
-      background = AppColors.successLight;
-      foreground = AppColors.successDark;
+      background = AppColors.successFill(dark);
+      foreground = AppColors.successText(dark);
     } else {
-      background = AppColors.errorLight;
-      foreground = AppColors.errorDark;
+      background = AppColors.error.withValues(alpha: dark ? 0.18 : 0.12);
+      foreground = AppColors.errorText(dark);
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -499,17 +500,18 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
     final note = _noteController.text.trim();
 
     try {
-      final result = await ref.read(productRepositoryProvider).adjustStockAudited(
-            productId: widget.product.id,
-            mode: _mode,
-            quantity: qty,
-            expectedOnHand: _onHand,
-            reasonId: selectedReason.id,
-            reasonName: selectedReason.name,
-            note: note.isEmpty ? null : note,
-            updatedBy: currentUser.id,
-            updatedByName: currentUser.displayName,
-          );
+      final result =
+          await ref.read(productRepositoryProvider).adjustStockAudited(
+                productId: widget.product.id,
+                mode: _mode,
+                quantity: qty,
+                expectedOnHand: _onHand,
+                reasonId: selectedReason.id,
+                reasonName: selectedReason.name,
+                note: note.isEmpty ? null : note,
+                updatedBy: currentUser.id,
+                updatedByName: currentUser.displayName,
+              );
 
       // The audit entry for a manual correction — the only place the
       // picked reason and typed note survive. Logging never throws
@@ -526,8 +528,15 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
             note: note.isEmpty ? null : note,
           );
 
+      // Mirrors the old updateStock notifier path (product_provider.dart) and
+      // the web hook's qc.invalidateQueries: any screen watching this
+      // product, or the low-stock list, must see the new quantity.
+      ref.invalidate(productByIdProvider(widget.product.id));
+      ref.invalidate(lowStockProductsProvider);
+
       if (!mounted) return;
-      final deltaLabel = result.delta >= 0 ? '+${result.delta}' : '${result.delta}';
+      final deltaLabel =
+          result.delta >= 0 ? '+${result.delta}' : '${result.delta}';
       Navigator.pop(context, true);
       context.showSuccessSnackBar(
         'Stock adjusted · $deltaLabel → ${result.after} ${widget.product.unit}',

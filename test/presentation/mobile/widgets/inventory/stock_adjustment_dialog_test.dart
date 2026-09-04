@@ -486,6 +486,79 @@ void main() {
     });
   });
 
+  group('cache invalidation', () {
+    testWidgets(
+        'a successful apply invalidates productByIdProvider and lowStockProductsProvider',
+        (tester) async {
+      final admin = _user(role: UserRole.admin);
+      final repo = _RecordingProductRepository();
+      final logs = _RecordingActivityLogRepository();
+      var productByIdCalls = 0;
+      var lowStockCalls = 0;
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            currentUserProvider.overrideWith((ref) => Stream.value(admin)),
+            productRepositoryProvider.overrideWithValue(repo),
+            activityLoggerProvider.overrideWithValue(ActivityLogger(logs)),
+            activeAdjustmentReasonsProvider
+                .overrideWith((ref) => Stream.value([_reason('r1', 'Damaged')])),
+            // Counting fakes stand in for the real streams so an
+            // `ref.invalidate` can be observed as a second creation.
+            productByIdProvider.overrideWith((ref, id) async {
+              productByIdCalls++;
+              return null;
+            }),
+            lowStockProductsProvider.overrideWith((ref) {
+              lowStockCalls++;
+              return const Stream<List<ProductEntity>>.empty();
+            }),
+          ],
+          child: MaterialApp(
+            home: Builder(
+              builder: (context) => Scaffold(
+                body: TextButton(
+                  onPressed: () => StockAdjustmentDialog.show(
+                    context: context,
+                    product: _product(),
+                  ),
+                  child: const Text('open'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // Keep both providers alive — like a screen elsewhere in the app
+      // watching this product / the low-stock list — so an invalidate is
+      // observable as a fresh call instead of silently going unread.
+      final container =
+          ProviderScope.containerOf(tester.element(find.text('open')));
+      container.listen(productByIdProvider('p1'), (_, __) {});
+      container.listen(lowStockProductsProvider, (_, __) {});
+      await tester.pump();
+      expect(productByIdCalls, 1);
+      expect(lowStockCalls, 1);
+
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Enter quantity').hitTestable(),
+        '5',
+      );
+      await tester.pump();
+      await tester.tap(find.text('Damaged'));
+      await tester.pump();
+      await tester.tap(find.text('Apply adjustment'));
+      await tester.pumpAndSettle();
+
+      expect(productByIdCalls, 2);
+      expect(lowStockCalls, 2);
+    });
+  });
+
   group('footer', () {
     testWidgets('shows the acting user display name', (tester) async {
       await pumpDialog(
