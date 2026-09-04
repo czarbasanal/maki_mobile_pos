@@ -54,6 +54,8 @@ export const SettingsDocs = {
 export const Subcollections = {
   saleItems: 'items',
   priceHistory: 'price_history',
+  // Per-product audit trail written by adjustStockAudited (spec 2026-09-04).
+  stockAdjustments: 'stock_adjustments',
 } as const;
 
 export const FieldNames = {

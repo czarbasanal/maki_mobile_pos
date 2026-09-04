@@ -48,10 +48,17 @@ import {
 import { sellingOptionHistoryEvents } from '@/domain/products/sellingOptions';
 import { DuplicateSkuError, DuplicateBarcodeError } from '@/data/errors';
 import type { PriceChangeEntry } from '@/domain/products/priceChangeReport';
+import { resolveStockChange } from '@/domain/products/resolveStockChange';
+import {
+  StaleOnHandError,
+  ProductInactiveError,
+  NegativeResultError,
+} from '@/domain/products/adjustmentErrors';
 import type {
   PriceHistoryEntry,
   ProductCreateInput,
   ProductUpdateInput,
+  StockAdjustmentInput,
 } from '@/domain/repositories/ProductRepository';
 
 export class FirestoreProductRepository implements ProductRepository {
@@ -515,6 +522,54 @@ export class FirestoreProductRepository implements ProductRepository {
       updatedAt: serverTimestamp(),
     });
   }
+  /**
+   * Transactional stock adjustment (spec 2026-09-04): reads the product,
+   * aborts on inactive / stale-on-hand / would-go-negative (see
+   * adjustmentErrors.ts), then writes the new quantity plus an append-only
+   * audit record in one atomic transaction. Abort order is binding: inactive
+   * -> stale -> negative.
+   */
+  async adjustStockAudited(
+    productId: string,
+    input: StockAdjustmentInput,
+    actorId: string,
+    actorName: string | null,
+  ): Promise<{ before: number; after: number; delta: number }> {
+    const productRef = doc(this.db, FirestoreCollections.products, productId);
+    return runTransaction(this.db, async (tx) => {
+      const snap = await tx.get(productRef);
+      const data = snap.data() as { isActive?: boolean; quantity?: number } | undefined;
+      if (!data?.isActive) throw new ProductInactiveError();
+      const before = data.quantity ?? 0;
+      if (before !== input.expectedOnHand) throw new StaleOnHandError(before);
+      const after = resolveStockChange(input.mode, before, input.quantity);
+      if (after < 0) throw new NegativeResultError();
+      const delta = after - before;
+
+      tx.update(productRef, {
+        quantity: after,
+        updatedAt: serverTimestamp(),
+        updatedBy: actorId,
+        ...(actorName ? { updatedByName: actorName } : {}),
+      });
+      tx.set(doc(collection(productRef, Subcollections.stockAdjustments)), {
+        mode: input.mode,
+        quantity: input.quantity,
+        delta,
+        before,
+        after,
+        reasonId: input.reasonId,
+        reasonName: input.reasonName,
+        note: input.note,
+        createdAt: serverTimestamp(),
+        createdBy: actorId,
+        createdByName: actorName,
+      });
+
+      return { before, after, delta };
+    });
+  }
+
   async setStock(id: string, quantity: number, actorId: string, actorName: string | null): Promise<void> {
     await updateDoc(doc(this.db, FirestoreCollections.products, id), {
       quantity,

@@ -3,7 +3,11 @@ import { useActivityLogRepo, useProductRepo } from '@/infrastructure/di/containe
 import { useAuthStore } from '@/presentation/stores/authStore';
 import { hasPermission, Permission } from '@/domain/permissions/Permission';
 import { logActivity } from '@/application/activityLogger';
-import type { ProductCreateInput, ProductUpdateInput } from '@/domain/repositories/ProductRepository';
+import type {
+  ProductCreateInput,
+  ProductUpdateInput,
+  StockAdjustmentInput,
+} from '@/domain/repositories/ProductRepository';
 import { ActivityType, type Product, type SellingOption } from '@/domain/entities';
 import { UserRole } from '@/domain/enums';
 import { diffBarcodeClaims } from '@/domain/products/barcodes';
@@ -188,6 +192,47 @@ export function useSetStock() {
         metadata: { sku, oldQuantity, newQuantity: quantity, change: quantity - oldQuantity },
       }));
       qc.invalidateQueries({ queryKey: ['product', id] });
+    },
+  });
+}
+
+/**
+ * Transactional, reasoned stock adjustment (spec 2026-09-04) — the dialog's
+ * submit path. `StaleOnHandError` (thrown by the repo when the live on-hand
+ * no longer matches what the dialog started from) is deliberately NOT caught
+ * here; the dialog catches it to offer a refresh-and-retry recovery.
+ */
+export function useApplyStockAdjustment() {
+  const repo = useProductRepo();
+  const activityLogRepo = useActivityLogRepo();
+  const actor = useAuthStore((s) => s.user);
+  const qc = useQueryClient();
+  return useMutation<
+    { before: number; after: number; delta: number },
+    Error,
+    { id: string; productName: string; sku: string; input: StockAdjustmentInput }
+  >({
+    mutationFn: async ({ id, productName, sku, input }) => {
+      if (!actor) throw new Error('Not signed in');
+      const actorName = actor.displayName.trim() || null;
+      const result = await repo.adjustStockAudited(id, input, actor.id, actorName);
+      const { before, after, delta } = result;
+      logActivity(activityLogRepo, () => ({
+        type: ActivityType.stockAdjustment,
+        action: `Adjusted stock for ${productName}`,
+        details: `${before} → ${after} (${delta >= 0 ? '+' : ''}${delta}) · ${input.reasonName}${input.note ? ' · ' + input.note : ''}`,
+        entityId: id,
+        entityType: 'product',
+        metadata: {
+          sku,
+          reasonId: input.reasonId,
+          before,
+          after,
+          change: delta,
+        },
+      }));
+      qc.invalidateQueries({ queryKey: ['product', id] });
+      return result;
     },
   });
 }

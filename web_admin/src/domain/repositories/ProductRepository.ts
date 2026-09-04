@@ -4,6 +4,7 @@
 import type { Product } from '../entities';
 import type { Unsubscribe } from './AuthRepository';
 import type { PriceChangeEntry } from '@/domain/products/priceChangeReport';
+import type { StockMode } from '../products/resolveStockChange';
 
 export interface ProductCreateInput
   extends Omit<Product, 'id' | 'createdAt' | 'updatedAt' | 'searchKeywords'> {
@@ -29,6 +30,18 @@ export interface PriceHistoryEntry {
   optionLabel?: string | null;
   /** Denormalized option piece count at the time of the change. */
   optionPieces?: number | null;
+}
+
+/** Input to `ProductRepository.adjustStockAudited`. `expectedOnHand` is the
+ *  on-hand quantity the dialog last read — the transaction re-reads the
+ *  live doc and aborts with `StaleOnHandError` when it no longer matches. */
+export interface StockAdjustmentInput {
+  mode: StockMode;
+  quantity: number;
+  expectedOnHand: number;
+  reasonId: string;
+  reasonName: string;
+  note: string | null;
 }
 
 export interface ProductRepository {
@@ -69,6 +82,22 @@ export interface ProductRepository {
   updateTags(id: string, tagIds: string[], actorId: string, actorName: string | null): Promise<void>;
   adjustStock(id: string, delta: number, actorId: string, actorName: string | null): Promise<void>;
   setStock(id: string, quantity: number, actorId: string, actorName: string | null): Promise<void>;
+  /**
+   * Transactional stock adjustment (spec 2026-09-04). Aborts — in order —
+   * when the product is inactive (`ProductInactiveError`), when the current
+   * on-hand quantity read inside the transaction doesn't match
+   * `expectedOnHand` (`StaleOnHandError`, carrying the CURRENT quantity so
+   * the caller can re-seed and retry), or when the resolved after-quantity
+   * would be negative (`NegativeResultError`). On success, writes the new
+   * quantity to the product and an append-only record to its
+   * `stock_adjustments` subcollection, and returns before/after/delta.
+   */
+  adjustStockAudited(
+    productId: string,
+    input: StockAdjustmentInput,
+    actorId: string,
+    actorName: string | null,
+  ): Promise<{ before: number; after: number; delta: number }>;
   deactivate(id: string, actorId: string, actorName: string | null): Promise<void>;
   reactivate(id: string, actorId: string, actorName: string | null): Promise<void>;
   /** PERMANENT removal of a deactivated product: the doc, its price_history
