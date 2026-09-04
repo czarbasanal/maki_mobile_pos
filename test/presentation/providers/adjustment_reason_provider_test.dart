@@ -20,9 +20,8 @@ class _RecordingAdjustmentReasonRepo implements AdjustmentReasonRepository {
   }
 
   @override
-  Future<bool> seedDefaults(String createdBy) async {
+  Future<void> seedDefaults(String createdBy) async {
     seedDefaultsCalledWith.add(createdBy);
-    return true;
   }
 
   @override
@@ -73,10 +72,8 @@ void main() {
     addTearDown(container.dispose);
     await container.read(currentUserProvider.future);
 
-    final ok =
-        await container.read(adjustmentReasonOperationsProvider.notifier).seedDefaults();
+    await container.read(adjustmentReasonOperationsProvider.notifier).seedDefaults();
 
-    expect(ok, isTrue);
     expect(repo.seedDefaultsCalledWith.single, 'u-staff');
   });
 }

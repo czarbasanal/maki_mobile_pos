@@ -5,24 +5,16 @@ import 'package:maki_mobile_pos/data/models/models.dart';
 import 'package:maki_mobile_pos/domain/entities/entities.dart';
 import 'package:maki_mobile_pos/domain/repositories/adjustment_reason_repository.dart';
 
-/// Seed data for default adjustment reasons. Each tuple is (name, requiresNote).
+/// Seed data for default adjustment reasons. Each record is ({name, requiresNote}).
 /// Used by [AdjustmentReasonRepositoryImpl.seedDefaults] on first initialization.
-const kSeedAdjustmentReasons = [
-  _AdjustmentReasonSeed('Delivery', false),
-  _AdjustmentReasonSeed('Count correction', true),
-  _AdjustmentReasonSeed('Damaged', true),
-  _AdjustmentReasonSeed('Lost', true),
-  _AdjustmentReasonSeed('Returned', false),
-  _AdjustmentReasonSeed('Transfer', false),
+const kSeedAdjustmentReasons = <({String name, bool requiresNote})>[
+  (name: 'Delivery', requiresNote: false),
+  (name: 'Count correction', requiresNote: true),
+  (name: 'Damaged', requiresNote: true),
+  (name: 'Lost', requiresNote: true),
+  (name: 'Returned', requiresNote: false),
+  (name: 'Transfer', requiresNote: false),
 ];
-
-/// Private helper class for seed data serialization.
-class _AdjustmentReasonSeed {
-  final String name;
-  final bool requiresNote;
-
-  const _AdjustmentReasonSeed(this.name, this.requiresNote);
-}
 
 /// Firestore implementation of [AdjustmentReasonRepository], bound to the single
 /// `adjustment_reasons` collection.
