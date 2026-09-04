@@ -151,51 +151,6 @@ export function useUpdateProductTags() {
   });
 }
 
-export function useAdjustStock() {
-  const repo = useProductRepo();
-  const activityLogRepo = useActivityLogRepo();
-  const actor = useAuthStore((s) => s.user);
-  const qc = useQueryClient();
-  return useMutation<void, Error, { id: string; delta: number; productName: string; sku: string; oldQuantity: number }>({
-    mutationFn: async ({ id, delta, productName, sku, oldQuantity }) => {
-      if (!actor) throw new Error('Not signed in');
-      await repo.adjustStock(id, delta, actor.id, (actor.displayName.trim() || null));
-      const newQuantity = oldQuantity + delta;
-      logActivity(activityLogRepo, () => ({
-        type: ActivityType.stockAdjustment,
-        action: `Adjusted stock for ${productName}`,
-        details: `${oldQuantity} → ${newQuantity} (${delta >= 0 ? '+' : ''}${delta})`,
-        entityId: id,
-        entityType: 'product',
-        metadata: { sku, oldQuantity, newQuantity, change: delta },
-      }));
-      qc.invalidateQueries({ queryKey: ['product', id] });
-    },
-  });
-}
-
-export function useSetStock() {
-  const repo = useProductRepo();
-  const activityLogRepo = useActivityLogRepo();
-  const actor = useAuthStore((s) => s.user);
-  const qc = useQueryClient();
-  return useMutation<void, Error, { id: string; quantity: number; productName: string; sku: string; oldQuantity: number }>({
-    mutationFn: async ({ id, quantity, productName, sku, oldQuantity }) => {
-      if (!actor) throw new Error('Not signed in');
-      await repo.setStock(id, quantity, actor.id, (actor.displayName.trim() || null));
-      logActivity(activityLogRepo, () => ({
-        type: ActivityType.stockAdjustment,
-        action: `Adjusted stock for ${productName}`,
-        details: `${oldQuantity} → ${quantity} (${quantity - oldQuantity >= 0 ? '+' : ''}${quantity - oldQuantity})`,
-        entityId: id,
-        entityType: 'product',
-        metadata: { sku, oldQuantity, newQuantity: quantity, change: quantity - oldQuantity },
-      }));
-      qc.invalidateQueries({ queryKey: ['product', id] });
-    },
-  });
-}
-
 /**
  * Transactional, reasoned stock adjustment (spec 2026-09-04) — the dialog's
  * submit path. `StaleOnHandError` (thrown by the repo when the live on-hand

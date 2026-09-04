@@ -1519,6 +1519,11 @@ export function ProductModal() {
           product={target}
           open={adjustOpen}
           onClose={() => setAdjustOpen(false)}
+          onApplied={({ delta, after }) => {
+            setAdjustOpen(false);
+            toast.success('Stock adjusted', `${delta >= 0 ? '+' : ''}${delta} → ${after} ${target.unit}`);
+            navigate(exitTo);
+          }}
         />
       ) : null}
 
