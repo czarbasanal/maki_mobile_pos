@@ -1,317 +1,527 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
+// New Receiving builder — per design/maki-pos-new-receiving's Implementation
+// Guide §2/§3/§7 (reskinned tokens; the guide's localStorage/centavos/
+// server-allocated-reference notes are superseded by this repo's rulings:
+// Firestore + version-guard drafts, pesos, and the existing client-side
+// nextReferenceNumber() reservation — see useReceivingEntry).
+//
+// Direct-add replaces the old "pick → inline box → confirm" flow: a search
+// result's Add/+1 appends or bumps a line immediately, and every existing-
+// product line is edited in place (qty stepper, cost, price cells) rather
+// than through a reopened box. A pending-new-product line is the one
+// exception — its spec isn't inline-editable, so it keeps a pencil that
+// reopens NewProductDialog (see useReceivingEntry's updateNew).
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { PencilSquareIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useReceivingEntry, type NewProductSpec } from './useReceivingEntry';
 import { NewProductDialog } from './NewProductDialog';
 import { formatMoney } from '@/core/utils/money';
 import { RoutePaths } from '@/presentation/router/routePaths';
-import type { Product } from '@/domain/entities';
-import { displaySku } from '@/domain/products/sku';
+import { marginPct, marginToneClass } from '@/domain/products/margin';
+import { costsDiffer } from '@/domain/products/costVariation';
 import { skuCellText } from '@/domain/receiving/skuPreview';
-
+import { ProductImage } from '@/presentation/components/common/ProductImage';
+import { BackButton } from '@/presentation/components/ui/BackButton';
+import { Badge } from '@/presentation/components/ui/Badge';
+import { Button } from '@/presentation/components/ui/Button';
+import { CopyButton } from '@/presentation/components/ui/CopyButton';
+import { DataTable, type Column } from '@/presentation/components/ui/DataTable';
+import { FirstRunState } from '@/presentation/components/ui/TableEmptyStates';
+import { SearchInput } from '@/presentation/components/ui/SearchInput';
+import { SelectFilter } from '@/presentation/components/ui/SelectFilter';
+import { StickyActionBar } from '@/presentation/components/ui/StickyActionBar';
+import { Field, inputCls } from '@/presentation/components/ui/formKit';
+import { useEscapeLayer } from '@/presentation/components/ui/escapeLayers';
+import { cn } from '@/core/utils/cn';
+import type { Product, ReceivingItem } from '@/domain/entities';
 
 export function ReceivingEntryPage() {
   const entry = useReceivingEntry();
+  const navigate = useNavigate();
+  const searchRef = useRef<HTMLInputElement>(null);
 
-  const [picked, setPicked] = useState<Product | null>(null);
-  const [qty, setQty] = useState('1');
-  const [cost, setCost] = useState('');
-  const [price, setPrice] = useState('');
   const [showNew, setShowNew] = useState(false);
-  // Line being edited via the row pencil: the picked box (existing product)
-  // or the product dialog (pending new product) reopens on it, and the
-  // confirm rewrites the line instead of appending one.
+  const [newInitialName, setNewInitialName] = useState<string | undefined>(undefined);
+  // A pending-new line's pencil reopens the dialog in edit mode; its confirm
+  // rewrites the line (updateNew) instead of appending one.
   const [editingLineId, setEditingLineId] = useState<string | null>(null);
   const [editingSpec, setEditingSpec] = useState<NewProductSpec | null>(null);
+
+  const [highlight, setHighlight] = useState(0);
+  const [suppressDropdown, setSuppressDropdown] = useState(false);
+  const dropdownOpen = entry.search.trim() !== '' && !suppressDropdown;
+  useEscapeLayer(dropdownOpen, () => setSuppressDropdown(true));
+  useEffect(() => setHighlight(0), [entry.matches]);
 
   useEffect(() => {
     document.title = `${entry.isResuming ? 'Resume' : 'New'} receiving · MAKI POS Admin`;
   }, [entry.isResuming]);
 
-  function pick(p: Product) {
-    setPicked(p);
-    setEditingLineId(null);
-    setQty('1');
-    setCost(String(p.cost));
-    setPrice(String(p.price));
+  const productsById = useMemo(
+    () => new Map(entry.products.map((p) => [p.id, p])),
+    [entry.products],
+  );
+  const lineProductIds = useMemo(
+    () => new Set(entry.lines.filter((l) => !l.pendingNewProduct).map((l) => l.productId)),
+    [entry.lines],
+  );
+
+  function pick(product: Product) {
+    entry.addExisting(product);
+    setSuppressDropdown(false);
+    // Autofocus after every add (guide §2) — a scanned box's next barcode
+    // must land in the search field without a click.
+    searchRef.current?.focus();
   }
 
-  // The price only applies when the entered cost spawns a variation; a plain
-  // top-up never touches the existing product's price.
-  const costDiffers = picked != null && Math.abs(Number(cost) - picked.cost) > 0.01;
-
-  function confirmExisting() {
-    if (!picked) return;
-    const q = Number(qty);
-    const c = Number(cost);
-    const pr = Number(price);
-    if (!Number.isFinite(q) || q <= 0 || !Number.isFinite(c) || c < 0) return;
-    if (costDiffers && (!Number.isFinite(pr) || pr < 0)) return;
-    const unitPrice = costDiffers ? pr : null;
-    if (editingLineId) {
-      entry.updateExisting(editingLineId, { quantity: q, unitCost: c, unitPrice });
-    } else {
-      entry.addExisting(picked, q, c, unitPrice);
-    }
-    setPicked(null);
+  function openNewProduct(initialName?: string) {
+    setEditingSpec(null);
     setEditingLineId(null);
+    setNewInitialName(initialName);
+    setShowNew(true);
   }
 
-  function editLine(l: (typeof entry.lines)[number]) {
-    if (l.pendingNewProduct) {
-      const np = l.pendingNewProduct;
-      setEditingSpec({
-        name: l.name,
-        sku: l.sku,
-        autoGenerateSku: np.autoGenerateSku,
-        category: np.category,
-        unit: l.unit,
-        cost: l.unitCost,
-        price: np.price,
-        quantity: l.quantity,
-        reorderLevel: np.reorderLevel,
-        autoSkuCategoryCode: np.autoSkuCategoryCode ?? null,
-        barcodes: np.barcodes ?? [],
-        notes: np.notes ?? null,
-        sellingOptions: np.sellingOptions ?? [],
-      });
-      setEditingLineId(l.id);
-      // Close the inline box if another line was mid-edit — leaving it open
-      // would silently degrade its Update back into an appending Add.
-      setPicked(null);
-      setShowNew(true);
-      return;
-    }
-    const product = entry.products.find((p) => p.id === l.productId);
-    if (!product) return;
-    setPicked(product);
+  function editPendingLine(l: ReceivingItem) {
+    const np = l.pendingNewProduct;
+    if (!np) return;
+    setEditingSpec({
+      name: l.name,
+      sku: l.sku,
+      autoGenerateSku: np.autoGenerateSku,
+      category: np.category,
+      unit: l.unit,
+      cost: l.unitCost,
+      price: np.price,
+      quantity: l.quantity,
+      reorderLevel: np.reorderLevel,
+      autoSkuCategoryCode: np.autoSkuCategoryCode ?? null,
+      barcodes: np.barcodes ?? [],
+      notes: np.notes ?? null,
+      sellingOptions: np.sellingOptions ?? [],
+    });
     setEditingLineId(l.id);
-    setQty(String(l.quantity));
-    setCost(String(l.unitCost));
-    setPrice(String(l.unitPrice ?? product.price));
+    setNewInitialName(undefined);
+    setShowNew(true);
   }
 
+  /** Effective sell price a margin/price cell shows: the catalog price while
+   *  the line's cost matches it, the line's own price once it diverges (the
+   *  cost-variation policy) — and the queued spec's price for a pending-new
+   *  line, which was never in the catalog to begin with. */
+  function effectivePrice(l: ReceivingItem, product: Product | undefined): number | null {
+    if (l.pendingNewProduct) return l.pendingNewProduct.price;
+    if (!product) return null;
+    return costsDiffer(l.unitCost, product.cost) ? (l.unitPrice ?? product.price) : product.price;
+  }
 
-  // The receiving line denormalizes cost but not the selling price, so a line
-  // for an existing product resolves it from the product. A product deleted
-  // since the receiving was written has none to show.
-  const priceByProductId = new Map(entry.products.map((p) => [p.id, p.price]));
-  const sellingPriceText = (l: (typeof entry.lines)[number]): string => {
-    const price =
-      l.unitPrice ?? l.pendingNewProduct?.price ?? priceByProductId.get(l.productId ?? '');
-    return price == null ? '—' : formatMoney(price);
-  };
+  function handleSearchKeyDown(e: KeyboardEvent<HTMLInputElement>) {
+    if (!dropdownOpen || entry.matches.length === 0) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlight((h) => Math.min(h + 1, entry.matches.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlight((h) => Math.max(h - 1, 0));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      // A wedge scanner's Enter follows the last character almost instantly:
+      // with exactly one match, add it outright rather than depend on the
+      // highlight having caught up.
+      const chosen = entry.matches.length === 1 ? entry.matches[0] : entry.matches[highlight];
+      if (chosen) pick(chosen);
+    }
+  }
 
-  return (
-    <div className="space-y-tk-lg">
-      <header className="space-y-tk-xs">
-        <Link
-          to={RoutePaths.receiving}
-          className="text-bodySmall text-light-text-secondary hover:underline"
-        >
-          ← Back
-        </Link>
-        <span className="block font-mono text-bodySmall text-light-text-secondary">
-          {entry.referenceNumber ?? '…'}
+  const columns: Array<Column<ReceivingItem>> = [
+    {
+      key: 'item',
+      header: 'Item',
+      render: (l) => {
+        const product = l.pendingNewProduct ? undefined : productsById.get(l.productId ?? '');
+        return (
+          <div className="flex min-w-0 items-center gap-2.5">
+            <ProductImage
+              src={product?.imageUrl}
+              alt={l.name}
+              size="sm"
+              className="h-[34px] w-[34px] shrink-0 rounded-[9px]"
+            />
+            <div className="flex min-w-0 flex-col gap-[2px]">
+              <span className="flex items-center gap-1.5 text-ctl-sm font-medium text-ink">
+                {l.name}
+                {l.pendingNewProduct ? <Badge tone="info">New</Badge> : null}
+              </span>
+              {product ? (
+                <span className="text-[10.5px] text-ink-3">
+                  {product.quantity} on hand → {product.quantity + l.quantity}
+                </span>
+              ) : null}
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      key: 'sku',
+      header: 'SKU',
+      width: '128px',
+      mono: true,
+      render: (l) => (
+        <span className="whitespace-nowrap text-[12px] text-ink-2">
+          {skuCellText(l.sku, l.pendingNewProduct?.autoSkuCategoryCode != null)}
         </span>
-      </header>
-
-      {entry.error ? (
-        <div className="rounded-md border border-error bg-error-light px-tk-md py-tk-sm text-bodySmall text-error-dark">
-          {entry.error}
-        </div>
-      ) : null}
-
-      {/* Supplier */}
-      <div className="max-w-sm">
-        <label className="mb-tk-xs block text-bodySmall font-medium text-light-text">Supplier</label>
-        <select
-          value={entry.supplierId}
-          onChange={(e) => entry.setSupplierId(e.target.value)}
-          className="w-full rounded-md border border-light-border bg-light-card px-tk-md py-[8px] text-bodySmall text-light-text"
-        >
-          <option value="">No supplier</option>
-          {entry.suppliers.map((s) => (
-            <option key={s.id} value={s.id}>{s.name}</option>
-          ))}
-        </select>
-      </div>
-
-      {/* Add item */}
-      <section className="space-y-tk-sm rounded-lg border border-light-hairline bg-light-card p-tk-lg">
-        <div className="flex items-center justify-between">
-          <h2 className="text-bodyMedium font-semibold text-light-text">Add items</h2>
+      ),
+    },
+    {
+      key: 'qty',
+      header: 'Qty',
+      align: 'right',
+      width: '112px',
+      render: (l) =>
+        l.pendingNewProduct ? (
+          <span className="font-mono text-ctl-sm text-ink">{l.quantity}</span>
+        ) : (
+          <div className="flex items-center justify-end gap-[5px]">
+            <button
+              type="button"
+              aria-label={`Decrease quantity for ${l.name}`}
+              onClick={() => entry.updateLine(l.id, { quantity: l.quantity - 1 })}
+              className="flex h-[30px] w-[26px] shrink-0 items-center justify-center rounded-ctl border border-line text-ink-2 hover:border-accent-line hover:text-ink"
+            >
+              −
+            </button>
+            <input
+              type="number"
+              aria-label={`Quantity for ${l.name}`}
+              value={l.quantity}
+              onChange={(e) => entry.updateLine(l.id, { quantity: Number(e.target.value) })}
+              className="h-[30px] w-12 rounded-ctl border border-line bg-surface-2 text-center font-mono text-ctl-sm text-ink outline-none focus:border-accent-line"
+            />
+            <button
+              type="button"
+              aria-label={`Increase quantity for ${l.name}`}
+              onClick={() => entry.updateLine(l.id, { quantity: l.quantity + 1 })}
+              className="flex h-[30px] w-[26px] shrink-0 items-center justify-center rounded-ctl border border-line text-ink-2 hover:border-accent-line hover:text-ink"
+            >
+              +
+            </button>
+          </div>
+        ),
+    },
+    {
+      key: 'cost',
+      header: 'Unit cost',
+      align: 'right',
+      width: '108px',
+      render: (l) => {
+        const product = l.pendingNewProduct ? undefined : productsById.get(l.productId ?? '');
+        if (l.pendingNewProduct || !product) {
+          return <span className="font-mono text-ctl-sm text-ink-2">{formatMoney(l.unitCost)}</span>;
+        }
+        const deviates = costsDiffer(l.unitCost, product.cost);
+        return (
+          <input
+            type="number"
+            aria-label={`Unit cost for ${l.name}`}
+            value={l.unitCost}
+            onChange={(e) => entry.updateLine(l.id, { unitCost: Number(e.target.value) })}
+            className={cn(
+              'h-[30px] w-full rounded-ctl border bg-surface-2 px-2 text-right font-mono text-ctl-sm text-ink outline-none',
+              deviates ? 'border-accent-text' : 'border-line focus:border-accent-line',
+            )}
+          />
+        );
+      },
+    },
+    {
+      key: 'price',
+      header: 'Sell price',
+      align: 'right',
+      width: '108px',
+      render: (l) => {
+        const product = l.pendingNewProduct ? undefined : productsById.get(l.productId ?? '');
+        if (l.pendingNewProduct) {
+          return <span className="font-mono text-ctl-sm text-ink-2">{formatMoney(l.pendingNewProduct.price)}</span>;
+        }
+        if (!product) return <span className="text-ink-3">—</span>;
+        const editable = costsDiffer(l.unitCost, product.cost);
+        return (
+          <input
+            type="number"
+            aria-label="Price"
+            title={editable ? undefined : 'Price applies when a cost change spawns a variation'}
+            value={editable ? l.unitPrice ?? product.price : product.price}
+            disabled={!editable}
+            onChange={(e) => entry.updateLine(l.id, { unitPrice: Number(e.target.value) })}
+            className={cn(
+              'h-[30px] w-full rounded-ctl border bg-surface-2 px-2 text-right font-mono text-ctl-sm text-ink outline-none disabled:text-ink-3',
+              editable && l.unitPrice != null ? 'border-accent-text' : 'border-line focus:border-accent-line',
+            )}
+          />
+        );
+      },
+    },
+    {
+      key: 'margin',
+      header: 'Margin',
+      align: 'right',
+      width: '78px',
+      render: (l) => {
+        const product = l.pendingNewProduct ? undefined : productsById.get(l.productId ?? '');
+        const price = effectivePrice(l, product);
+        const pct = price != null ? marginPct(price, l.unitCost) : null;
+        return (
+          <span className={cn('font-mono text-[12px] font-semibold', marginToneClass(pct))}>
+            {pct == null ? '—' : `${pct}%`}
+          </span>
+        );
+      },
+    },
+    {
+      key: 'total',
+      header: 'Line total',
+      align: 'right',
+      width: '110px',
+      mono: true,
+      render: (l) => (
+        <span className="text-[13px] font-semibold text-ink">{formatMoney(l.unitCost * l.quantity)}</span>
+      ),
+    },
+    {
+      key: 'actions',
+      header: '',
+      align: 'right',
+      width: '64px',
+      render: (l) => (
+        <div className="flex items-center justify-end gap-1">
+          {l.pendingNewProduct ? (
+            <button
+              type="button"
+              aria-label="Edit"
+              onClick={() => editPendingLine(l)}
+              className="flex h-[26px] w-[26px] items-center justify-center rounded-[7px] text-ink-3 hover:bg-surface-3 hover:text-ink-2"
+            >
+              <PencilSquareIcon className="h-3.5 w-3.5" />
+            </button>
+          ) : null}
           <button
             type="button"
-            onClick={() => { setShowNew(true); setPicked(null); setEditingSpec(null); setEditingLineId(null); }}
-            className="rounded-md border border-light-border px-tk-md py-[6px] text-bodySmall text-light-text hover:bg-light-subtle"
+            aria-label="Remove"
+            title="Remove line"
+            onClick={() => entry.removeLine(l.id)}
+            className="flex h-[26px] w-[26px] items-center justify-center rounded-[7px] text-ink-3 hover:bg-neg-soft hover:text-neg"
           >
-            + New product
+            <TrashIcon className="h-3.5 w-3.5" />
           </button>
         </div>
+      ),
+    },
+  ];
 
-          <div className="relative">
-            <input
-              value={entry.search}
-              onChange={(e) => entry.setSearch(e.target.value)}
-              placeholder="Search a product by name or SKU…"
-              className={inputCls}
+  const retailValue = entry.lines.reduce((sum, l) => {
+    const product = l.pendingNewProduct ? undefined : productsById.get(l.productId ?? '');
+    const price = effectivePrice(l, product);
+    return price == null ? sum : sum + price * l.quantity;
+  }, 0);
+
+  const receiveDisabled = entry.isBusy || entry.lines.length === 0;
+
+  return (
+    <div className="flex flex-col gap-3">
+      <BackButton onClick={() => navigate(RoutePaths.receiving)} />
+
+      {entry.error ? (
+        <p className="rounded-ctl border border-neg bg-neg-soft px-3.5 py-2.5 text-ctl-sm text-neg">
+          {entry.error}
+        </p>
+      ) : null}
+
+      <section className="overflow-visible rounded-card border border-line bg-surface shadow-card">
+        {/* Header */}
+        <div className="flex flex-wrap items-center gap-2.5 border-b border-line-2 px-5 py-4">
+          <span className="flex items-center gap-2 font-mono text-[19px] font-semibold tracking-[-0.6px] text-ink">
+            {entry.referenceNumber ?? '…'}
+            {entry.referenceNumber ? <CopyButton value={entry.referenceNumber} label="reference" /> : null}
+          </span>
+          <Badge tone="info">Draft</Badge>
+          <span className="text-[11.5px] text-ink-3">Nothing moves until you receive it</span>
+        </div>
+
+        {/* Meta grid */}
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3 border-b border-line-2 px-5 py-4">
+          <Field label="Supplier" group>
+            <SelectFilter
+              label="Supplier"
+              value={entry.supplierId}
+              options={entry.suppliers.map((s) => ({ value: s.id, label: s.name }))}
+              onChange={entry.setSupplierId}
+              allLabel="No supplier"
+              triggerClassName="h-[42px] w-full bg-surface-2 shadow-none"
             />
-            {entry.matches.length > 0 && !picked ? (
-              <ul className="absolute z-10 mt-1 max-h-64 w-full overflow-auto rounded-md border border-light-hairline bg-light-card shadow-lg">
-                {entry.matches.map((p) => (
-                  <li key={p.id}>
-                    <button type="button" onClick={() => pick(p)}
-                      className="flex w-full items-center justify-between px-tk-md py-tk-sm text-left text-bodySmall hover:bg-light-subtle">
-                      <span className="text-light-text">{p.name} <span className="whitespace-nowrap text-light-text-hint">{displaySku(p.sku)}</span></span>
-                      <span className="tabular-nums text-light-text-secondary">{formatMoney(p.cost)}</span>
-                    </button>
-                  </li>
+          </Field>
+          <Field label="Invoice / DR no.">
+            <input
+              value={entry.invoiceNumber}
+              onChange={(e) => entry.setInvoiceNumber(e.target.value)}
+              placeholder="From the supplier's paperwork"
+              className={cn(inputCls(), 'font-mono')}
+            />
+          </Field>
+          <Field label="Received">
+            <input
+              type="date"
+              value={entry.receivedOn}
+              onChange={(e) => entry.setReceivedOn(e.target.value)}
+              className={cn(inputCls(), 'font-mono')}
+            />
+          </Field>
+        </div>
+
+        {/* Add bar */}
+        <div className="flex flex-wrap items-center gap-2.5 border-b border-line-2 px-5 py-3.5">
+          <div className="relative min-w-[240px] flex-1">
+            <SearchInput
+              value={entry.search}
+              onChange={(v) => {
+                entry.setSearch(v);
+                setSuppressDropdown(false);
+              }}
+              onKeyDown={(e) => handleSearchKeyDown(e)}
+              placeholder="Search a part by name or SKU — or scan a barcode"
+              variant="hero"
+              debounce={0}
+              autoFocus
+              inputRef={searchRef}
+            />
+            {dropdownOpen ? (
+              <div
+                data-testid="search-results"
+                className="absolute left-0 right-0 top-[calc(100%+6px)] z-40 max-h-64 overflow-y-auto rounded-card border border-line bg-surface p-[5px] shadow-card"
+              >
+                {entry.matches.map((p, i) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => pick(p)}
+                    className={cn(
+                      'flex w-full items-center gap-2.5 rounded-field px-2.5 py-2 text-left',
+                      i === highlight ? 'bg-surface-2' : 'hover:bg-surface-2',
+                    )}
+                  >
+                    <ProductImage src={p.imageUrl} alt={p.name} size="sm" className="h-[30px] w-[30px] shrink-0 rounded-[8px]" />
+                    <span className="flex min-w-0 flex-col gap-[2px]">
+                      <span className="truncate text-[12.5px] font-medium text-ink">{p.name}</span>
+                      <span className="whitespace-nowrap font-mono text-[10.5px] text-ink-3">
+                        {p.sku} · {p.quantity} on hand · last cost {formatMoney(p.cost)}
+                      </span>
+                    </span>
+                    <span className="ml-auto shrink-0 text-[11.5px] font-semibold text-accent-text">
+                      {lineProductIds.has(p.id) ? '+1' : 'Add'}
+                    </span>
+                  </button>
                 ))}
                 {entry.moreMatches > 0 ? (
-                  <li className="px-tk-md py-tk-sm text-bodySmall text-light-text-hint">
+                  <div className="px-2.5 py-2 text-[11.5px] text-ink-3">
                     {entry.moreMatches} more — keep typing to narrow
-                  </li>
+                  </div>
                 ) : null}
-              </ul>
+                {entry.matches.length === 0 ? (
+                  <div className="flex flex-col gap-2 px-3 py-3.5">
+                    <span className="text-[12.5px] text-ink-2">No part matches “{entry.search.trim()}”</span>
+                    <button
+                      type="button"
+                      onClick={() => openNewProduct(entry.search.trim())}
+                      className="w-fit rounded-ctl border border-line px-3 py-1.5 text-[12px] font-medium text-ink-2 hover:border-accent-line hover:text-ink"
+                    >
+                      + Create it as a new product
+                    </button>
+                  </div>
+                ) : null}
+              </div>
             ) : null}
           </div>
-
-        {picked ? (
-          <div className="flex flex-wrap items-end gap-tk-sm rounded-md border border-light-hairline bg-light-subtle p-tk-md">
-            <div className="text-bodySmall text-light-text">
-              <span className="font-medium">{picked.name}</span>{' '}
-              <span className="whitespace-nowrap text-light-text-hint">{displaySku(picked.sku)}</span>
-            </div>
-            <Field label="Qty"><input type="number" className={inputCls} value={qty}
-              onChange={(e) => setQty(e.target.value)} /></Field>
-            <Field label="Unit cost"><input type="number" className={inputCls} value={cost}
-              onChange={(e) => setCost(e.target.value)} /></Field>
-            <Field label="Price">
-              <input type="number" aria-label="Price" className={inputCls} value={price}
-                disabled={!costDiffers}
-                title={costDiffers ? undefined : 'Price applies when a cost change spawns a variation'}
-                onChange={(e) => setPrice(e.target.value)} />
-            </Field>
-            {costDiffers ? (
-              <span className="text-[11px] text-warning-dark">
-                Cost differs → a <span className="whitespace-nowrap">{picked.baseSku ?? picked.sku}-N</span> variation will be created at this cost and price
-              </span>
-            ) : null}
-            <button type="button" onClick={confirmExisting}
-              className="rounded-md bg-primary-dark px-tk-md py-[8px] text-bodySmall font-medium text-white hover:opacity-90">
-              {editingLineId ? 'Update' : 'Add'}
-            </button>
-            <button type="button" onClick={() => { setPicked(null); setEditingLineId(null); }}
-              className="px-tk-sm py-[8px] text-bodySmall text-light-text-secondary hover:underline">
-              Cancel
-            </button>
-          </div>
-        ) : null}
-      </section>
-
-      {/* Items */}
-      <NewProductDialog
-        open={showNew}
-        initial={editingSpec}
-        onClose={() => { setShowNew(false); setEditingSpec(null); setEditingLineId(null); }}
-        onAdd={(spec) => {
-          if (editingLineId && editingSpec) entry.updateNew(editingLineId, spec);
-          else entry.addNew(spec);
-          setEditingSpec(null);
-          setEditingLineId(null);
-        }}
-      />
-
-      <section className="overflow-hidden rounded-lg border border-light-hairline bg-light-card">
-        <table className="w-full text-bodySmall">
-          <thead className="border-b border-light-hairline bg-light-subtle text-light-text-secondary">
-            <tr>
-              <th className="px-tk-md py-tk-sm text-left font-medium">SKU</th>
-              <th className="px-tk-md py-tk-sm text-left font-medium">Item name</th>
-              <th className="px-tk-md py-tk-sm text-right font-medium">Qty</th>
-              <th className="px-tk-md py-tk-sm text-right font-medium">Cost</th>
-              <th className="px-tk-md py-tk-sm text-right font-medium">Price</th>
-              <th className="px-tk-md py-tk-sm text-right font-medium">Line total</th>
-              <th className="px-tk-md py-tk-sm" />
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-light-hairline">
-            {entry.lines.length === 0 ? (
-              <tr><td colSpan={7} className="px-tk-md py-tk-lg text-center text-light-text-hint">No items yet.</td></tr>
-            ) : (
-              entry.lines.map((l) => (
-                <tr key={l.id}>
-                  <td className="px-tk-md py-tk-sm font-mono text-light-text-secondary">
-                    {skuCellText(l.sku, l.pendingNewProduct?.autoSkuCategoryCode != null)}
-                  </td>
-                  {/* The "New" badge describes the product, so it stays with
-                      the name rather than the code. */}
-                  <td className="px-tk-md py-tk-sm">
-                    <span className="font-medium text-light-text">{l.name}</span>
-                    {l.pendingNewProduct ? (
-                      <span className="ml-tk-sm rounded-full bg-info-light px-tk-sm py-[1px] text-[10px] font-semibold uppercase text-info-dark">New</span>
-                    ) : null}
-                  </td>
-                  <td className="px-tk-md py-tk-sm text-right tabular-nums">{l.quantity}</td>
-                  <td className="px-tk-md py-tk-sm text-right tabular-nums">{formatMoney(l.unitCost)}</td>
-                  <td className="px-tk-md py-tk-sm text-right tabular-nums">{sellingPriceText(l)}</td>
-                  <td className="px-tk-md py-tk-sm text-right tabular-nums">{formatMoney(l.unitCost * l.quantity)}</td>
-                  <td className="px-tk-md py-tk-sm text-right">
-                    <div className="flex items-center justify-end gap-tk-sm">
-                      <button type="button" onClick={() => editLine(l)}
-                        disabled={!l.pendingNewProduct && !priceByProductId.has(l.productId ?? '')}
-                        title={
-                          !l.pendingNewProduct && !priceByProductId.has(l.productId ?? '')
-                            ? 'Product no longer exists'
-                            : undefined
-                        }
-                        className="text-light-text-hint hover:text-light-text disabled:opacity-40 disabled:hover:text-light-text-hint"
-                        aria-label="Edit">
-                        <PencilSquareIcon className="h-4 w-4" />
-                      </button>
-                      <button type="button" onClick={() => entry.removeLine(l.id)}
-                        className="text-light-text-hint hover:text-error" aria-label="Remove">
-                        <TrashIcon className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </section>
-
-      {/* Footer */}
-      <div className="flex items-center justify-between">
-        <div className="text-bodySmall text-light-text-secondary">
-          Total <span className="tabular-nums text-light-text">{entry.totals.quantity}</span> units ·{' '}
-          <span className="tabular-nums font-semibold text-light-text">{formatMoney(entry.totals.cost)}</span>
+          <Button onClick={() => openNewProduct(undefined)} icon={<PlusIcon className="h-3.5 w-3.5" />}>
+            New product
+          </Button>
         </div>
-        <div className="flex gap-tk-sm">
-          <button type="button" disabled={entry.isBusy} onClick={entry.saveDraft}
-            className="rounded-md border border-light-border px-tk-lg py-[8px] text-bodySmall text-light-text hover:bg-light-subtle disabled:opacity-50">
+
+        <NewProductDialog
+          open={showNew}
+          initial={editingSpec}
+          initialName={newInitialName}
+          onClose={() => {
+            setShowNew(false);
+            setEditingSpec(null);
+            setEditingLineId(null);
+            setNewInitialName(undefined);
+          }}
+          onAdd={(spec) => {
+            if (editingLineId) entry.updateNew(editingLineId, spec);
+            else entry.addNew(spec);
+            setEditingSpec(null);
+            setEditingLineId(null);
+            setNewInitialName(undefined);
+            searchRef.current?.focus();
+          }}
+        />
+
+        {/* Line table */}
+        <DataTable
+          columns={columns}
+          rows={entry.lines}
+          rowKey={(l) => l.id}
+          minWidth="900px"
+          empty={
+            <FirstRunState
+              icon={
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-text)" strokeWidth="1.6">
+                  <path d="M12 3.2 20 7.4v9.2L12 20.8 4 16.6V7.4Z" />
+                  <path d="M4 7.4 12 11.6l8-4.2" />
+                  <line x1="12" y1="11.6" x2="12" y2="20.8" />
+                </svg>
+              }
+              title="No items yet"
+              description="Search a part above, or scan the barcode on the box. Costs default to what you last paid."
+            />
+          }
+        />
+
+        {/* Sticky footer */}
+        <StickyActionBar
+          figures={[
+            { label: 'Lines', value: String(entry.lines.length) },
+            { label: 'Units in', value: String(entry.totals.quantity) },
+            { label: 'Retail value', value: formatMoney(retailValue), tone: 'pos' },
+          ]}
+        >
+          <span className="flex items-baseline gap-2">
+            <span className="text-[11.5px] text-ink-3">Total cost</span>
+            <span className="tnum font-mono text-[23px] font-semibold tracking-[-1px] text-ink">
+              {formatMoney(entry.totals.cost)}
+            </span>
+          </span>
+          <Button disabled={entry.isBusy} onClick={entry.saveDraft}>
             Save draft
+          </Button>
+          {/* aria-disabled (not disabled): the .45-opacity treatment stays
+             clickable-looking per the guide, and this is the actual gate —
+             a real `disabled` attribute would also block Enter-to-submit
+             detection consistently with the rest of the app's forms. */}
+          <button
+            type="button"
+            aria-disabled={receiveDisabled || undefined}
+            onClick={() => {
+              if (!receiveDisabled) entry.receive();
+            }}
+            className={cn(
+              'inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-ctl bg-accent px-3.5 py-[9px] text-ctl-md font-semibold text-accent-ink hover:brightness-95',
+              receiveDisabled && 'cursor-default opacity-45',
+            )}
+          >
+            {entry.isBusy ? 'Receiving…' : 'Receive into stock'}
           </button>
-          <button type="button" disabled={entry.isBusy || entry.lines.length === 0} onClick={entry.receive}
-            className="rounded-md bg-primary-dark px-tk-lg py-[8px] text-bodySmall font-medium text-white hover:opacity-90 disabled:opacity-50">
-            {entry.isBusy ? 'Receiving…' : 'Receive'}
-          </button>
-        </div>
-      </div>
+        </StickyActionBar>
+      </section>
     </div>
-  );
-}
-
-const inputCls =
-  'w-full rounded-md border border-light-border bg-light-card px-tk-sm py-[6px] text-bodySmall text-light-text';
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block">
-      <span className="mb-1 block text-[11px] font-medium uppercase tracking-wider text-light-text-hint">{label}</span>
-      {children}
-    </label>
   );
 }

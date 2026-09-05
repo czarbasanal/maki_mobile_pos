@@ -3,13 +3,16 @@
 // and an upward shadow. Stays visible while a long table scrolls — the
 // buyer adjusting quantities is watching that total.
 import type { ReactNode } from 'react';
+import { cn } from '@/core/utils/cn';
 
 export function StickyActionBar({
   figures,
   children,
 }: {
-  /** Left side: label/value pairs. */
-  figures: Array<{ label: string; value: string }>;
+  /** Left side: label/value pairs. `tone: 'pos'` highlights one figure in
+   *  the positive-money color (receiving guide §2's Retail value, sitting
+   *  beside the always-neutral Lines/Units in figures). */
+  figures: Array<{ label: string; value: string; tone?: 'pos' }>;
   /** Right side: the money figure + action buttons. */
   children: ReactNode;
 }) {
@@ -18,7 +21,14 @@ export function StickyActionBar({
       {figures.map((f) => (
         <span key={f.label} className="flex items-baseline gap-1.5">
           <span className="text-[11.5px] text-ink-3">{f.label}</span>
-          <span className="font-mono text-[13px] font-semibold text-ink">{f.value}</span>
+          <span
+            className={cn(
+              'font-mono text-[13px] font-semibold',
+              f.tone === 'pos' ? 'text-pos' : 'text-ink',
+            )}
+          >
+            {f.value}
+          </span>
         </span>
       ))}
       <div className="ml-auto flex items-center gap-2.5">{children}</div>

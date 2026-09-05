@@ -1,303 +1,342 @@
+// Real-harness page test (ExpensesPage.test.tsx's idiom) — DI overrides feed
+// the real useReceivingEntry hook rather than mocking it, so the direct-add
+// line model, the cost-variation price lock and the meta fields are all
+// exercised through the actual page + hook wiring.
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
 import { ReceivingEntryPage } from './ReceivingEntryPage';
+import { useAuthStore } from '@/presentation/stores/authStore';
+import type { Product, Receiving, Supplier } from '@/domain/entities';
 
-// 3 lines, 12 pieces — totalQuantity is a piece sum, never a line count.
-const entry = {
-  products: [],
-  isResuming: false,
-  referenceNumber: 'RCV-20260805',
-  isLoadingRefs: false,
-  suppliers: [],
-  supplierId: '',
-  setSupplierId: vi.fn(),
-  search: '',
-  setSearch: vi.fn(),
-  matches: [],
-  lines: [
-    { id: 'i1', productId: 'p1', sku: 'SKU-1', name: 'Brake Pad', quantity: 4, unit: 'pcs', unitCost: 10, costCode: 'A', isNewVariation: false, newProductId: null, notes: null, pendingNewProduct: null },
-    { id: 'i2', productId: 'p2', sku: 'SKU-2', name: 'Chain', quantity: 5, unit: 'pcs', unitCost: 10, costCode: 'A', isNewVariation: false, newProductId: null, notes: null, pendingNewProduct: null },
-    { id: 'i3', productId: 'p3', sku: 'SKU-3', name: 'Bolt', quantity: 3, unit: 'pcs', unitCost: 10, costCode: 'A', isNewVariation: false, newProductId: null, notes: null, pendingNewProduct: null },
-  ],
-  addExisting: vi.fn(),
-  addNew: vi.fn(),
-  updateExisting: vi.fn(),
-  updateNew: vi.fn(),
-  removeLine: vi.fn(),
-  totals: { quantity: 12, cost: 120 },
-  error: null,
-  isBusy: false,
-  saveDraft: vi.fn(),
-  receive: vi.fn(),
-};
+function signIn() {
+  useAuthStore.setState({
+    user: { id: 'u1', email: 'a@b.c', displayName: 'Czar', role: 'admin', isActive: true } as never,
+    status: 'signedIn',
+  } as never);
+}
 
-vi.mock('./useReceivingEntry', () => ({
-  useReceivingEntry: () => entry,
-}));
+function product(over: Partial<Product> = {}): Product {
+  return {
+    id: 'p1', sku: '00220004', name: 'Brake Pad', category: 'Brakes', unit: 'pcs',
+    cost: 1200, price: 1600, quantity: 34, reorderLevel: 2, costCode: 'AB',
+    barcodes: [], sellingOptions: [], supplierId: null, supplierName: null,
+    baseSku: null, variationNumber: null, isActive: true, imageUrl: null, notes: null,
+    searchKeywords: [], createdAt: new Date(), updatedAt: null,
+    createdBy: 'u1', updatedBy: 'u1', createdByName: 'Czar', updatedByName: 'Czar',
+    ...over,
+  } as Product;
+}
 
-vi.mock('@/presentation/hooks/useCategories', () => ({
-  useActiveCategories: () => ({ data: [] }),
-}));
+const draftReceiving = (o: Partial<Receiving> = {}): Receiving => ({
+  id: 'rcv1',
+  referenceNumber: 'RCV-20260905-001',
+  supplierId: null,
+  supplierName: null,
+  items: [],
+  totalCost: 0,
+  totalQuantity: 0,
+  status: 'draft',
+  notes: null,
+  createdAt: new Date('2026-09-05'),
+  completedAt: null,
+  createdBy: 'u1',
+  createdByName: 'Czar',
+  completedBy: null,
+  version: 0,
+  invoiceNumber: null,
+  receivedOn: null,
+  ...o,
+});
 
-function renderPage() {
+function harness(opts: { products?: Product[]; suppliers?: Supplier[] } = {}) {
+  signIn();
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  // The NewProductDialog (mounted even while closed) pulls categoryRepo from DI.
+  const receivingRepo: Partial<Container['receivingRepo']> = {
+    nextReferenceNumber: vi.fn(async () => 'RCV-20260905-001'),
+    create: vi.fn(async (input) => draftReceiving({ id: 'rcv-new', ...input })),
+    update: vi.fn(async () => {}),
+    complete: vi.fn(async () => {}),
+  };
+  const productRepo: Partial<Container['productRepo']> = {
+    watchAll: (onData: (v: Product[]) => void) => {
+      onData(opts.products ?? []);
+      return () => {};
+    },
+  };
+  const supplierRepo: Partial<Container['supplierRepo']> = {
+    watchAll: (onData: (v: Supplier[]) => void) => {
+      onData(opts.suppliers ?? []);
+      return () => {};
+    },
+  };
   const categoryRepo: Partial<Container['categoryRepo']> = {
+    watchAll: (_kind, cb) => {
+      cb([]);
+      return () => {};
+    },
     peekNextSequence: vi.fn(async () => 1),
   };
-  return render(
-    <DiProvider override={{ categoryRepo: categoryRepo as Container['categoryRepo'] }}>
+  const activityLogRepo: Partial<Container['activityLogRepo']> = { log: vi.fn() };
+
+  render(
+    <DiProvider
+      override={
+        {
+          receivingRepo,
+          productRepo,
+          supplierRepo,
+          categoryRepo,
+          activityLogRepo,
+        } as unknown as Container
+      }
+    >
       <QueryClientProvider client={qc}>
         <MemoryRouter initialEntries={['/receiving/new']}>
-          <ReceivingEntryPage />
+          <Routes>
+            <Route path="/receiving/new" element={<ReceivingEntryPage />} />
+            <Route path="/receiving" element={<div>RECEIVING LIST</div>} />
+            <Route path="/receiving/:id" element={<div>RECEIVING DETAIL</div>} />
+          </Routes>
         </MemoryRouter>
       </QueryClientProvider>
     </DiProvider>,
   );
+  return { receivingRepo };
 }
 
-describe('ReceivingEntryPage quantity label', () => {
-  it('labels the footer total quantity "units", not "items"', () => {
-    // The footer is unconditional (no loading/empty gate), and the number
-    // renders in its own <span> ahead of the word, so the two never share
-    // a single text node — assert against the flattened footer text rather
-    // than a node-scoped query.
-    const { container } = renderPage();
-    expect(container.textContent).toContain('12 units');
-    expect(container.textContent).not.toContain('12 items');
+async function typeSearch(text: string) {
+  await userEvent.type(screen.getByPlaceholderText(/Search a part/), text);
+}
+
+/** Scopes a dropdown-row query to the results box — once a line exists, its
+ *  qty-stepper aria-labels ("Decrease quantity for Brake Pad", etc.) also
+ *  contain the product name and would otherwise collide with a plain
+ *  top-level role/name query. */
+function searchResults() {
+  return within(screen.getByTestId('search-results'));
+}
+
+describe('ReceivingEntryPage — direct add', () => {
+  it('adding a search result appends a line, and adding it again shows +1 and increments qty instead of duplicating', async () => {
+    harness({ products: [product()] });
+    await typeSearch('Brake');
+
+    const addBtn = await searchResults().findByRole('button', { name: /Brake Pad/ });
+    expect(within(addBtn).getByText('Add')).toBeInTheDocument();
+    await userEvent.click(addBtn);
+
+    // One line, qty 1.
+    expect(await screen.findByLabelText('Quantity for Brake Pad')).toHaveValue(1);
+
+    // Search again — the same result now offers +1.
+    await typeSearch('Brake');
+    const again = await searchResults().findByRole('button', { name: /Brake Pad/ });
+    expect(within(again).getByText('+1')).toBeInTheDocument();
+    await userEvent.click(again);
+
+    expect(screen.getAllByText('Brake Pad')).toHaveLength(1); // still one line
+    expect(screen.getByLabelText('Quantity for Brake Pad')).toHaveValue(2);
+  });
+
+  it('the qty stepper floors at 1 — the minus button never goes to 0', async () => {
+    harness({ products: [product()] });
+    await typeSearch('Brake');
+    await userEvent.click(await searchResults().findByRole('button', { name: /Brake Pad/ }));
+
+    const minus = screen.getByLabelText('Decrease quantity for Brake Pad');
+    await userEvent.click(minus); // 1 -> floors at 1, not 0
+    expect(screen.getByLabelText('Quantity for Brake Pad')).toHaveValue(1);
+  });
+
+  it('shows the on-hand → new transition, which updates as qty changes', async () => {
+    harness({ products: [product({ quantity: 34 })] });
+    await typeSearch('Brake');
+    await userEvent.click(await searchResults().findByRole('button', { name: /Brake Pad/ }));
+
+    expect(await screen.findByText('34 on hand → 35')).toBeInTheDocument();
+    const plus = screen.getByLabelText('Increase quantity for Brake Pad');
+    await userEvent.click(plus);
+    expect(await screen.findByText('34 on hand → 36')).toBeInTheDocument();
   });
 });
 
-describe('ReceivingEntryPage item table columns', () => {
-  it('gives the SKU its own column, matching the completed-receiving table', () => {
-    renderPage();
+describe('ReceivingEntryPage — cost-variation price lock', () => {
+  it('the price cell is disabled at the catalog cost, unlocks on a differing cost, shows the variation notice, and the cost input takes the accent border', async () => {
+    harness({ products: [product({ cost: 1200, price: 1600 })] });
+    await typeSearch('Brake');
+    await userEvent.click(await searchResults().findByRole('button', { name: /Brake Pad/ }));
 
-    // Trailing blank header is the remove-button column.
-    const headers = screen.getAllByRole('columnheader').map((h) => h.textContent);
-    expect(headers).toEqual(['SKU', 'Item name', 'Qty', 'Cost', 'Price', 'Line total', '']);
+    const price = await screen.findByLabelText('Price');
+    expect(price).toBeDisabled();
+    expect(price).toHaveValue(1600);
+
+    const cost = screen.getByLabelText('Unit cost for Brake Pad');
+    expect(cost.className).not.toContain('border-accent-text');
+    await userEvent.clear(cost);
+    await userEvent.type(cost, '1350');
+
+    expect(screen.getByLabelText('Unit cost for Brake Pad').className).toContain('border-accent-text');
+    expect(screen.getByLabelText('Price')).toBeEnabled();
+
+    // Typing a price stores it, and the cell takes the accent border too.
+    const priceInput = screen.getByLabelText('Price');
+    await userEvent.clear(priceInput);
+    await userEvent.type(priceInput, '1700');
+    expect(screen.getByLabelText('Price')).toHaveValue(1700);
+    expect(screen.getByLabelText('Price').className).toContain('border-accent-text');
   });
 
-  it('puts each line’s SKU in the first cell, not trailing the name', () => {
-    renderPage();
+  it('reverting the cost back to the catalog value re-disables Price at the catalog figure', async () => {
+    harness({ products: [product({ cost: 1200, price: 1600 })] });
+    await typeSearch('Brake');
+    await userEvent.click(await searchResults().findByRole('button', { name: /Brake Pad/ }));
 
-    const row = screen.getByText('Brake Pad').closest('tr')!;
-    const cells = Array.from(row.querySelectorAll('td')).map((c) => c.textContent);
-    expect(cells[0]).toBe('SKU-1');
-    expect(cells[1]).toBe('Brake Pad');
-  });
-
-  it('spans the empty-state row across every column', () => {
-    // Adding a column without widening this colSpan leaves "No items yet."
-    // short of the table and the layout visibly ragged. The mock returns the
-    // same `entry` object every call, so emptying it here really does empty
-    // the rendered table — no doMock, which would be a no-op after import.
-    const original = entry.lines;
-    entry.lines = [];
-    try {
-      renderPage();
-      const table = screen.getByRole('table');
-      const headerCount = within(table).getAllByRole('columnheader').length;
-      const placeholder = screen.getByText('No items yet.');
-      expect(placeholder.closest('td')!.getAttribute('colspan')).toBe(
-        String(headerCount),
-      );
-    } finally {
-      entry.lines = original;
-    }
-  });
-});
-
-describe('ReceivingEntryPage pending-SKU display', () => {
-  const pendingLine = (id: string, name: string) => ({
-    id, productId: '', sku: '00220001', name, quantity: 1, unit: 'pcs',
-    unitCost: 10, costCode: '', isNewVariation: false, newProductId: null, notes: null,
-    pendingNewProduct: {
-      category: 'Wheels', price: 20, reorderLevel: 0,
-      autoGenerateSku: true, autoSkuCategoryCode: '0022',
-      barcodes: [], notes: null, sellingOptions: [],
-    },
-  });
-
-  it('shows no code for new products awaiting allocation, and not one repeated code', () => {
-    // The reported bug: every new product added before saving displayed the
-    // same SKU, because each one carried the same registry-floor seed.
-    const original = entry.lines;
-    // The shared fixture's lines all carry `pendingNewProduct: null`, so its
-    // inferred element type cannot hold a pending spec — widen for this case.
-    entry.lines = [
-      pendingLine('n1', 'New Tyre A'),
-      pendingLine('n2', 'New Tyre B'),
-    ] as unknown as typeof entry.lines;
-    try {
-      renderPage();
-      expect(screen.getAllByText('Assigned when saved')).toHaveLength(2);
-      expect(screen.queryByText('00220001')).not.toBeInTheDocument();
-    } finally {
-      entry.lines = original;
-    }
-  });
-
-  it('still shows a real SKU for an existing product line', () => {
-    renderPage();
-    expect(screen.getByText('SKU-1')).toBeInTheDocument();
-  });
-});
-
-describe('ReceivingEntryPage selling price column', () => {
-  it('resolves an existing line’s price from the product catalogue', () => {
-    const originalP = entry.products;
-    entry.products = [
-      { id: 'p1', price: 180 },
-    ] as unknown as typeof entry.products;
-    try {
-      renderPage();
-      const row = screen.getByText('Brake Pad').closest('tr')!;
-      // SKU | Item name | Qty | Cost | Price | Line total | remove
-      const cells = Array.from(row.querySelectorAll('td')).map((c) => c.textContent);
-      expect(cells[4]).toContain('180');
-    } finally {
-      entry.products = originalP;
-    }
-  });
-
-  it('uses the typed price for a new product that does not exist yet', () => {
-    const originalL = entry.lines;
-    entry.lines = [{
-      id: 'n1', productId: '', sku: '00220001', name: 'New Tyre', quantity: 1, unit: 'pcs',
-      unitCost: 720, costCode: '', isNewVariation: false, newProductId: null, notes: null,
-      pendingNewProduct: {
-        category: 'Wheels', price: 900, reorderLevel: 0, autoGenerateSku: true,
-        autoSkuCategoryCode: '0022', barcodes: [], notes: null, sellingOptions: [],
-      },
-    }] as unknown as typeof entry.lines;
-    try {
-      renderPage();
-      const row = screen.getByText('New Tyre').closest('tr')!;
-      const cells = Array.from(row.querySelectorAll('td')).map((c) => c.textContent);
-      expect(cells[4]).toContain('900');
-    } finally {
-      entry.lines = originalL;
-    }
-  });
-
-  it('shows a dash when the product is gone rather than a wrong number', () => {
-    renderPage(); // fixture has no products loaded
-    const row = screen.getByText('Brake Pad').closest('tr')!;
-    const cells = Array.from(row.querySelectorAll('td')).map((c) => c.textContent);
-    expect(cells[4]).toBe('—');
-  });
-});
-
-const productP1 = {
-  id: 'p1', sku: 'SKU-1', name: 'Brake Pad', category: null, unit: 'pcs',
-  cost: 10, price: 25, quantity: 5, reorderLevel: 2, costCode: 'A',
-  barcodes: [], sellingOptions: [], supplierId: null, supplierName: null,
-  baseSku: null, variationNumber: null, isActive: true, imageUrl: null, notes: null,
-  searchKeywords: [], createdAt: new Date(), updatedAt: null,
-  createdBy: 'u1', updatedBy: 'u1', createdByName: 'C', updatedByName: 'C',
-};
-
-describe('ReceivingEntryPage — variation price entry', () => {
-  it('price stays disabled at the base cost and unlocks when the cost differs', async () => {
-    const { userEvent } = await import('@testing-library/user-event').then((m) => ({ userEvent: m.default }));
-    entry.matches = [productP1] as never;
-    entry.products = [productP1] as never;
-    renderPage();
-    await userEvent.click(screen.getByRole('button', { name: /Brake Pad/ }));
+    const cost = screen.getByLabelText('Unit cost for Brake Pad');
+    await userEvent.clear(cost);
+    await userEvent.type(cost, '1350');
+    await userEvent.clear(screen.getByLabelText('Unit cost for Brake Pad'));
+    await userEvent.type(screen.getByLabelText('Unit cost for Brake Pad'), '1200');
 
     const price = screen.getByLabelText('Price');
     expect(price).toBeDisabled();
-    expect(price).toHaveValue(25);
-
-    const cost = screen.getByLabelText('Unit cost', { selector: 'input' });
-    await userEvent.clear(cost);
-    await userEvent.type(cost, '12');
-    expect(screen.getByLabelText('Price')).toBeEnabled();
-    expect(screen.getByText(/variation will be created at this cost and price/)).toBeInTheDocument();
-
-    await userEvent.clear(screen.getByLabelText('Price'));
-    await userEvent.type(screen.getByLabelText('Price'), '30');
-    await userEvent.click(screen.getByRole('button', { name: 'Add' }));
-    expect(entry.addExisting).toHaveBeenCalledWith(expect.objectContaining({ id: 'p1' }), 1, 12, 30);
-    entry.matches = [] as never;
-    entry.products = [] as never;
+    expect(price).toHaveValue(1600);
   });
 });
 
-describe('ReceivingEntryPage — row editing', () => {
-  it('the pencil on an existing line reopens the box prefilled and Update rewrites the line', async () => {
-    const { userEvent } = await import('@testing-library/user-event').then((m) => ({ userEvent: m.default }));
-    entry.products = [productP1] as never;
-    renderPage();
+describe('ReceivingEntryPage — margin cell', () => {
+  it('renders a margin percentage colored by marginToneClass', async () => {
+    harness({ products: [product({ cost: 100, price: 200 })] }); // 50% -> healthy
+    await typeSearch('Brake');
+    await userEvent.click(await searchResults().findByRole('button', { name: /Brake Pad/ }));
 
-    const row = screen.getByText('Brake Pad', { selector: 'td span' }).closest('tr')!;
-    await userEvent.click(within(row).getByRole('button', { name: 'Edit' }));
-
-    expect(screen.getByLabelText('Qty', { selector: 'input' })).toHaveValue(4);
-    const update = screen.getByRole('button', { name: 'Update' });
-    await userEvent.click(update);
-    expect(entry.updateExisting).toHaveBeenCalledWith('i1', { quantity: 4, unitCost: 10, unitPrice: null });
-    entry.products = [] as never;
-  });
-
-  it('the pencil is disabled when the line’s product no longer exists', () => {
-    renderPage(); // entry.products is empty — every product is "gone"
-    const row = screen.getByText('Chain').closest('tr')!;
-    expect(within(row).getByRole('button', { name: 'Edit' })).toBeDisabled();
-  });
-
-  it('the pencil on a new-product line opens the dialog in edit mode, prefilled', async () => {
-    const { userEvent } = await import('@testing-library/user-event').then((m) => ({ userEvent: m.default }));
-    const saved = entry.lines[2];
-    entry.lines[2] = {
-      ...saved, productId: '', name: 'Squid', sku: 'SQ-9',
-      pendingNewProduct: {
-        category: null, price: 130, reorderLevel: 1, autoGenerateSku: false,
-        autoSkuCategoryCode: null, barcodes: [], notes: null, sellingOptions: [],
-      },
-    } as never;
-    renderPage();
-
-    const row = screen.getByText('Squid').closest('tr')!;
-    await userEvent.click(within(row).getByRole('button', { name: 'Edit' }));
-
-    expect(await screen.findByText('Edit product')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('Squid')).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
-    expect(entry.updateNew).toHaveBeenCalledWith('i3', expect.objectContaining({ name: 'Squid', price: 130 }));
-    entry.lines[2] = saved;
+    const row = screen.getByText('Brake Pad').closest('tr')!;
+    const margin = within(row).getByText('50%');
+    expect(margin.className).toContain('text-pos');
   });
 });
 
-describe('ReceivingEntryPage — no stale inline box behind the dialog', () => {
-  it('pencil-editing a new-product line closes an inline edit that was in progress', async () => {
-    const { userEvent } = await import('@testing-library/user-event').then((m) => ({ userEvent: m.default }));
-    const saved = entry.lines[2];
-    entry.products = [productP1] as never;
-    entry.lines[2] = {
-      ...saved, productId: '', name: 'Squid', sku: 'SQ-9',
-      pendingNewProduct: {
-        category: null, price: 130, reorderLevel: 1, autoGenerateSku: false,
-        autoSkuCategoryCode: null, barcodes: [], notes: null, sellingOptions: [],
-      },
-    } as never;
-    renderPage();
+describe('ReceivingEntryPage — SKU column and units wording (protected)', () => {
+  it('gives the SKU its own column, distinct from the item-name cell', async () => {
+    harness({ products: [product({ sku: '00220004' })] });
+    await typeSearch('Brake');
+    await userEvent.click(await searchResults().findByRole('button', { name: /Brake Pad/ }));
 
-    // Open the inline box in Update mode on the existing line…
-    const rowA = screen.getByText('Brake Pad', { selector: 'td span' }).closest('tr')!;
-    await userEvent.click(within(rowA).getByRole('button', { name: 'Edit' }));
-    expect(screen.getByRole('button', { name: 'Update' })).toBeInTheDocument();
+    const headers = screen.getAllByRole('columnheader').map((h) => h.textContent);
+    expect(headers).toContain('SKU');
+    const row = screen.getByText('Brake Pad').closest('tr')!;
+    expect(within(row).getByText('00220004')).toBeInTheDocument();
+  });
 
-    // …then pencil the new-product line: the inline box must close, or its
-    // confirm would silently append instead of update after the dialog closes.
-    const rowB = screen.getByText('Squid').closest('tr')!;
-    await userEvent.click(within(rowB).getByRole('button', { name: 'Edit' }));
-    expect(screen.queryByRole('button', { name: 'Update' })).not.toBeInTheDocument();
+  it('the footer says "units in", never "items"', async () => {
+    harness({ products: [product()] });
+    await typeSearch('Brake');
+    await userEvent.click(await searchResults().findByRole('button', { name: /Brake Pad/ }));
 
-    entry.products = [] as never;
-    entry.lines[2] = saved;
+    expect(document.body.textContent).toContain('Units in');
+    expect(document.body.textContent).not.toMatch(/\d+ items\b/);
+  });
+
+  it('a pending-new line shows "Assigned when saved", never the peeked SKU', async () => {
+    harness();
+    await userEvent.click(screen.getByRole('button', { name: /New product/ }));
+    await userEvent.type(screen.getByLabelText('Name'), 'Squid');
+    await userEvent.click(screen.getByText('Auto-generate SKU from category'));
+    await userEvent.type(screen.getByLabelText('SKU'), 'MANUAL-1');
+    await userEvent.type(screen.getByLabelText('Cost'), '90');
+    await userEvent.type(screen.getByLabelText('Price'), '130');
+    await userEvent.type(screen.getByLabelText('Quantity received'), '3');
+    await userEvent.click(screen.getByRole('button', { name: 'Add to receiving' }));
+
+    // Manual SKU is literal, not auto — shows verbatim, not the pending label.
+    expect(await screen.findByText('MANUAL-1')).toBeInTheDocument();
+  });
+});
+
+describe('ReceivingEntryPage — no-results create-new prefill', () => {
+  it('opens NewProductDialog with the query prefilled as Name', async () => {
+    harness({ products: [product()] });
+    await typeSearch('Nonexistent Widget');
+
+    const create = await screen.findByRole('button', { name: '+ Create it as a new product' });
+    await userEvent.click(create);
+
+    expect(await screen.findByRole('heading', { name: 'New product' })).toBeInTheDocument();
+    expect(screen.getByLabelText('Name')).toHaveValue('Nonexistent Widget');
+  });
+});
+
+describe('ReceivingEntryPage — search keyboard', () => {
+  it('Enter with exactly one match adds it and clears the search', async () => {
+    harness({ products: [product()] });
+    await typeSearch('Brake Pad');
+    await waitFor(() => expect(screen.getByRole('button', { name: /Brake Pad/ })).toBeInTheDocument());
+
+    await userEvent.keyboard('{Enter}');
+    expect(await screen.findByLabelText('Quantity for Brake Pad')).toHaveValue(1);
+    expect(screen.getByPlaceholderText(/Search a part/)).toHaveValue('');
+  });
+
+  it('ArrowDown/ArrowUp move a highlight and Enter adds the highlighted row', async () => {
+    harness({ products: [product({ id: 'p1', sku: 'A1', name: 'Brake Pad' }), product({ id: 'p2', sku: 'A2', name: 'Brake Shoe' })] });
+    await typeSearch('Brake');
+    await waitFor(() => expect(screen.getAllByRole('button', { name: /Brake/ })).toHaveLength(2));
+
+    await userEvent.keyboard('{ArrowDown}'); // move off the first result
+    await userEvent.keyboard('{Enter}');
+
+    // The second result (Brake Shoe) was added, not the first.
+    expect(await screen.findByLabelText('Quantity for Brake Shoe')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Quantity for Brake Pad')).not.toBeInTheDocument();
+  });
+});
+
+describe('ReceivingEntryPage — footer figures and Receive gating', () => {
+  it('Receive into stock is aria-disabled while there are no lines, and enables once one exists', async () => {
+    harness({ products: [product()] });
+    const receiveBtn = screen.getByRole('button', { name: 'Receive into stock' });
+    expect(receiveBtn).toHaveAttribute('aria-disabled', 'true');
+
+    await typeSearch('Brake');
+    await userEvent.click(await searchResults().findByRole('button', { name: /Brake Pad/ }));
+
+    expect(screen.getByRole('button', { name: 'Receive into stock' })).not.toHaveAttribute('aria-disabled');
+  });
+
+  it('the footer reports Lines, Units in and Retail value from the current lines', async () => {
+    harness({ products: [product({ cost: 100, price: 200 })] });
+    await typeSearch('Brake');
+    await userEvent.click(await searchResults().findByRole('button', { name: /Brake Pad/ }));
+    await userEvent.click(screen.getByLabelText('Increase quantity for Brake Pad')); // qty 2
+
+    expect(document.body.textContent).toContain('Lines');
+    expect(screen.getByLabelText('Quantity for Brake Pad')).toHaveValue(2);
+    // Retail value = 200 * 2 = ₱400.00 at the catalog price (cost undisturbed).
+    expect(document.body.textContent).toContain('₱400.00');
+  });
+});
+
+describe('ReceivingEntryPage — meta fields persist into buildInput', () => {
+  it('Invoice/DR no. and Received flow through to create() on Save draft', async () => {
+    const { receivingRepo } = harness({ products: [product()] });
+    await typeSearch('Brake');
+    await userEvent.click(await searchResults().findByRole('button', { name: /Brake Pad/ }));
+
+    await userEvent.type(screen.getByPlaceholderText("From the supplier's paperwork"), 'INV-55');
+    const dateInput = document.querySelector('input[type="date"]') as HTMLInputElement;
+    await userEvent.clear(dateInput);
+    await userEvent.type(dateInput, '2026-08-30');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+
+    await waitFor(() =>
+      expect(receivingRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ invoiceNumber: 'INV-55', receivedOn: '2026-08-30' }),
+        'u1',
+      ),
+    );
   });
 });

@@ -26,6 +26,8 @@ const receiving = {
   createdBy: 'u1',
   createdByName: 'Tester',
   completedBy: 'u1',
+  invoiceNumber: null as string | null,
+  receivedOn: null as string | null,
 };
 
 vi.mock('@/presentation/hooks/useReceiving', () => ({
@@ -54,6 +56,29 @@ function renderPage(products: Product[] = []) {
     </DiProvider>,
   );
 }
+
+describe('ReceivingDetailPage — invoice/received-on facts', () => {
+  it('shows neither additive fact when the receiving predates both fields', () => {
+    renderPage();
+    expect(screen.queryByText('Invoice / DR no.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Delivery date')).not.toBeInTheDocument();
+  });
+
+  it('shows both when the receiving carries them, without shifting the calendar day', () => {
+    receiving.invoiceNumber = 'INV-4471';
+    receiving.receivedOn = '2026-08-30';
+    try {
+      renderPage();
+      expect(screen.getByText('Invoice / DR no.')).toBeInTheDocument();
+      expect(screen.getByText('INV-4471')).toBeInTheDocument();
+      expect(screen.getByText('Delivery date')).toBeInTheDocument();
+      expect(screen.getByText('Aug 30, 2026')).toBeInTheDocument();
+    } finally {
+      receiving.invoiceNumber = null;
+      receiving.receivedOn = null;
+    }
+  });
+});
 
 describe('ReceivingDetailPage quantity label', () => {
   it('labels the total quantity row "Total units", not "Total items"', () => {

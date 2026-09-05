@@ -28,6 +28,19 @@ import { displaySku } from '@/domain/products/sku';
 import { cn } from '@/core/utils/cn';
 import type { Receiving } from '@/domain/entities';
 
+/** `receivedOn` is a raw shop-calendar `YYYY-MM-DD` string, never an instant
+ *  — parse it into LOCAL Y/M/D components (never through the shop-timezone
+ *  formatter, which expects a real instant) so displaying it can't shift the
+ *  day. Same pattern as the HR pay-period cards. */
+function formatReceivedOnDate(iso: string): string {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
 const STATUS_LABEL: Record<Receiving['status'], string> = {
   draft: 'Draft',
   completed: 'Completed',
@@ -138,6 +151,27 @@ export function ReceivingDetailPage() {
             sub={`${totalUnits} units in`}
             mono
           />
+          {/* Additive — only when the builder recorded them (guide's new
+             Invoice/DR + Received fields on the entry form). Labeled
+             "Delivery date" rather than "Received" to stay distinct from
+             the timestamp fact above (when the doc was recorded, not when
+             the delivery physically arrived). */}
+          {receiving.invoiceNumber ? (
+            <Fact
+              label="Invoice / DR no."
+              value={receiving.invoiceNumber}
+              sub="Supplier paperwork"
+              mono
+            />
+          ) : null}
+          {receiving.receivedOn ? (
+            <Fact
+              label="Delivery date"
+              value={formatReceivedOnDate(receiving.receivedOn)}
+              sub="Shop calendar day"
+              mono
+            />
+          ) : null}
         </div>
 
         {/* Band 3 — items, full width */}
