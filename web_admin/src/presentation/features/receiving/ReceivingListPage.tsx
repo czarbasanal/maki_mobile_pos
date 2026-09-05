@@ -21,7 +21,6 @@ import { formatInShopZone } from '@/domain/time/shopTime';
 import { resolvePreset } from '@/domain/reports/dateRange';
 import { useDateRangeControlState } from '@/presentation/hooks/useDateRangeControlState';
 import { formatMoney } from '@/core/utils/money';
-import { cn } from '@/core/utils/cn';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { usePageClamp } from '@/presentation/hooks/usePageClamp';
 import { usePageSize } from '@/presentation/hooks/usePageSize';
@@ -29,6 +28,7 @@ import { Badge } from '@/presentation/components/ui/Badge';
 import { Button } from '@/presentation/components/ui/Button';
 import { CopyButton } from '@/presentation/components/ui/CopyButton';
 import { DataTable, type Column } from '@/presentation/components/ui/DataTable';
+import { BreakdownCard } from '@/presentation/components/ui/BreakdownCard';
 import { MoneyCard } from '@/presentation/components/ui/MoneyCard';
 import { FirstRunState, NoMatchesState } from '@/presentation/components/ui/TableEmptyStates';
 import { ViewChips } from '@/presentation/components/ui/ViewChips';
@@ -278,51 +278,27 @@ export function ReceivingListPage() {
     <div className="flex flex-col gap-3">
       {/* Summary row — pipeline card + money cards */}
       <div className="grid grid-cols-[repeat(auto-fit,minmax(236px,1fr))] gap-3">
-        <div className="flex flex-col gap-[11px] rounded-card border border-line bg-surface px-[17px] py-[15px] shadow-card">
-          <div className="flex items-baseline gap-[9px]">
-            <span className="text-[11.5px] font-medium text-ink-2">{monthLabel}</span>
-            <span className="ml-auto font-mono text-[11.5px] text-ink-3">
-              {inMonth.length} {inMonth.length === 1 ? 'receipt' : 'receipts'}
-            </span>
-          </div>
-          <div className="flex flex-col gap-[7px]">
-            {(
-              [
-                { status: 'completed' as const, label: 'Completed', color: 'var(--pos)' },
-                { status: 'draft' as const, label: 'Drafts', color: 'var(--info)' },
-                { status: 'cancelled' as const, label: 'Cancelled', color: 'var(--neg)' },
-              ]
-            ).map((p) => (
-              <button
-                key={p.status}
-                type="button"
-                aria-pressed={view === p.status}
-                onClick={() => {
-                  setView((cur) => (cur === p.status ? 'all' : p.status));
-                  setPage(1);
-                }}
-                className="flex items-center gap-2 py-[2px] text-left"
-              >
-                <span
-                  aria-hidden
-                  className="h-[7px] w-[7px] shrink-0 rounded-[2px]"
-                  style={{ background: p.color }}
-                />
-                <span
-                  className={cn(
-                    'text-[12px]',
-                    view === p.status ? 'font-semibold text-ink' : 'font-medium text-ink-2',
-                  )}
-                >
-                  {p.label}
-                </span>
-                <span className="ml-auto font-mono text-[13px] font-semibold text-ink">
-                  {monthByStatus[p.status]}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
+        <BreakdownCard
+          label={monthLabel}
+          total={`${inMonth.length} ${inMonth.length === 1 ? 'receipt' : 'receipts'}`}
+          rows={(
+            [
+              { status: 'completed' as const, label: 'Completed', color: 'var(--pos)' },
+              { status: 'draft' as const, label: 'Drafts', color: 'var(--info)' },
+              { status: 'cancelled' as const, label: 'Cancelled', color: 'var(--neg)' },
+            ]
+          ).map((p) => ({
+            key: p.status,
+            label: p.label,
+            color: p.color,
+            count: monthByStatus[p.status],
+            active: view === p.status,
+            onClick: () => {
+              setView((cur) => (cur === p.status ? 'all' : p.status));
+              setPage(1);
+            },
+          }))}
+        />
 
         <MoneyCard
           label="Received this month"

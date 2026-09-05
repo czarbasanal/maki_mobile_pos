@@ -10,8 +10,10 @@ import { instantOf, shopWall } from '@/domain/time/shopTime';
  * days via instantOf(shopWall(...)), with the end bound at 23:59:59.999
  * shop-wall. Until both custom dates are picked, the range falls back to
  * `defaultPreset`'s resolved range so the rows under it don't go empty.
+ * `defaultPreset` itself can't be 'custom' — there'd be no dates to resolve
+ * before the operator has picked any.
  */
-export function useDateRangeControlState<T extends RangePreset>(defaultPreset: T) {
+export function useDateRangeControlState<T extends RangePreset>(defaultPreset: Exclude<T, 'custom'>) {
   const [preset, setPreset] = useState<T>(defaultPreset);
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
