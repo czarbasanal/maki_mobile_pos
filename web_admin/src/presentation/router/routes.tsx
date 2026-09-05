@@ -24,7 +24,6 @@ import { ProfitReportPage } from '@/presentation/features/reports/ProfitReportPa
 import { LaborReportPage } from '@/presentation/features/reports/LaborReportPage';
 import { PriceChangeReportPage } from '@/presentation/features/reports/PriceChangeReportPage';
 import { SaleDetailPage } from '@/presentation/features/reports/SaleDetailPage';
-import { DaySalesPage } from '@/presentation/features/sales/DaySalesPage';
 import { BulkReceivingPage } from '@/presentation/features/receiving/BulkReceivingPage';
 import { ReceivingListPage } from '@/presentation/features/receiving/ReceivingListPage';
 import { ReceivingDetailPage } from '@/presentation/features/receiving/ReceivingDetailPage';
@@ -267,11 +266,6 @@ export const router = createBrowserRouter(
             title: 'Sales report',
             subtitle: 'Sales and payment breakdown for the selected range.',
           } satisfies PageChrome,
-        },
-        {
-          path: RoutePaths.daySales,
-          element: <DaySalesPage />,
-          handle: { title: 'Day sales', subtitle: 'All sales for the selected day.' } satisfies PageChrome,
         },
         {
           path: RoutePaths.profitReport,

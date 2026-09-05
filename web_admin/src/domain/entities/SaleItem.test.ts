@@ -3,7 +3,7 @@ import { saleItemDisplayName, saleItemOptionSetsCaption } from './SaleItem';
 import type { SaleItem } from './SaleItem';
 
 // Extracted so every render site (Receipt, SaleDetailPage, OrderSummary,
-// DaySalesPage) builds the same option-label / sets-caption strings from
+// SaleLines) builds the same option-label / sets-caption strings from
 // one place instead of hand-copying the ternary/ guard at each site.
 function item(overrides: Partial<SaleItem> = {}): SaleItem {
   return {

@@ -57,7 +57,7 @@ export function saleItemQuantityStep(item: SaleItem): number {
 /** Name for display, with the option label appended when there is one —
  * e.g. "Pulley Ball · By 3". Falls back to the bare name with no option.
  * Centralised here so every render site (Receipt, SaleDetailPage,
- * OrderSummary, DaySalesPage) constructs this string identically. */
+ * OrderSummary, SaleLines) constructs this string identically. */
 export function saleItemDisplayName(item: SaleItem): string {
   return saleItemHasOption(item) ? `${item.name} · ${item.optionLabel}` : item.name;
 }

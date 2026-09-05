@@ -152,7 +152,6 @@ describe('canAccess — cashier web access map', () => {
       '/reports/sales',
       '/reports/labor',
       '/reports/sale/s1',
-      '/sales/day',
       '/settings',
       '/settings/about',
       '/settings/lists',

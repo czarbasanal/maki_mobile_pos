@@ -36,7 +36,6 @@ const protectedRoutes: ReadonlyMap<string, Permission> = new Map<string, Permiss
   [RoutePaths.expenseAdd, Permission.addExpense],
   [RoutePaths.reports, Permission.viewSalesReports],
   [RoutePaths.salesReport, Permission.viewSalesReports],
-  [RoutePaths.daySales, Permission.viewSalesReports],
   [RoutePaths.profitReport, Permission.viewProfitReports],
   [RoutePaths.laborReport, Permission.viewSalesReports],
   [RoutePaths.priceChangeReport, Permission.viewProductCost],
