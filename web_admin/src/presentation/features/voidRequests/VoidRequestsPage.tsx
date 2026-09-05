@@ -266,15 +266,15 @@ export function VoidRequestsPage() {
               onCustomStart={range.setCustomStart}
               onCustomEnd={range.setCustomEnd}
             />
-            <button
-              type="button"
+            <Button
+              variant="secondary"
               title="Export CSV"
+              icon={<ArrowDownTrayIcon className="h-3.5 w-3.5" />}
               onClick={exportCsv}
               disabled={rows.length === 0}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-ctl border border-line bg-surface text-ink-2 shadow-card hover:border-accent-line hover:text-ink disabled:opacity-50"
             >
-              <ArrowDownTrayIcon className="h-[15px] w-[15px]" />
-            </button>
+              Export CSV
+            </Button>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-[9px]">

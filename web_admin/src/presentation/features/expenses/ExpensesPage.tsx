@@ -298,14 +298,14 @@ export function ExpensesPage() {
               Add expense
             </Button>
           ) : null}
-          <button
-            type="button"
+          <Button
+            variant="secondary"
             title="Export CSV"
+            icon={<ArrowDownTrayIcon className="h-3.5 w-3.5" />}
             onClick={exportCsv}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-ctl border border-line bg-surface text-ink-2 hover:border-accent-line hover:text-ink"
           >
-            <ArrowDownTrayIcon className="h-[15px] w-[15px]" />
-          </button>
+            Export CSV
+          </Button>
         </div>
       </div>
 

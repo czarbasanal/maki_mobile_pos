@@ -52,12 +52,12 @@ export function ReportHeader({
         {onExport ? (
           <Button
             variant="secondary"
-            title="Download CSV"
+            title="Export CSV"
             icon={<ArrowDownTrayIcon className="h-3.5 w-3.5" />}
             onClick={onExport}
             disabled={exportDisabled}
           >
-            CSV
+            Export CSV
           </Button>
         ) : null}
       </div>

@@ -361,14 +361,14 @@ export function ReceivingListPage() {
             </Button>
           ) : null}
           {canImport ? (
-            <button
-              type="button"
+            <Button
+              variant="secondary"
               title="Import CSV"
+              icon={<ArrowUpTrayIcon className="h-3.5 w-3.5" />}
               onClick={() => navigate(RoutePaths.bulkReceiving)}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-ctl border border-line bg-surface text-ink-2 hover:border-accent-line hover:text-ink"
             >
-              <ArrowUpTrayIcon className="h-[15px] w-[15px]" />
-            </button>
+              Import CSV
+            </Button>
           ) : null}
         </div>
       </div>
