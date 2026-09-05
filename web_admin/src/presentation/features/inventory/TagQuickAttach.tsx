@@ -1,14 +1,17 @@
 import { useState } from 'react';
 import { TagIcon } from '@heroicons/react/24/outline';
-import { Dialog } from '@/presentation/components/common/Dialog';
+import { Modal } from '@/presentation/components/ui/Modal';
 import { useUpdateProductTags } from '@/presentation/hooks/useProductMutations';
 import { tagChipStyle } from '@/domain/tags/tagColors';
+import { cn } from '@/core/utils/cn';
 import type { Product, Tag } from '@/domain/entities';
 
-/** Tag-icon button on an inventory row: opens a small Dialog listing every
- *  active tag as a toggle checkbox. Each toggle writes immediately (no Save
- *  step) — local `ids` state is the running composed array so successive
- *  toggles stack correctly even while a previous write is still in flight. */
+/** Tag-icon button on an inventory row: opens a small Modal listing every
+ *  active tag as a toggle chip — the same chip vocabulary as the product
+ *  modal's Tags field, so tagging looks identical wherever it happens. Each
+ *  toggle writes immediately (no Save step) — local `ids` state is the
+ *  running composed array so successive toggles stack correctly even while
+ *  a previous write is still in flight. */
 export function TagQuickAttachButton({ product, tags }: { product: Product; tags: Tag[] }) {
   const [open, setOpen] = useState(false);
   const [ids, setIds] = useState<string[]>(product.tagIds);
@@ -34,30 +37,50 @@ export function TagQuickAttachButton({ product, tags }: { product: Product; tags
       >
         <TagIcon className="h-3.5 w-3.5" />
       </button>
-      <Dialog open={open} onClose={() => setOpen(false)} title={product.name} className="max-w-sm">
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        title={product.name}
+        subtitle="Tap a tag to attach or remove it — changes save immediately."
+        icon={
+          <div
+            aria-hidden
+            className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[10px] bg-accent-soft text-accent-text"
+          >
+            <TagIcon className="h-[18px] w-[18px]" />
+          </div>
+        }
+        size="sm"
+        initialFocus="none"
+      >
         {tags.length === 0 ? (
           <p className="text-ctl-sm text-ink-2">
             No tags yet — create tags in Settings → Product tags.
           </p>
         ) : (
-          <div className="flex flex-col gap-1">
-            {tags.map((t) => (
-              <label
-                key={t.id}
-                className="flex items-center gap-2 rounded-[6px] px-1.5 py-1 text-ctl-sm text-ink hover:bg-surface-2"
-              >
-                <input type="checkbox" checked={ids.includes(t.id)} onChange={() => toggle(t.id)} />
-                <span
-                  aria-hidden="true"
-                  className="h-2 w-2 shrink-0 rounded-full"
-                  style={{ background: tagChipStyle(t.color).fg }}
-                />
-                {t.name}
-              </label>
-            ))}
+          <div className="flex flex-wrap gap-1.5">
+            {tags.map((t) => {
+              const selected = ids.includes(t.id);
+              const s = tagChipStyle(t.color);
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => toggle(t.id)}
+                  className={cn(
+                    'rounded-[6px] border px-2 py-[3px] text-[11px] font-medium',
+                    selected ? 'border-transparent' : 'border-line bg-surface text-ink-3',
+                  )}
+                  style={selected ? { background: s.bg, color: s.fg } : undefined}
+                >
+                  {t.name}
+                </button>
+              );
+            })}
           </div>
         )}
-      </Dialog>
+      </Modal>
     </>
   );
 }

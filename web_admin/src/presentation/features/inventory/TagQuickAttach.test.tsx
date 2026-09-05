@@ -45,10 +45,10 @@ describe('TagQuickAttachButton', () => {
     await userEvent.click(screen.getByRole('button', { name: /edit tags/i }));
     // Add t1: component composes from its LOCAL state (seeded from
     // product.tagIds, updated per toggle) so successive toggles stack.
-    await userEvent.click(screen.getByRole('checkbox', { name: 'Intact' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Intact' }));
     expect(repo.updateTags).toHaveBeenLastCalledWith('p1', ['t2', 't1'], 'u1', 'Tester');
     // Remove t2: the earlier t1 addition must survive.
-    await userEvent.click(screen.getByRole('checkbox', { name: 'Recheck' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Recheck' }));
     expect(repo.updateTags).toHaveBeenLastCalledWith('p1', ['t1'], 'u1', 'Tester');
   });
 
@@ -65,7 +65,7 @@ describe('TagQuickAttachButton', () => {
     // leaving 't1' (the other client's tag) intact. Composing from the
     // stale mount-time snapshot (['t2']) would instead write [] — silently
     // deleting the tag the other client just added.
-    await userEvent.click(screen.getByRole('checkbox', { name: 'Recheck' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Recheck' }));
     expect(repo.updateTags).toHaveBeenLastCalledWith('p1', ['t1'], 'u1', 'Tester');
   });
 });
