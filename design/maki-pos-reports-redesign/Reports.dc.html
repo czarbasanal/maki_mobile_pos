@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg:#f3f5f7; --surface:#ffffff; --surface-2:#f8fafb; --surface-3:#eef1f4;
+  --border:#e4e8ed; --border-2:#eef1f4;
+  --text:#14171c; --text-2:#69727f; --text-3:#98a1ad;
+  --accent:#f2c418; --accent-ink:#1d1a08; --accent-soft:#fdf4d2; --accent-line:#e0b200; --accent-text:#8a6300;
+  --pos:#12866a; --pos-soft:#e3f4ef; --neg:#c04b38; --neg-soft:#fbeae6;
+  --info:#3f68d6; --info-soft:#e9eefc;
+  --shadow:0 1px 2px rgba(16,24,40,.04), 0 10px 28px -12px rgba(16,24,40,.10);
+}
+:root[data-theme="dark"]{
+  --bg:#0d0f12; --surface:#15181d; --surface-2:#1a1e24; --surface-3:#222731;
+  --border:#252b34; --border-2:#1e232a;
+  --text:#eceff3; --text-2:#98a1ad; --text-3:#6a7482;
+  --accent:#f2c418; --accent-ink:#1d1a08; --accent-soft:#332a0a; --accent-line:#f0c53a; --accent-text:#f0c53a;
+  --pos:#3fc79f; --pos-soft:#132a25; --neg:#e5806c; --neg-soft:#2c1a17;
+  --info:#7d9bf0; --info-soft:#182034;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -12px rgba(0,0,0,.6);
+}
+html,body{margin:0;padding:0;background:var(--bg);}
+*{box-sizing:border-box;}
+a{color:var(--text);text-decoration:none;}
+a:hover{color:var(--accent-text);}
+input::placeholder{color:var(--text-3);}
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:8px;border:3px solid transparent;background-clip:content-box;}
+@keyframes rise{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+</style>
+</helmet>
+
+<div style="display:flex;min-height:100vh;width:100%;background:var(--bg);font-family:'IBM Plex Sans',system-ui,sans-serif;color:var(--text);">
+
+  <aside style="width:248px;flex:0 0 248px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;">
+    <div style="padding:20px 18px 16px 18px;display:flex;align-items:center;gap:11px;">
+      <div style="width:34px;height:34px;border-radius:10px;background:var(--accent);display:flex;align-items:center;justify-content:center;flex:0 0 34px;box-shadow:0 2px 8px -2px var(--accent-line);">
+        <span style="font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:14px;color:var(--accent-ink);letter-spacing:-.5px;">M</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:1px;min-width:0;">
+        <span style="font-size:14px;font-weight:600;letter-spacing:.3px;">MAKI MOTOR PARTS</span>
+        <span style="font-size:10.5px;color:var(--text-3);">Point of sale</span>
+      </div>
+    </div>
+
+    <div style="padding:2px 10px;">
+      <button onClick="{{ pickDash }}" style="all:unset;cursor:pointer;box-sizing:border-box;width:100%;display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:10px;font-size:13.5px;color:var(--text-2);font-weight:500;" style-hover="background:var(--surface-2);color:var(--text);">
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2.5" y="2.5" width="6.4" height="6.4" rx="1.8"></rect><rect x="11.1" y="2.5" width="6.4" height="6.4" rx="1.8"></rect><rect x="2.5" y="11.1" width="6.4" height="6.4" rx="1.8"></rect><rect x="11.1" y="11.1" width="6.4" height="6.4" rx="1.8"></rect></svg>
+        Dashboard
+      </button>
+    </div>
+
+    <div style="flex:1;overflow-y:auto;padding:0 10px 8px 10px;display:flex;flex-direction:column;gap:2px;">
+      <sc-for list="{{ navGroups }}" as="g" hint-placeholder-count="4">
+        <div style="display:flex;flex-direction:column;gap:2px;">
+          <div style="padding:16px 11px 6px 11px;font-size:10px;letter-spacing:1.1px;text-transform:uppercase;color:var(--text-3);font-weight:600;">{{ g.label }}</div>
+          <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="3">
+            <button onClick="{{ it.pick }}" style="all:unset;cursor:pointer;box-sizing:border-box;width:100%;display:flex;align-items:center;gap:11px;padding:8px 11px;border-radius:10px;font-size:13.5px;background:{{ it.bg }};color:{{ it.fg }};font-weight:{{ it.fw }};">
+              <span style="width:16px;height:16px;display:flex;align-items:center;justify-content:center;flex:0 0 16px;">
+                <span style="width:7px;height:7px;border-radius:2px;background:{{ it.dot }};display:block;"></span>
+              </span>
+              {{ it.name }}
+            </button>
+          </sc-for>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="padding:10px;border-top:1px solid var(--border-2);">
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 9px;border-radius:11px;background:var(--surface-2);">
+        <div style="width:32px;height:32px;border-radius:9px;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:var(--text-2);flex:0 0 32px;">C</div>
+        <div style="display:flex;flex-direction:column;min-width:0;">
+          <span style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px;">czarbasanal@gmail.com</span>
+          <span style="font-size:10px;letter-spacing:.7px;color:var(--text-3);font-weight:600;">ADMIN</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column;">
+
+    <header style="display:flex;align-items:center;gap:14px;padding:18px 28px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:20;">
+      <div style="display:flex;flex-direction:column;gap:3px;">
+        <h1 style="margin:0;font-size:20px;font-weight:600;letter-spacing:-.4px;">{{ pageTitle }}</h1>
+        <span style="font-size:12.5px;color:var(--text-3);">{{ pageSub }}</span>
+      </div>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:9px;">
+        <span style="font-size:12.5px;font-weight:600;letter-spacing:-.1px;padding-right:3px;">Saturday, Sep 5 2026</span>
+        <div style="display:flex;align-items:center;gap:7px;padding:8px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2);font-size:12.5px;color:var(--text-2);">
+          <span style="width:6px;height:6px;border-radius:50%;background:var(--text-3);"></span>
+          Register closed
+        </div>
+        <button onClick="{{ toggleTheme }}" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:7px;padding:8px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2);font-size:12.5px;color:var(--text-2);" style-hover="color:var(--text);">
+          {{ themeIcon }} {{ themeLabel }}
+        </button>
+      </div>
+    </header>
+
+    <div style="flex:1;padding:20px 28px 36px 28px;display:flex;flex-direction:column;gap:12px;animation:rise .3s ease both;">
+
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <sc-if value="{{ notIndex }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ back }}" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:6px;padding:8px 14px 8px 11px;border-radius:10px;background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow);font-size:12.5px;font-weight:500;color:var(--text-2);white-space:nowrap;" style-hover="border-color:var(--accent-line);color:var(--text);">
+            <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.9" style="flex:0 0 14px;"><polyline points="12,4.5 6.5,10 12,15.5"></polyline></svg>
+            Reports
+          </button>
+        </sc-if>
+
+        <div style="margin-left:auto;display:flex;align-items:center;gap:9px;">
+          <div style="display:flex;gap:4px;padding:3px;border-radius:11px;background:var(--surface-3);">
+            <sc-for list="{{ ranges }}" as="rg" hint-placeholder-count="4">
+              <button onClick="{{ rg.pick }}" style="all:unset;cursor:pointer;padding:6px 13px;border-radius:8px;font-size:12px;white-space:nowrap;font-weight:{{ rg.fw }};background:{{ rg.bg }};color:{{ rg.fg }};">{{ rg.label }}</button>
+            </sc-for>
+          </div>
+          <sc-if value="{{ notIndex }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ exportCsv }}" title="Download CSV" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:7px;padding:9px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface);font-size:12.5px;font-weight:500;color:var(--text-2);white-space:nowrap;" style-hover="border-color:var(--accent-line);color:var(--text);">
+              <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M10 3v9"></path><polyline points="6.4,8.6 10,12.2 13.6,8.6"></polyline><path d="M3.6 14.4v1.4a1.6 1.6 0 0 0 1.6 1.6h9.6a1.6 1.6 0 0 0 1.6-1.6v-1.4"></path></svg>
+              CSV
+            </button>
+          </sc-if>
+        </div>
+      </div>
+
+      <sc-if value="{{ isIndex }}" hint-placeholder-val="{{ true }}">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;">
+
+          <button onClick="{{ goSales }}" style="all:unset;cursor:pointer;box-sizing:border-box;width:100%;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:18px 20px;display:flex;flex-direction:column;gap:14px;" style-hover="border-color:var(--accent-line);">
+            <div style="display:flex;align-items:flex-start;gap:12px;">
+              <div style="width:34px;height:34px;border-radius:10px;background:var(--accent-soft);border:1px solid var(--accent-line);display:flex;align-items:center;justify-content:center;flex:0 0 34px;color:var(--accent-text);">
+                <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><line x1="3" y1="17" x2="17" y2="17"></line><rect x="4.4" y="10" width="3" height="5.4"></rect><rect x="8.5" y="6" width="3" height="9.4"></rect><rect x="12.6" y="12.4" width="3" height="3"></rect></svg>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:3px;min-width:0;">
+                <span style="font-size:14px;font-weight:600;letter-spacing:-.2px;">Sales report</span>
+                <span style="font-size:12px;color:var(--text-3);text-wrap:pretty;">Sales, payment breakdown, top products, and a downloadable sales list.</span>
+              </div>
+              <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="var(--text-3)" stroke-width="1.8" style="margin-left:auto;flex:0 0 15px;"><polyline points="8,4.5 13.5,10 8,15.5"></polyline></svg>
+            </div>
+            <div style="display:flex;align-items:flex-end;gap:16px;padding-top:13px;border-top:1px solid var(--border-2);">
+              <div style="display:flex;flex-direction:column;gap:3px;">
+                <span style="font-size:10px;letter-spacing:.9px;text-transform:uppercase;color:var(--text-3);font-weight:600;">Gross</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:600;letter-spacing:-.5px;">{{ figGross }}</span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:3px;">
+                <span style="font-size:10px;letter-spacing:.9px;text-transform:uppercase;color:var(--text-3);font-weight:600;">Sales</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:600;letter-spacing:-.5px;">{{ figCount }}</span>
+              </div>
+              <span style="margin-left:auto;font-size:11px;color:var(--text-3);">{{ rangeNote }}</span>
+            </div>
+          </button>
+
+          <button onClick="{{ goProfit }}" style="all:unset;cursor:pointer;box-sizing:border-box;width:100%;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:18px 20px;display:flex;flex-direction:column;gap:14px;" style-hover="border-color:var(--accent-line);">
+            <div style="display:flex;align-items:flex-start;gap:12px;">
+              <div style="width:34px;height:34px;border-radius:10px;background:var(--accent-soft);border:1px solid var(--accent-line);display:flex;align-items:center;justify-content:center;flex:0 0 34px;color:var(--accent-text);">
+                <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><polyline points="3.2,14.6 8,9.4 11.2,12.2 17,5.6"></polyline><polyline points="13.4,5.6 17,5.6 17,9.2"></polyline></svg>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:3px;min-width:0;">
+                <span style="font-size:14px;font-weight:600;letter-spacing:-.2px;">Profit report</span>
+                <span style="font-size:12px;color:var(--text-3);text-wrap:pretty;">Cost of goods, gross profit, margin, and top products by profit.</span>
+              </div>
+              <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="var(--text-3)" stroke-width="1.8" style="margin-left:auto;flex:0 0 15px;"><polyline points="8,4.5 13.5,10 8,15.5"></polyline></svg>
+            </div>
+            <div style="display:flex;align-items:flex-end;gap:16px;padding-top:13px;border-top:1px solid var(--border-2);">
+              <div style="display:flex;flex-direction:column;gap:3px;">
+                <span style="font-size:10px;letter-spacing:.9px;text-transform:uppercase;color:var(--text-3);font-weight:600;">Profit</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:600;letter-spacing:-.5px;color:var(--pos);">{{ figProfit }}</span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:3px;">
+                <span style="font-size:10px;letter-spacing:.9px;text-transform:uppercase;color:var(--text-3);font-weight:600;">Margin</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:600;letter-spacing:-.5px;">{{ figMargin }}</span>
+              </div>
+              <span style="margin-left:auto;font-size:11px;color:var(--text-3);">{{ rangeNote }}</span>
+            </div>
+          </button>
+
+          <button onClick="{{ goLabor }}" style="all:unset;cursor:pointer;box-sizing:border-box;width:100%;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:18px 20px;display:flex;flex-direction:column;gap:14px;" style-hover="border-color:var(--accent-line);">
+            <div style="display:flex;align-items:flex-start;gap:12px;">
+              <div style="width:34px;height:34px;border-radius:10px;background:var(--accent-soft);border:1px solid var(--accent-line);display:flex;align-items:center;justify-content:center;flex:0 0 34px;color:var(--accent-text);">
+                <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12.6 3.4a3.6 3.6 0 0 0-4.4 4.6l-5 5 2.2 2.2 5-5a3.6 3.6 0 0 0 4.6-4.4l-2.6 2.6-1.8-1.8Z"></path></svg>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:3px;min-width:0;">
+                <span style="font-size:14px;font-weight:600;letter-spacing:-.2px;">Labor report</span>
+                <span style="font-size:12px;color:var(--text-3);text-wrap:pretty;">Service revenue and a per-mechanic breakdown of labor.</span>
+              </div>
+              <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="var(--text-3)" stroke-width="1.8" style="margin-left:auto;flex:0 0 15px;"><polyline points="8,4.5 13.5,10 8,15.5"></polyline></svg>
+            </div>
+            <div style="display:flex;align-items:flex-end;gap:16px;padding-top:13px;border-top:1px solid var(--border-2);">
+              <div style="display:flex;flex-direction:column;gap:3px;">
+                <span style="font-size:10px;letter-spacing:.9px;text-transform:uppercase;color:var(--text-3);font-weight:600;">Labor</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:600;letter-spacing:-.5px;">{{ figLabor }}</span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:3px;">
+                <span style="font-size:10px;letter-spacing:.9px;text-transform:uppercase;color:var(--text-3);font-weight:600;">Jobs</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:600;letter-spacing:-.5px;">{{ figJobs }}</span>
+              </div>
+              <span style="margin-left:auto;font-size:11px;color:var(--text-3);">{{ rangeNote }}</span>
+            </div>
+          </button>
+
+          <button onClick="{{ goPrice }}" style="all:unset;cursor:pointer;box-sizing:border-box;width:100%;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:18px 20px;display:flex;flex-direction:column;gap:14px;" style-hover="border-color:var(--accent-line);">
+            <div style="display:flex;align-items:flex-start;gap:12px;">
+              <div style="width:34px;height:34px;border-radius:10px;background:var(--accent-soft);border:1px solid var(--accent-line);display:flex;align-items:center;justify-content:center;flex:0 0 34px;color:var(--accent-text);">
+                <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M10.4 2.8H16a1.2 1.2 0 0 1 1.2 1.2v5.6l-7.4 7.4a1.2 1.2 0 0 1-1.7 0L3.4 12.1a1.2 1.2 0 0 1 0-1.7Z"></path><circle cx="13.4" cy="6.6" r=".8"></circle></svg>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:3px;min-width:0;">
+                <span style="font-size:14px;font-weight:600;letter-spacing:-.2px;">Price changes</span>
+                <span style="font-size:12px;color:var(--text-3);text-wrap:pretty;">Price/cost changes across products over a date range.</span>
+              </div>
+              <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="var(--text-3)" stroke-width="1.8" style="margin-left:auto;flex:0 0 15px;"><polyline points="8,4.5 13.5,10 8,15.5"></polyline></svg>
+            </div>
+            <div style="display:flex;align-items:flex-end;gap:16px;padding-top:13px;border-top:1px solid var(--border-2);">
+              <div style="display:flex;flex-direction:column;gap:3px;">
+                <span style="font-size:10px;letter-spacing:.9px;text-transform:uppercase;color:var(--text-3);font-weight:600;">Logged</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:600;letter-spacing:-.5px;">{{ figLogged }}</span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:3px;">
+                <span style="font-size:10px;letter-spacing:.9px;text-transform:uppercase;color:var(--text-3);font-weight:600;">Repriced</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:600;letter-spacing:-.5px;">{{ figRepriced }}</span>
+              </div>
+              <span style="margin-left:auto;font-size:11px;color:var(--text-3);">{{ rangeNote }}</span>
+            </div>
+          </button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ notIndex }}" hint-placeholder-val="{{ false }}">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
+          <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
+            <div style="background:{{ k.bg }};border:1px solid {{ k.bd }};border-radius:14px;box-shadow:var(--shadow);padding:15px 17px;display:flex;flex-direction:column;gap:7px;">
+              <span style="font-size:11.5px;color:{{ k.labelFg }};font-weight:500;">{{ k.label }}</span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;letter-spacing:-1px;font-feature-settings:'tnum';color:{{ k.fg }};">{{ k.value }}</span>
+              <span style="font-size:11px;color:{{ k.noteFg }};">{{ k.note }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isSales }}" hint-placeholder-val="{{ false }}">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px;align-items:stretch;">
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:18px 20px;display:flex;flex-direction:column;gap:14px;">
+            <div style="display:flex;align-items:baseline;gap:10px;">
+              <h2 style="margin:0;font-size:14px;font-weight:600;letter-spacing:-.15px;">By payment method</h2>
+              <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-3);">{{ payTotal }}</span>
+            </div>
+            <sc-if value="{{ hasPay }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;gap:2px;">
+                <sc-for list="{{ payMethods }}" as="p" hint-placeholder-count="4">
+                  <div style="width:{{ p.pct }}%;background:{{ p.color }};"></div>
+                </sc-for>
+              </div>
+            </sc-if>
+            <div style="display:flex;flex-direction:column;">
+              <sc-for list="{{ payMethods }}" as="p" hint-placeholder-count="4">
+                <div style="display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid var(--border-2);">
+                  <span style="width:7px;height:7px;border-radius:2px;background:{{ p.color }};flex:0 0 7px;"></span>
+                  <span style="font-size:12.5px;color:var(--text-2);">{{ p.name }}</span>
+                  <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--text-3);">{{ p.share }}</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:600;">{{ p.value }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:9px;padding-top:4px;">
+              <span style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;">Revenue split</span>
+              <sc-for list="{{ revSplit }}" as="r" hint-placeholder-count="2">
+                <div style="display:flex;align-items:center;gap:9px;">
+                  <span style="font-size:12.5px;color:var(--text-2);">{{ r.name }}</span>
+                  <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:600;">{{ r.value }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:18px 20px;display:flex;flex-direction:column;gap:14px;">
+            <div style="display:flex;align-items:baseline;gap:10px;">
+              <h2 style="margin:0;font-size:14px;font-weight:600;letter-spacing:-.15px;">Top products</h2>
+              <span style="margin-left:auto;font-size:11.5px;color:var(--text-3);">by revenue</span>
+            </div>
+            <sc-if value="{{ hasTop }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;flex-direction:column;gap:13px;flex:1;justify-content:space-between;">
+                <sc-for list="{{ topProducts }}" as="t" hint-placeholder-count="5">
+                  <div style="display:flex;flex-direction:column;gap:6px;">
+                    <div style="display:flex;align-items:baseline;gap:9px;">
+                      <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--text-3);width:16px;flex:0 0 16px;">{{ t.rank }}</span>
+                      <span style="font-size:12.5px;font-weight:500;min-width:0;">{{ t.name }}</span>
+                      <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--text-3);">×{{ t.qty }}</span>
+                      <span style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:600;">{{ t.value }}</span>
+                    </div>
+                    <div style="height:5px;border-radius:3px;background:var(--surface-3);overflow:hidden;margin-left:25px;">
+                      <div style="height:100%;border-radius:3px;background:var(--accent);width:{{ t.pct }}%;"></div>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ noTop }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:40px 12px;text-align:center;display:flex;flex-direction:column;gap:5px;">
+                <span style="font-size:12.5px;color:var(--text-2);font-weight:500;">No products sold in this range</span>
+                <span style="font-size:11.5px;color:var(--text-3);">Widen the range above to see movement.</span>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;">
+          <div style="display:flex;align-items:center;gap:10px;padding:15px 20px;border-bottom:1px solid var(--border-2);">
+            <h2 style="margin:0;font-size:14px;font-weight:600;letter-spacing:-.15px;">Sales</h2>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;padding:2px 7px;border-radius:6px;background:var(--surface-3);color:var(--text-2);font-weight:600;">{{ saleCount }}</span>
+          </div>
+          <sc-if value="{{ hasSales }}" hint-placeholder-val="{{ true }}">
+            <div style="overflow-x:auto;">
+              <table style="width:100%;min-width:720px;border-collapse:collapse;">
+                <thead>
+                  <tr style="background:var(--surface-2);">
+                    <th style="text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 20px;border-bottom:1px solid var(--border);">Sale no.</th>
+                    <th style="text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 14px;border-bottom:1px solid var(--border);">When</th>
+                    <th style="text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 14px;border-bottom:1px solid var(--border);">Paid via</th>
+                    <th style="text-align:right;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 14px;border-bottom:1px solid var(--border);width:80px;">Items</th>
+                    <th style="text-align:right;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 20px;border-bottom:1px solid var(--border);width:126px;">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <sc-for list="{{ sales }}" as="s" hint-placeholder-count="6">
+                    <tr style-hover="background:var(--surface-2);">
+                      <td style="padding:12px 20px;border-bottom:1px solid var(--border-2);font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:500;">{{ s.no }}</td>
+                      <td style="padding:12px 14px;border-bottom:1px solid var(--border-2);font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-2);">{{ s.when }}</td>
+                      <td style="padding:12px 14px;border-bottom:1px solid var(--border-2);font-size:12.5px;color:var(--text-2);">{{ s.paid }}</td>
+                      <td style="padding:12px 14px;border-bottom:1px solid var(--border-2);text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-2);">{{ s.items }}</td>
+                      <td style="padding:12px 20px;border-bottom:1px solid var(--border-2);text-align:right;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;">{{ s.total }}</td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+                <tfoot>
+                  <tr style="background:var(--surface-2);">
+                    <td colSpan="4" style="padding:12px 14px 12px 20px;border-top:1px solid var(--border);font-size:12px;font-weight:600;color:var(--text-2);">Total shown</td>
+                    <td style="padding:12px 20px;border-top:1px solid var(--border);text-align:right;font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600;letter-spacing:-.5px;">{{ salesTotal }}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </sc-if>
+          <sc-if value="{{ noSales }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:56px 24px;display:flex;flex-direction:column;align-items:center;gap:6px;">
+              <div style="width:48px;height:48px;border-radius:14px;background:var(--surface-2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;margin-bottom:6px;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="1.6"><line x1="3.5" y1="20" x2="20.5" y2="20"></line><rect x="5.5" y="12" width="3.6" height="6"></rect><rect x="11" y="7" width="3.6" height="11"></rect><rect x="16.5" y="14.5" width="2" height="3.5"></rect></svg>
+              </div>
+              <span style="font-size:14px;font-weight:600;letter-spacing:-.2px;">No sales in this range</span>
+              <span style="font-size:12.5px;color:var(--text-3);max-width:320px;text-align:center;text-wrap:pretty;">The register recorded nothing {{ rangeNote }}. Try Last 7 days, or check whether the shift was opened.</span>
+              <button onClick="{{ widen }}" style="all:unset;cursor:pointer;margin-top:12px;padding:9px 15px;border-radius:10px;border:1px solid var(--border);background:var(--surface);font-size:12px;font-weight:500;color:var(--text-2);" style-hover="border-color:var(--accent-line);color:var(--text);">Show last 7 days</button>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isProfit }}" hint-placeholder-val="{{ false }}">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;">
+          <div style="display:flex;align-items:center;gap:10px;padding:15px 20px;border-bottom:1px solid var(--border-2);">
+            <h2 style="margin:0;font-size:14px;font-weight:600;letter-spacing:-.15px;">Top products by profit</h2>
+            <span style="margin-left:auto;font-size:11.5px;color:var(--text-3);">{{ rangeNote }}</span>
+          </div>
+          <div style="overflow-x:auto;">
+            <table style="width:100%;min-width:820px;border-collapse:collapse;">
+              <thead>
+                <tr style="background:var(--surface-2);">
+                  <th style="text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 20px;border-bottom:1px solid var(--border);">Product</th>
+                  <th style="text-align:right;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 12px;border-bottom:1px solid var(--border);width:62px;">Qty</th>
+                  <th style="text-align:right;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 12px;border-bottom:1px solid var(--border);width:112px;">Revenue</th>
+                  <th style="text-align:right;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 12px;border-bottom:1px solid var(--border);width:112px;">Cost</th>
+                  <th style="text-align:right;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 12px;border-bottom:1px solid var(--border);width:112px;">Profit</th>
+                  <th style="text-align:right;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 20px;border-bottom:1px solid var(--border);width:86px;">Margin</th>
+                </tr>
+              </thead>
+              <tbody>
+                <sc-for list="{{ profitRows }}" as="p" hint-placeholder-count="10">
+                  <tr style-hover="background:var(--surface-2);">
+                    <td style="padding:11px 20px;border-bottom:1px solid var(--border-2);font-size:12.5px;font-weight:500;">{{ p.name }}</td>
+                    <td style="padding:11px 12px;border-bottom:1px solid var(--border-2);text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-2);">{{ p.qty }}</td>
+                    <td style="padding:11px 12px;border-bottom:1px solid var(--border-2);text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--text-2);">{{ p.rev }}</td>
+                    <td style="padding:11px 12px;border-bottom:1px solid var(--border-2);text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--text-2);">{{ p.cost }}</td>
+                    <td style="padding:11px 12px;border-bottom:1px solid var(--border-2);text-align:right;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;">{{ p.profit }}</td>
+                    <td style="padding:11px 20px;border-bottom:1px solid var(--border-2);text-align:right;">
+                      <div style="display:flex;align-items:center;gap:8px;justify-content:flex-end;">
+                        <div style="width:34px;height:5px;border-radius:3px;background:var(--surface-3);overflow:hidden;flex:0 0 34px;">
+                          <div style="height:100%;border-radius:3px;width:{{ p.margin }}%;background:{{ p.marginFg }};"></div>
+                        </div>
+                        <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:{{ p.marginFg }};width:34px;text-align:right;">{{ p.marginLabel }}</span>
+                      </div>
+                    </td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isLabor }}" hint-placeholder-val="{{ false }}">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;">
+          <div style="display:flex;align-items:center;gap:10px;padding:15px 20px;border-bottom:1px solid var(--border-2);">
+            <h2 style="margin:0;font-size:14px;font-weight:600;letter-spacing:-.15px;">Labor by mechanic</h2>
+            <span style="margin-left:auto;font-size:11.5px;color:var(--text-3);">{{ rangeNote }}</span>
+          </div>
+          <div style="overflow-x:auto;">
+            <table style="width:100%;min-width:640px;border-collapse:collapse;">
+              <thead>
+                <tr style="background:var(--surface-2);">
+                  <th style="text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 20px;border-bottom:1px solid var(--border);">Mechanic</th>
+                  <th style="text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 14px;border-bottom:1px solid var(--border);width:44%;">Share of labor</th>
+                  <th style="text-align:right;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 14px;border-bottom:1px solid var(--border);width:80px;">Jobs</th>
+                  <th style="text-align:right;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 14px;border-bottom:1px solid var(--border);width:112px;">Avg / job</th>
+                  <th style="text-align:right;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 20px;border-bottom:1px solid var(--border);width:126px;">Labor</th>
+                </tr>
+              </thead>
+              <tbody>
+                <sc-for list="{{ laborRows }}" as="l" hint-placeholder-count="1">
+                  <tr style-hover="background:var(--surface-2);">
+                    <td style="padding:12px 20px;border-bottom:1px solid var(--border-2);font-size:12.5px;font-weight:500;">{{ l.name }}</td>
+                    <td style="padding:12px 14px;border-bottom:1px solid var(--border-2);">
+                      <div style="display:flex;align-items:center;gap:10px;padding-right:16px;">
+                        <div style="flex:1;height:5px;border-radius:3px;background:var(--surface-3);overflow:hidden;min-width:40px;">
+                          <div style="height:100%;border-radius:3px;background:var(--accent);width:{{ l.pct }}%;"></div>
+                        </div>
+                        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-3);">{{ l.share }}</span>
+                      </div>
+                    </td>
+                    <td style="padding:12px 14px;border-bottom:1px solid var(--border-2);text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12.5px;">{{ l.jobs }}</td>
+                    <td style="padding:12px 14px;border-bottom:1px solid var(--border-2);text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--text-2);">{{ l.avg }}</td>
+                    <td style="padding:12px 20px;border-bottom:1px solid var(--border-2);text-align:right;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;">{{ l.labor }}</td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:13px 20px;background:var(--surface-2);border-top:1px solid var(--border);">
+            <span style="font-size:11.5px;color:var(--text-3);text-wrap:pretty;">One mechanic is recorded on every job in this range. Assign mechanics on the job order to break this down.</span>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isPrice }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:9px 13px;width:280px;box-shadow:var(--shadow);">
+            <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="var(--text-3)" stroke-width="1.8" style="flex:0 0 14px;"><circle cx="9" cy="9" r="5.6"></circle><line x1="13.2" y1="13.2" x2="17" y2="17"></line></svg>
+            <input value="{{ query }}" onChange="{{ onQuery }}" placeholder="Search product or SKU" style="all:unset;font-family:'IBM Plex Sans',sans-serif;font-size:12.5px;color:var(--text);width:100%;" />
+          </div>
+          <sc-for list="{{ reasonChips }}" as="r" hint-placeholder-count="4">
+            <button onClick="{{ r.pick }}" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:7px;padding:7px 13px;border-radius:20px;font-size:12.5px;white-space:nowrap;font-weight:{{ r.fw }};background:{{ r.bg }};color:{{ r.fg }};border:1px solid {{ r.bd }};">
+              {{ r.label }}
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;opacity:.7;">{{ r.count }}</span>
+            </button>
+          </sc-for>
+          <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-3);">{{ priceCount }}</span>
+        </div>
+
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;">
+          <div style="overflow-x:auto;">
+            <table style="width:100%;min-width:880px;border-collapse:collapse;">
+              <thead>
+                <tr style="background:var(--surface-2);">
+                  <th style="text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 20px;border-bottom:1px solid var(--border);">Product</th>
+                  <th style="text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 14px;border-bottom:1px solid var(--border);width:136px;">SKU</th>
+                  <th style="text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 14px;border-bottom:1px solid var(--border);width:122px;">Reason</th>
+                  <th style="text-align:right;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 12px;border-bottom:1px solid var(--border);width:150px;">Price</th>
+                  <th style="text-align:right;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 12px;border-bottom:1px solid var(--border);width:112px;">New cost</th>
+                  <th style="text-align:right;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 20px;border-bottom:1px solid var(--border);width:104px;">When</th>
+                </tr>
+              </thead>
+              <tbody>
+                <sc-for list="{{ priceRows }}" as="p" hint-placeholder-count="10">
+                  <tr style-hover="background:var(--surface-2);">
+                    <td style="padding:11px 20px;border-bottom:1px solid var(--border-2);font-size:12.5px;font-weight:500;">{{ p.name }}</td>
+                    <td style="padding:11px 14px;border-bottom:1px solid var(--border-2);">
+                      <div style="display:flex;align-items:center;gap:6px;">
+                        <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--text-2);">{{ p.sku }}</span>
+                        <button onClick="{{ p.copy }}" title="Copy SKU" style="all:unset;cursor:pointer;display:flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:5px;color:var(--text-3);flex:0 0 20px;" style-hover="background:var(--surface-3);color:var(--text-2);">
+                          <svg width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="7" y="7" width="9.5" height="9.5" rx="2.2"></rect><path d="M13 4.6a2.2 2.2 0 0 0-2.2-2.1H5.7A2.2 2.2 0 0 0 3.5 4.7v5.1a2.2 2.2 0 0 0 2.1 2.2"></path></svg>
+                        </button>
+                      </div>
+                    </td>
+                    <td style="padding:11px 14px;border-bottom:1px solid var(--border-2);">
+                      <span style="font-size:11px;font-weight:500;padding:3px 8px;border-radius:6px;background:{{ p.rBg }};color:{{ p.rFg }};white-space:nowrap;">{{ p.reason }}</span>
+                    </td>
+                    <td style="padding:11px 12px;border-bottom:1px solid var(--border-2);text-align:right;">
+                      <div style="display:flex;align-items:center;gap:7px;justify-content:flex-end;">
+                        <sc-if value="{{ p.hasDelta }}" hint-placeholder-val="{{ false }}">
+                          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;padding:2px 6px;border-radius:6px;background:{{ p.dBg }};color:{{ p.dFg }};">{{ p.delta }}</span>
+                        </sc-if>
+                        <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;">{{ p.price }}</span>
+                      </div>
+                    </td>
+                    <td style="padding:11px 12px;border-bottom:1px solid var(--border-2);text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--text-2);">{{ p.cost }}</td>
+                    <td style="padding:11px 20px;border-bottom:1px solid var(--border-2);text-align:right;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--text-3);">{{ p.when }}</td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+          <sc-if value="{{ emptyRange }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:56px 24px;display:flex;flex-direction:column;align-items:center;gap:6px;">
+              <div style="width:48px;height:48px;border-radius:14px;background:var(--surface-2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;margin-bottom:6px;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="1.6"><path d="M12.4 3.4H19a1.4 1.4 0 0 1 1.4 1.4v6.6l-8.7 8.7a1.4 1.4 0 0 1-2 0l-5.6-5.6a1.4 1.4 0 0 1 0-2Z"></path><circle cx="15.8" cy="7.9" r=".9"></circle></svg>
+              </div>
+              <span style="font-size:14px;font-weight:600;letter-spacing:-.2px;">No price changes in this range</span>
+              <span style="font-size:12.5px;color:var(--text-3);max-width:320px;text-align:center;text-wrap:pretty;">Nothing was repriced {{ rangeNote }}. Prices change when stock is received or edited on a product.</span>
+              <button onClick="{{ widen }}" style="all:unset;cursor:pointer;margin-top:12px;padding:9px 15px;border-radius:10px;border:1px solid var(--border);background:var(--surface);font-size:12px;font-weight:500;color:var(--text-2);" style-hover="border-color:var(--accent-line);color:var(--text);">Show last 7 days</button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ noPriceMatch }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:52px 20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:7px;">
+              <span style="font-size:13px;color:var(--text-2);font-weight:500;">No price changes match these filters</span>
+              <span style="font-size:12px;color:var(--text-3);">Try another reason, or clear the search.</span>
+              <button onClick="{{ clearPriceFilters }}" style="all:unset;cursor:pointer;margin-top:6px;padding:8px 14px;border-radius:10px;border:1px solid var(--border);font-size:12px;font-weight:500;color:var(--text-2);" style-hover="border-color:var(--accent-line);color:var(--text);">Clear filters</button>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+    </div>
+  </main>
+
+  <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;left:50%;bottom:32px;transform:translateX(-50%);z-index:80;display:flex;align-items:center;gap:10px;padding:11px 18px;border-radius:12px;background:var(--surface);border:1px solid var(--border);box-shadow:0 18px 44px -14px rgba(0,0,0,.35);font-family:'IBM Plex Sans',sans-serif;color:var(--text);animation:rise .18s ease both;">
+      <span style="width:18px;height:18px;border-radius:50%;background:var(--pos-soft);color:var(--pos);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex:0 0 18px;">✓</span>
+      <span style="font-size:12.5px;font-weight:500;">{{ toast }}</span>
+      <sc-if value="{{ toastDetail }}" hint-placeholder-val="{{ false }}">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-3);">{{ toastDetail }}</span>
+      </sc-if>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1500,&quot;height&quot;:950}}">
+const GROUPS = [
+  {label:'SELL',  items:[{name:'POS'}, {name:'Job Orders'}]},
+  {label:'STOCK', items:[{name:'Inventory'}, {name:'Price History'}, {name:'Receiving'}, {name:'Purchase Orders'}, {name:'Suppliers'}]},
+  {label:'MONEY', items:[{name:'Expenses'}, {name:'Reports'}]},
+  {label:'ADMIN', items:[{name:'Void Requests'}, {name:'Users'}, {name:'Activity Logs'}, {name:'HR'}, {name:'Settings'}]}
+];
+
+// ONE line-level fixture. Every figure on every report screen derives from this —
+// gross, COGS, profit, margin, the payment split and both product tables.
+// Nothing below is a literal.
+const SALES = [
+  {no:'SALE-20260904-031', day:'2026-09-04', when:'Sep 4 · 4:12 PM', paid:'Cash',  mechanic:'Jeric', labor:1200,
+   lines:[{name:'MAXXIS TIRE TL 70/90-14 34P MA-V6', qty:2, price:1500, cost:1220}]},
+  {no:'SALE-20260904-030', day:'2026-09-04', when:'Sep 4 · 1:40 PM', paid:'Gcash', mechanic:'Jeric', labor:900,
+   lines:[{name:'BEAST TIRE TL 130/70-13 FLASH', qty:1, price:2100, cost:1630},
+          {name:'DISC PLATE RR YAMAHA NMAX/AEROX V1 V2', qty:1, price:1250, cost:525}]},
+  {no:'SALE-20260903-029', day:'2026-09-03', when:'Sep 3 · 5:02 PM', paid:'Cash',  mechanic:'Jeric', labor:1500,
+   lines:[{name:'TIRE SEALANT KOBY 500ML', qty:6, price:150, cost:60},
+          {name:'HENG NUT CNC MIO/CLICK/PCX/NMAX/AEROXV2', qty:3, price:380, cost:180}]},
+  {no:'SALE-20260903-028', day:'2026-09-03', when:'Sep 3 · 11:18 AM', paid:'Maya', mechanic:'Jeric', labor:770,
+   lines:[{name:'YAMALUBE AT BLUE CORE 10W-40 MB 1L', qty:3, price:410, cost:328},
+          {name:'SHELL ADVANCE AX7 10W-40 800ML', qty:3, price:330, cost:287}]},
+  {no:'SALE-20260902-027', day:'2026-09-02', when:'Sep 2 · 3:55 PM', paid:'Cash',  mechanic:'Jeric', labor:1000,
+   lines:[{name:'PROHONDA SCOOTER MB 10W-30 800ML', qty:4, price:350, cost:310},
+          {name:'SHELL ADVANCE AX5 15W-40 800ML', qty:4, price:280, cost:241}]},
+  {no:'SALE-20260901-026', day:'2026-09-01', when:'Sep 1 · 9:24 AM', paid:'Cash',  mechanic:'Jeric', labor:500,
+   lines:[{name:'LEO TIRE TT LASER 60/80-17', qty:2, price:500, cost:365}]}
+];
+
+const TODAY = '2026-09-05';
+const RANGE_FROM = {'Today':'2026-09-05', '7 days':'2026-08-30', '30 days':'2026-08-07', 'Custom':'2026-08-01'};
+
+const PRICES = [
+  {name:'CHAIN GLOBAL 420-120L',            sku:'00060014-1', price:300,  cost:155,  delta:0,   reason:'receiving',    day:'2026-09-04', when:'Sep 4'},
+  {name:'MDL GLOBAL 20W',                   sku:'00160063',   price:980,  cost:600,  delta:0,   reason:'Initial price',day:'2026-09-04', when:'Sep 4'},
+  {name:'HONDA GEAR OIL 120ML',             sku:'00200015-1', price:120,  cost:75,   delta:0,   reason:'receiving',    day:'2026-09-04', when:'Sep 4'},
+  {name:'SIDE MIRROR HOLDER UNIVERSAL',     sku:'00050117',   price:150,  cost:50,   delta:0,   reason:'Initial price',day:'2026-09-04', when:'Sep 4'},
+  {name:'HEADLIGHT BULB GLOBAL T19 P15D-25-1', sku:'00160062',price:30,   cost:10,   delta:0,   reason:'Initial price',day:'2026-09-04', when:'Sep 4'},
+  {name:'BRAKE FLUID TANK BREMBO BLACK',    sku:'00040107',   price:180,  cost:70,   delta:0,   reason:'Initial price',day:'2026-09-03', when:'Sep 3'},
+  {name:'BRAKE FLUID TANK BREMBO SILVER',   sku:'00040104',   price:180,  cost:70,   delta:0,   reason:'Initial price',day:'2026-09-03', when:'Sep 3'},
+  {name:'KOYO JTEKT BEARING 62/22',         sku:'00220141-1', price:300,  cost:143,  delta:0,   reason:'receiving',    day:'2026-09-03', when:'Sep 3'},
+  {name:'HENG BOLT UMBRELLA 5X15 SCREW SILVER', sku:'00070077', price:35, cost:20,  delta:0,   reason:'Initial price',day:'2026-09-03', when:'Sep 3'},
+  {name:'IZUMI TUBE 2.75-17',               sku:'00220112-1', price:200,  cost:150,  delta:0,   reason:'receiving',    day:'2026-09-02', when:'Sep 2'},
+  {name:'LEO TIRE TT LASER 70/80-17',       sku:'00220054-2', price:600,  cost:465,  delta:0,   reason:'receiving',    day:'2026-09-02', when:'Sep 2'},
+  {name:'JPS BEARING 6300',                 sku:'00220235',   price:120,  cost:30,   delta:0,   reason:'Initial price',day:'2026-09-02', when:'Sep 2'},
+  {name:'GEAR PEDAL RAIDER150',             sku:'00020213',   price:200,  cost:100,  delta:-20, reason:'Price update', day:'2026-09-01', when:'Sep 1'},
+  {name:'GEAR PEDAL CT100',                 sku:'00020099-1', price:180,  cost:80,   delta:0,   reason:'receiving',    day:'2026-09-01', when:'Sep 1'},
+  {name:'MOTOSPEED PIPE R150 CARB',         sku:'00100012-1', price:2650, cost:1400, delta:0,   reason:'receiving',    day:'2026-09-01', when:'Sep 1'},
+  {name:'GEAR PEDAL RUSI125',               sku:'00020212',   price:180,  cost:65,   delta:0,   reason:'Initial price',day:'2026-08-28', when:'Aug 28'},
+  {name:'SIDE MIRROR CROSSPEE GB545 CLEAR', sku:'00010110',   price:750,  cost:470,  delta:40,  reason:'Price update', day:'2026-08-28', when:'Aug 28'},
+  {name:'MOTOSPEED PIPE CLICK125/150',      sku:'00100017',   price:2750, cost:1500, delta:0,   reason:'Initial price',day:'2026-08-12', when:'Aug 12'}
+];
+
+const REASON_TONE = {
+  'receiving':     {bg:'var(--info-soft)',   fg:'var(--info)'},
+  'Initial price': {bg:'var(--surface-3)',   fg:'var(--text-2)'},
+  'Price update':  {bg:'var(--accent-soft)', fg:'var(--accent-text)'}
+};
+
+const peso = (n) => '₱' + n.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2});
+const RANGE_NOTE = {'Today':'today', '7 days':'in the last 7 days', '30 days':'in the last 30 days', 'Custom':'in the selected range'};
+
+class Component extends DCLogic {
+  state = {theme:'light', active:'Reports', screen:'index', range:'7 days', query:'', reason:'All', toast:null, toastDetail:null};
+
+  componentDidMount(){
+    let t = 'light';
+    try { t = localStorage.getItem('maki-pos-theme') || 'light'; } catch(e) {}
+    document.documentElement.setAttribute('data-theme', t);
+    this.setState({theme:t});
+  }
+  componentWillUnmount(){ clearTimeout(this._t); }
+
+  setTheme(t){
+    document.documentElement.setAttribute('data-theme', t);
+    try { localStorage.setItem('maki-pos-theme', t); } catch(e) {}
+    this.setState({theme:t});
+  }
+
+  notify(msg, detail){
+    clearTimeout(this._t);
+    this.setState({toast:msg, toastDetail:detail || null});
+    this._t = setTimeout(() => this.setState({toast:null, toastDetail:null}), 1900);
+  }
+
+  chip(on){
+    return on
+      ? {bg:'var(--accent-soft)', fg:'var(--accent-text)', bd:'var(--accent-text)', fw:'600'}
+      : {bg:'var(--surface)', fg:'var(--text-2)', bd:'var(--border)', fw:'500'};
+  }
+
+  kpi(label, value, note, lead){
+    return lead
+      ? {label:label, value:value, note:note, bg:'var(--accent-soft)', bd:'var(--accent-line)',
+         fg:'var(--text)', labelFg:'var(--accent-text)', noteFg:'var(--accent-text)'}
+      : {label:label, value:value, note:note, bg:'var(--surface)', bd:'var(--border)',
+         fg:'var(--text)', labelFg:'var(--text-2)', noteFg:'var(--text-3)'};
+  }
+
+  renderVals(){
+    const st = this.state;
+    const note = RANGE_NOTE[st.range];
+
+    // one scoped set drives every figure on every screen
+    const from = RANGE_FROM[st.range];
+    const sales = SALES.filter(s => s.day >= from && s.day <= TODAY);
+    const isToday = sales.length === 0;
+
+    const lineRev  = (l) => l.qty * l.price;
+    const lineCost = (l) => l.qty * l.cost;
+    const partsOf  = (s) => s.lines.reduce((a, l) => a + lineRev(l), 0);
+    const totalOf  = (s) => partsOf(s) + s.labor;
+    const itemsOf  = (s) => s.lines.reduce((a, l) => a + l.qty, 0);
+
+    const parts    = sales.reduce((a, s) => a + partsOf(s), 0);
+    const labor    = sales.reduce((a, s) => a + s.labor, 0);
+    const grossAll = parts + labor;
+    const gross    = grossAll;
+    const cogs     = sales.reduce((a, s) => a + s.lines.reduce((b, l) => b + lineCost(l), 0), 0);
+    const profit   = grossAll - cogs;
+    const count    = sales.length;
+    const avg      = count ? gross / count : 0;
+
+    // product totals rolled up from the same lines, so they reconcile with the sales list
+    const byProduct = {};
+    sales.forEach(s => s.lines.forEach(l => {
+      const p = byProduct[l.name] || (byProduct[l.name] = {name:l.name, qty:0, rev:0, cost:0});
+      p.qty += l.qty; p.rev += lineRev(l); p.cost += lineCost(l);
+    }));
+    const products = Object.keys(byProduct).map(k => byProduct[k]);
+
+    const payTotals = {Cash:0, Gcash:0, Maya:0, Salmon:0};
+    sales.forEach(s => { payTotals[s.paid] = (payTotals[s.paid] || 0) + totalOf(s); });
+    const payColor = {Cash:'var(--accent)', Gcash:'var(--info)', Maya:'var(--pos)', Salmon:'var(--neg)'};
+    const payRaw = ['Cash','Gcash','Maya','Salmon'].map(n => ({name:n, value: payTotals[n] || 0, color: payColor[n]}));
+    const payTot = payRaw.reduce((a, p) => a + p.value, 0);
+
+    const topRaw = products.slice().sort((a, b) => b.rev - a.rev).slice(0, 5);
+    const topMax = topRaw.length ? topRaw[0].rev : 1;
+
+    const laborRaw = [];
+    sales.forEach(s => {
+      if(!s.labor) return;
+      let m = laborRaw.filter(x => x.name === s.mechanic)[0];
+      if(!m){ m = {name:s.mechanic, jobs:0, labor:0}; laborRaw.push(m); }
+      m.jobs += 1; m.labor += s.labor;
+    });
+    const laborTot = laborRaw.reduce((a, l) => a + l.labor, 0) || 1;
+    const laborJobs = laborRaw.reduce((a, l) => a + l.jobs, 0);
+
+    // price changes scoped by the SAME range as everything else
+    const scopedPrices = PRICES.filter(p => p.day >= from && p.day <= TODAY);
+    const q = st.query.trim().toLowerCase();
+    const priceRows = scopedPrices
+      .filter(p => st.reason === 'All' || p.reason === st.reason)
+      .filter(p => !q || p.name.toLowerCase().includes(q) || p.sku.includes(q));
+    const reasons = ['All','receiving','Initial price','Price update'];
+    const priceUps = scopedPrices.filter(p => p.delta > 0).length;
+    const priceDowns = scopedPrices.filter(p => p.delta < 0).length;
+    const priceNew = scopedPrices.filter(p => p.reason === 'Initial price').length;
+    const priceFiltered = st.reason !== 'All' || q.length > 0;
+
+    const screens = {
+      index:  ['Reports', 'Sales and profit over any date range.'],
+      sales:  ['Sales report', 'Sales and payment breakdown for the selected range.'],
+      profit: ['Profit report', 'Cost of goods, gross profit, and margin for the selected range.'],
+      labor:  ['Labor report', 'Service revenue and per-mechanic breakdown for the selected range.'],
+      price:  ['Price changes', 'Price/cost changes across products for the selected range.']
+    };
+    const [title, sub] = screens[st.screen];
+
+    let kpis = [];
+    if(st.screen === 'sales'){
+      kpis = [
+        this.kpi('Gross sales', peso(gross), note, true),
+        this.kpi('Parts', peso(parts), grossAll ? (parts / grossAll * 100).toFixed(0) + '% of gross' : '—'),
+        this.kpi('Service / labor', peso(labor), grossAll ? (labor / grossAll * 100).toFixed(0) + '% of gross' : '—'),
+        this.kpi('Avg order', peso(avg), count ? 'across ' + count + ' sales' : 'no sales yet')
+      ];
+    } else if(st.screen === 'profit'){
+      kpis = [
+        this.kpi('Gross profit', peso(profit), (grossAll ? (profit / grossAll * 100).toFixed(1) : '0.0') + '% margin', true),
+        this.kpi('Gross sales', peso(grossAll), note),
+        this.kpi('Total COGS', peso(cogs), grossAll ? (cogs / grossAll * 100).toFixed(1) + '% of sales' : '—'),
+        this.kpi('Service / labor profit', peso(labor), 'no cost of goods')
+      ];
+    } else if(st.screen === 'labor'){
+      kpis = [
+        this.kpi('Total labor', peso(labor), note, true),
+        this.kpi('Jobs with labor', String(laborJobs), 'service tickets billed'),
+        this.kpi('Avg per job', peso(laborJobs ? labor / laborJobs : 0),
+          'across ' + laborRaw.length + (laborRaw.length === 1 ? ' mechanic' : ' mechanics'))
+      ];
+    } else if(st.screen === 'price'){
+      kpis = [
+        this.kpi('Changes logged', String(scopedPrices.length), note, true),
+        this.kpi('Price increases', String(priceUps), priceUps === 0 ? 'none in range' : 'products repriced up'),
+        this.kpi('Price cuts', String(priceDowns), priceDowns === 0 ? 'none in range' : 'products repriced down'),
+        this.kpi('New products', String(priceNew), priceNew === 0 ? 'none in range' : 'first price set')
+      ];
+    }
+
+    return {
+      pageTitle: title, pageSub: sub,
+      themeLabel: st.theme === 'light' ? 'Dark' : 'Light',
+      themeIcon: st.theme === 'light' ? '☾' : '☀',
+      toggleTheme: () => this.setTheme(st.theme === 'light' ? 'dark' : 'light'),
+
+      pickDash: () => this.setState({active:'Dashboard'}),
+      navGroups: GROUPS.map(g => ({
+        label:g.label,
+        items: g.items.map(it => {
+          const on = st.active === it.name;
+          return {
+            name:it.name,
+            bg: on ? 'var(--accent-soft)' : 'transparent',
+            fg: on ? 'var(--accent-text)' : 'var(--text-2)',
+            fw: on ? '600' : '500',
+            dot: on ? 'var(--accent-line)' : 'var(--border)',
+            pick: () => this.setState({active:it.name})
+          };
+        })
+      })),
+
+      isIndex: st.screen === 'index',
+      notIndex: st.screen !== 'index',
+      isSales: st.screen === 'sales',
+      isProfit: st.screen === 'profit',
+      isLabor: st.screen === 'labor',
+      isPrice: st.screen === 'price',
+      back: () => this.setState({screen:'index'}),
+
+      ranges: ['Today','7 days','30 days','Custom'].map(r => {
+        const on = st.range === r;
+        return {label:r, bg: on ? 'var(--surface)' : 'transparent', fg: on ? 'var(--text)' : 'var(--text-2)',
+          fw: on ? '600' : '500', pick: () => this.setState({range:r})};
+      }),
+      rangeNote: note,
+      widen: () => this.setState({range:'7 days'}),
+      exportCsv: () => this.notify('Export queued', title),
+
+      goSales:  () => this.setState({screen:'sales'}),
+      goProfit: () => this.setState({screen:'profit'}),
+      goLabor:  () => this.setState({screen:'labor'}),
+      goPrice:  () => this.setState({screen:'price'}),
+
+      figGross: peso(gross),
+      figCount: String(count),
+      figProfit: peso(profit),
+      figMargin: grossAll ? (profit / grossAll * 100).toFixed(1) + '%' : '—',
+      figLabor: peso(labor),
+      figJobs: String(laborJobs),
+      figLogged: String(scopedPrices.length),
+      figRepriced: String(priceUps + priceDowns),
+
+      kpis: kpis,
+
+      payTotal: peso(payTot),
+      hasPay: payTot > 0,
+      payMethods: payRaw.map(p => ({
+        name:p.name, value: peso(p.value), color: p.color,
+        pct: payTot ? (p.value / payTot * 100).toFixed(1) : 0,
+        share: payTot ? (p.value / payTot * 100).toFixed(0) + '%' : '—'
+      })),
+      revSplit: [
+        {name:'Parts',           value: peso(parts)},
+        {name:'Service / Labor', value: peso(labor)},
+        {name:'Shop fees',       value: peso(0)}
+      ],
+
+      hasTop: topRaw.length > 0,
+      noTop: topRaw.length === 0,
+      topProducts: topRaw.map((t, i) => ({
+        rank: '0' + (i + 1), name: t.name, qty: t.qty,
+        value: peso(t.rev), pct: Math.round(t.rev / topMax * 100)
+      })),
+
+      saleCount: count,
+      hasSales: count > 0,
+      noSales: count === 0,
+      salesTotal: peso(gross),
+      sales: sales.map(s => ({no:s.no, when:s.when, paid:s.paid, items: itemsOf(s), total: peso(totalOf(s))})),
+
+      profitRows: products.slice().sort((a, b) => (b.rev - b.cost) - (a.rev - a.cost)).map(p => {
+        const pr = p.rev - p.cost;
+        const m = Math.round(pr / p.rev * 100);
+        return {
+          name:p.name, qty:p.qty, rev: peso(p.rev), cost: peso(p.cost), profit: peso(pr),
+          margin: m, marginLabel: m + '%',
+          marginFg: m >= 50 ? 'var(--pos)' : m >= 25 ? 'var(--text-2)' : 'var(--neg)'
+        };
+      }),
+
+      laborRows: laborRaw.map(l => ({
+        name:l.name, jobs:l.jobs, labor: peso(l.labor), avg: peso(l.labor / l.jobs),
+        pct: Math.round(l.labor / laborTot * 100),
+        share: Math.round(l.labor / laborTot * 100) + '%'
+      })),
+
+      query: st.query,
+      onQuery: (e) => this.setState({query:e.target.value}),
+      reasonChips: reasons.map(r => {
+        const n = r === 'All' ? scopedPrices.length : scopedPrices.filter(p => p.reason === r).length;
+        return Object.assign({label:r, count:n, pick: () => this.setState({reason:r})}, this.chip(st.reason === r));
+      }),
+      priceCount: priceRows.length + (priceRows.length === 1 ? ' change' : ' changes'),
+      hasPrice: priceRows.length > 0,
+      emptyRange: scopedPrices.length === 0,
+      noPriceMatch: scopedPrices.length > 0 && priceRows.length === 0,
+      clearPriceFilters: () => this.setState({reason:'All', query:''}),
+      priceRows: priceRows.map(p => {
+        const t = REASON_TONE[p.reason];
+        return {
+          name:p.name, sku:p.sku, reason:p.reason, rBg:t.bg, rFg:t.fg,
+          price: peso(p.price), cost: peso(p.cost), when:p.when,
+          hasDelta: p.delta !== 0,
+          delta: p.delta > 0 ? '+' + p.delta.toFixed(2) : p.delta.toFixed(2),
+          dBg: p.delta > 0 ? 'var(--neg-soft)' : 'var(--pos-soft)',
+          dFg: p.delta > 0 ? 'var(--neg)' : 'var(--pos)',
+          copy: (e) => {
+            if(e && e.stopPropagation) e.stopPropagation();
+            try { if(navigator.clipboard) navigator.clipboard.writeText(p.sku); } catch(err) {}
+            this.notify('Copied to clipboard', p.sku);
+          }
+        };
+      }),
+
+      toast: st.toast,
+      toastDetail: st.toastDetail
+    };
+  }
+}
+</script>
+</body>
+</html>
