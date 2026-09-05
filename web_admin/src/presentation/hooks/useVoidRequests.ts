@@ -25,14 +25,19 @@ export interface VoidRequestQueue {
   error: Error | null;
 }
 
+/** Every pending request, uncapped, oldest first. Feeds the queue, the
+ *  KPI strip and the sidebar badge, so they cannot disagree. */
 export function useVoidRequests(): VoidRequestQueue {
   const repo = useVoidRequestRepo();
   const { data, error, isLoading } = useFirestoreSubscription<VoidRequest[]>(
-    (onData, onError) => repo.watchRequests(onData, onError),
+    (onData, onError) => repo.watchPending(onData, onError),
     [repo],
     'voidRequests',
   );
-  const requests = useMemo(() => data ?? [], [data]);
+  const requests = useMemo(
+    () => [...(data ?? [])].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()),
+    [data],
+  );
   return useMemo(
     () => ({
       requests,
@@ -43,6 +48,21 @@ export function useVoidRequests(): VoidRequestQueue {
     }),
     [requests, isLoading, error],
   );
+}
+
+/** Resolved requests inside [range] (by resolvedAt), newest first. */
+export function useResolvedVoidRequests(range: { start: Date; end: Date }): {
+  requests: VoidRequest[];
+  isLoading: boolean;
+  error: Error | null;
+} {
+  const repo = useVoidRequestRepo();
+  const { data, error, isLoading } = useFirestoreSubscription<VoidRequest[]>(
+    (onData, onError) => repo.watchResolved(range, onData, onError),
+    [repo, range.start.getTime(), range.end.getTime()],
+    'voidRequestsResolved',
+  );
+  return useMemo(() => ({ requests: data ?? [], isLoading, error }), [data, isLoading, error]);
 }
 
 export interface ResolveVoidRequestInput {
@@ -62,6 +82,11 @@ export function useResolveVoidRequest() {
   return useMutation<void, Error, ResolveVoidRequestInput>({
     mutationFn: async ({ request, approve, rejectionReason }) => {
       if (!actor) throw new Error('Not signed in');
+      // Whoever raised the request cannot decide it — a cashier with an
+      // admin login must not void their own sales (guide §3 rule 5).
+      if (request.requestedBy === actor.id) {
+        throw new Error('You raised this request — another admin has to decide it');
+      }
       const actorName = actor.displayName.trim() || actor.email;
 
       if (approve) {

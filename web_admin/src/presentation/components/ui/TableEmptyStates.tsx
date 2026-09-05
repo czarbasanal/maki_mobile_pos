@@ -15,8 +15,9 @@ export function FirstRunState({
   /** A ~24px glyph, rendered inside the tile. */
   icon: ReactNode;
   /** 'accent' is the first-run teach; 'muted' is the reports empty-RANGE
-   *  state (surface-2 tile, plain border) — "nothing happened", not "get started". */
-  tone?: 'accent' | 'muted';
+   *  state (surface-2 tile, plain border) — "nothing happened", not "get started";
+   *  'positive' is reassurance (Void Requests' "Nothing waiting"). */
+  tone?: 'accent' | 'muted' | 'positive';
   title: string;
   description: string;
   /** Primary action(s); omit when the viewer lacks the permission. */
@@ -27,7 +28,11 @@ export function FirstRunState({
       <div
         className={cn(
           'mb-[9px] flex h-[52px] w-[52px] items-center justify-center rounded-[15px] border',
-          tone === 'muted' ? 'border-line bg-surface-2' : 'border-accent-line bg-accent-soft',
+          tone === 'muted'
+            ? 'border-line bg-surface-2'
+            : tone === 'positive'
+              ? 'border-pos bg-pos-soft'
+              : 'border-accent-line bg-accent-soft',
         )}
       >
         {icon}

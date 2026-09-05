@@ -15,8 +15,8 @@ import { formatMoney } from '@/core/utils/money';
 import { ErrorState } from '@/presentation/components/ui/ErrorState';
 import { ReportHeader } from './ReportHeader';
 import { ReportNavCard, type NavFigure } from './ReportNavCard';
-import { useReportRange } from './useReportRange';
-import { pctLabel } from './reportFormat';
+import { useReportRange } from '@/presentation/hooks/useReportRange';
+import { pctLabel } from '@/core/utils/reportFormat';
 
 const ICON = 'h-[17px] w-[17px]';
 

@@ -8,7 +8,7 @@ import { BackButton } from '@/presentation/components/ui/BackButton';
 import { Button } from '@/presentation/components/ui/Button';
 import { DateRangeControl } from '@/presentation/components/ui/DateRangeControl';
 import { DailyLockNotice } from './DailyLockNotice';
-import { REPORT_RANGE_OPTIONS, type ReportRangeState } from './useReportRange';
+import { REPORT_RANGE_OPTIONS, type ReportRangeState } from '@/presentation/hooks/useReportRange';
 
 export function ReportRangeControl({ range }: { range: ReportRangeState }) {
   return (

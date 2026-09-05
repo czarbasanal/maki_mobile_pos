@@ -140,7 +140,7 @@ function harness({
     },
   };
   const voidRequestRepo: Partial<Container['voidRequestRepo']> = {
-    watchRequests: (cb: (r: VoidRequest[]) => void) => {
+    watchPending: (cb: (r: VoidRequest[]) => void) => {
       cb(pendingVoids);
       return () => {};
     },

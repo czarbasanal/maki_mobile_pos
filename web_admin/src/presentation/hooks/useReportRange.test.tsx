@@ -6,7 +6,7 @@ import type { ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
-import { useReportRange } from './useReportRange';
+import { useReportRange } from '@/presentation/hooks/useReportRange';
 
 const wrap = (entry = '/reports/sales') =>
   function Wrapper({ children }: { children: ReactNode }) {

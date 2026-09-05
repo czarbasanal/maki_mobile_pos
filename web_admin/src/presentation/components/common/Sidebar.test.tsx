@@ -33,7 +33,7 @@ function harness(
 ) {
   useAuthStore.setState({ user });
   const voidRequestRepo = {
-    watchRequests: (cb: (r: VoidRequest[]) => void) => {
+    watchPending: (cb: (r: VoidRequest[]) => void) => {
       cb(pendingVoids);
       return () => {};
     },

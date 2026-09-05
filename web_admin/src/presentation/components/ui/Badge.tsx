@@ -16,19 +16,23 @@ export function Badge({
   tone = 'neutral',
   shape = 'pill',
   title,
+  wrap = false,
   children,
 }: {
   tone?: Tone;
   shape?: BadgeShape;
   /** Hover detail when the badge is a grouping of a rawer value (e.g. a reason group). */
   title?: string;
+  /** Free-text content (a cashier's "Other" reason) may wrap instead of forcing the cell wide. */
+  wrap?: boolean;
   children: ReactNode;
 }) {
   return (
     <span
       title={title}
       className={clsx(
-        'inline-flex items-center whitespace-nowrap',
+        'inline-flex items-center',
+        wrap ? 'whitespace-normal [text-wrap:pretty]' : 'whitespace-nowrap',
         shape === 'pill' && 'rounded-pill px-2.5 py-0.5 text-pill',
         shape === 'chip' && 'rounded-chip px-1.5 py-0.5 font-mono text-micro font-semibold',
         // Non-mono 11px chip (suppliers guide §3 Terms column).

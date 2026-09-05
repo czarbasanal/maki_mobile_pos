@@ -33,9 +33,9 @@ import { Skeleton } from '@/presentation/components/ui/Skeleton';
 import { ErrorState } from '@/presentation/components/ui/ErrorState';
 import { ReportHeader } from './ReportHeader';
 import { ReportTableCard } from './ReportTableCard';
-import { EmptyRangeState } from './EmptyRangeState';
-import { useReportRange } from './useReportRange';
-import { csvFileName, pctLabel, whenLabel } from './reportFormat';
+import { EmptyRangeState } from '@/presentation/components/ui/EmptyRangeState';
+import { useReportRange } from '@/presentation/hooks/useReportRange';
+import { csvFileName, pctLabel, whenLabel } from '@/core/utils/reportFormat';
 
 export function SalesReportPage() {
   const navigate = useNavigate();

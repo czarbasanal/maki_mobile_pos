@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { resolvePreset, type DateRange, type RangePreset } from '@/domain/reports/dateRange';
 import { instantOf, shopWall } from '@/domain/time/shopTime';
+import { useShopDay } from './useShopDay';
 
 /**
  * Preset + custom-start/custom-end state for a DateRangeControl, plus the
@@ -27,6 +28,10 @@ export function useDateRangeControlState<T extends RangePreset>(
   const [preset, setPreset] = useState<T>(seed.preset ?? defaultPreset);
   const [customStart, setCustomStart] = useState(seed.customStart ?? '');
   const [customEnd, setCustomEnd] = useState(seed.customEnd ?? '');
+  // A fixed preset resolves against "now"; re-resolve when the SHOP day
+  // rolls over so a page left open past midnight doesn't keep yesterday's
+  // end bound and drop rows written after it.
+  const shopDay = useShopDay();
 
   const range = useMemo<DateRange>(() => {
     if ((preset as RangePreset) === 'custom') {
@@ -44,7 +49,8 @@ export function useDateRangeControlState<T extends RangePreset>(
       return resolvePreset(defaultPreset as Exclude<RangePreset, 'custom'>);
     }
     return resolvePreset(preset as Exclude<RangePreset, 'custom'>);
-  }, [preset, customStart, customEnd, defaultPreset]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- shopDay re-keys the "now" the presets resolve against
+  }, [preset, customStart, customEnd, defaultPreset, shopDay]);
 
   return { preset, setPreset, customStart, setCustomStart, customEnd, setCustomEnd, range };
 }

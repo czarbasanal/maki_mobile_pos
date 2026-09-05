@@ -12,6 +12,7 @@ import {
   query,
   runTransaction,
   serverTimestamp,
+  Timestamp,
   where,
   writeBatch,
   type Firestore,
@@ -70,6 +71,38 @@ export class FirestoreVoidRequestRepository implements VoidRequestRepository {
       ),
     );
     return !snap.empty;
+  }
+
+  watchPending(callback: (requests: VoidRequest[]) => void, onError?: (e: Error) => void): Unsubscribe {
+    const q = query(
+      collection(this.db, REQUESTS).withConverter(voidRequestConverter),
+      where('status', '==', 'pending'),
+    );
+    return onSnapshot(
+      q,
+      (snap) => callback(snap.docs.map((d) => d.data())),
+      (e) => onError?.(e as Error),
+    );
+  }
+
+  watchResolved(
+    range: { start: Date; end: Date },
+    callback: (requests: VoidRequest[]) => void,
+    onError?: (e: Error) => void,
+  ): Unsubscribe {
+    // Single-field range on resolvedAt — no composite index. Rows resolved
+    // before resolvedAt was recorded (null) are not in scope of any range.
+    const q = query(
+      collection(this.db, REQUESTS).withConverter(voidRequestConverter),
+      where('resolvedAt', '>=', Timestamp.fromDate(range.start)),
+      where('resolvedAt', '<=', Timestamp.fromDate(range.end)),
+      orderBy('resolvedAt', 'desc'),
+    );
+    return onSnapshot(
+      q,
+      (snap) => callback(snap.docs.map((d) => d.data())),
+      (e) => onError?.(e as Error),
+    );
   }
 
   watchRequests(

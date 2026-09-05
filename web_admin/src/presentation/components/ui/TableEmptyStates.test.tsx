@@ -18,3 +18,12 @@ describe('FirstRunState tone', () => {
     expect(tile.className).not.toContain('bg-accent-soft');
   });
 });
+
+describe('FirstRunState positive tone', () => {
+  it('positive tone is the reassurance tile: pos-soft fill with the pos border', () => {
+    render(<FirstRunState tone="positive" icon={<span data-testid="glyph" />} title="Nothing waiting" description="d" />);
+    const tile = screen.getByTestId('glyph').parentElement as HTMLElement;
+    expect(tile.className).toContain('bg-pos-soft');
+    expect(tile.className).toContain('border-pos');
+  });
+});

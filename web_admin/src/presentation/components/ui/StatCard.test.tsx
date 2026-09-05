@@ -67,3 +67,15 @@ describe('StatCard — lead variant (reports guide §1)', () => {
     expect(screen.getByText('x').className).toContain('text-ink-3');
   });
 });
+
+describe('StatCard — text and null values', () => {
+  it('format "text" renders the string verbatim in the mono figure slot (an age)', () => {
+    render(<StatCard label="Oldest request" value="3h" format="text" note="SALE-1" />);
+    expect(screen.getByText('3h').className).toContain('font-mono');
+  });
+  it('a null value is a figure with no denominator: a dash, never 0.0%', () => {
+    render(<StatCard label="Approval rate" value={null} format="percent" />);
+    expect(screen.getByText('—')).toBeInTheDocument();
+    expect(screen.queryByText(/%/)).not.toBeInTheDocument();
+  });
+});

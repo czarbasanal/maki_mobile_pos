@@ -3,11 +3,13 @@ import { formatMoney } from '@/core/utils/money';
 import { Badge, type Tone } from './Badge';
 import { Skeleton } from './Skeleton';
 
-export type StatFormat = 'currency' | 'number' | 'percent';
+export type StatFormat = 'currency' | 'number' | 'percent' | 'text';
 
 export interface StatCardProps {
   label: string;
-  value: number;
+  /** A number is formatted per `format`; null is a figure with no denominator
+   *  and renders "—" (never a fabricated 0%); a string is only for `format: 'text'`. */
+  value: number | string | null;
   format: StatFormat;
   /** Signed fraction vs the prior business day; null/undefined hides the chip. */
   delta?: number | null;
@@ -20,7 +22,9 @@ export interface StatCardProps {
   lead?: boolean;
 }
 
-function formatValue(value: number, format: StatFormat): string {
+function formatValue(value: number | string | null, format: StatFormat): string {
+  if (value === null) return '—';
+  if (typeof value === 'string') return value;
   if (format === 'currency') return formatMoney(value);
   if (format === 'percent') return `${(value * 100).toFixed(1)}%`;
   return value.toLocaleString('en-PH');

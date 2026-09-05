@@ -39,7 +39,7 @@ function harness(
     },
   } as unknown as Container['drawerStateRepo'];
   const voidRequestRepo = {
-    watchRequests: (cb: (r: VoidRequest[]) => void) => {
+    watchPending: (cb: (r: VoidRequest[]) => void) => {
       cb([]);
       return () => {};
     },

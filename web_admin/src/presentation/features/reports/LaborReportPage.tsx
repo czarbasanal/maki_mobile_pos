@@ -17,9 +17,9 @@ import { MiniBar } from '@/presentation/components/ui/MiniBar';
 import { ErrorState } from '@/presentation/components/ui/ErrorState';
 import { ReportHeader } from './ReportHeader';
 import { ReportTableCard } from './ReportTableCard';
-import { EmptyRangeState } from './EmptyRangeState';
-import { useReportRange } from './useReportRange';
-import { csvFileName, pctLabel } from './reportFormat';
+import { EmptyRangeState } from '@/presentation/components/ui/EmptyRangeState';
+import { useReportRange } from '@/presentation/hooks/useReportRange';
+import { csvFileName, pctLabel } from '@/core/utils/reportFormat';
 
 export function LaborReportPage() {
   const user = useAuthStore((st) => st.user);
