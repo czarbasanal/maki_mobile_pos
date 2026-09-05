@@ -24,6 +24,7 @@ import { resolvePreset } from '@/domain/reports/dateRange';
 import { cn } from '@/core/utils/cn';
 import { Modal } from '@/presentation/components/ui/Modal';
 import { toast } from '@/presentation/components/ui/toast';
+import { inputCls, Field, SectionLabel } from '@/presentation/components/ui/formKit';
 
 interface Draft {
   name: string;
@@ -408,35 +409,3 @@ function SupplierModalForm({
   );
 }
 
-function inputCls(hasError: boolean): string {
-  return cn(
-    'w-full rounded-ctl border bg-surface-2 px-3 py-2.5 text-[13px] text-ink outline-none transition-colors placeholder:text-ink-3',
-    hasError ? 'border-neg' : 'border-line focus:border-accent-line',
-  );
-}
-
-function Field({
-  label,
-  error,
-  children,
-}: {
-  label: string;
-  error?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className="flex flex-col gap-[6px]">
-      <span className="text-[11.5px] font-semibold text-ink-2">{label}</span>
-      {children}
-      {error ? <span className="text-[11.5px] text-neg">{error}</span> : null}
-    </label>
-  );
-}
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="text-[10px] font-semibold uppercase tracking-[1px] text-ink-3">
-      {children}
-    </span>
-  );
-}

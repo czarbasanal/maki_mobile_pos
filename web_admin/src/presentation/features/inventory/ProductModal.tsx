@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -23,7 +23,7 @@ import { useAuthStore } from '@/presentation/stores/authStore';
 import { UserRole } from '@/domain/enums';
 import { hasPermission, Permission } from '@/domain/permissions/Permission';
 import { CategoryKind } from '@/domain/categories/categoryKind';
-import { formatShopDateTime } from '@/domain/time/shopTime';
+import { controlH, inputCls, Field, SectionLabel, HistoryEntry } from '@/presentation/components/ui/formKit';
 import { priceHistoryReason } from '@/domain/products/priceHistoryReason';
 import { costsDiffer } from '@/domain/products/costVariation';
 import { composeAutoSku, matchesAutoPattern, displaySku } from '@/domain/products/sku';
@@ -1576,66 +1576,6 @@ export function ProductModal() {
  *  dropdowns overflow their cells at split-screen widths. */
 const threeColGrid = 'grid grid-cols-[repeat(auto-fit,minmax(186px,1fr))] items-end gap-3';
 
-/** Every control in the shared rows renders at ONE height — inputs, select
- *  triggers, the Adjust-stock button and the margin tile alike. Mixed natural
- *  heights (36-42px) made the rows read as misaligned. */
-const controlH = 'h-[42px]';
-
 /** SelectFilter dressed as a form control: input height + input surface, no
  *  card shadow — the filter-band look doesn't belong inside a form. */
 const formSelectCls = `${controlH} w-full bg-surface-2 shadow-none`;
-
-function inputCls(hasError: boolean): string {
-  return cn(
-    'h-[42px] w-full rounded-ctl border bg-surface-2 px-3 py-2.5 text-[13px] text-ink outline-none transition-colors placeholder:text-ink-3',
-    hasError ? 'border-neg' : 'border-line focus:border-accent-line',
-  );
-}
-
-function Field({
-  label,
-  error,
-  group = false,
-  children,
-}: {
-  label: string;
-  error?: string;
-  /** Composite content (buttons, chips, dropdowns) must NOT sit in a <label>:
-   *  a label associates with its first labelable descendant — buttons
-   *  included — and steals their accessible name. */
-  group?: boolean;
-  children: ReactNode;
-}) {
-  const Tag = group ? 'div' : 'label';
-  return (
-    <Tag className="flex flex-col gap-[6px]">
-      <span className="text-[11.5px] font-semibold text-ink-2">{label}</span>
-      {children}
-      {error ? <span className="text-[11.5px] text-neg">{error}</span> : null}
-    </Tag>
-  );
-}
-
-function SectionLabel({ children }: { children: ReactNode }) {
-  return (
-    <span className="text-[10px] font-semibold uppercase tracking-[1px] text-ink-3">{children}</span>
-  );
-}
-
-/** One record-history entry: label / person / timestamp as a three-line
- *  stack. Person and timestamp are ONE entry, not two fields — that is how
- *  the fact is spoken ("Bern updated it on Sep 1"). Unknown person shows an
- *  em dash rather than repeating the creator (guide). */
-function HistoryEntry({ label, who, when }: { label: string; who: string | null; when: Date | null }) {
-  // Blank-string author names exist in old docs; they get the em dash too.
-  const name = who?.trim() ? who : null;
-  return (
-    <div className="flex flex-col gap-[3px]">
-      <span className="text-[10px] font-semibold uppercase tracking-[1px] text-ink-3">{label}</span>
-      <span className={cn('text-[12.5px] font-medium', name ? 'text-ink' : 'text-ink-3')}>{name ?? '—'}</span>
-      <span className="font-mono text-[10.5px] text-ink-3">
-        {when ? formatShopDateTime(when) : '—'}
-      </span>
-    </div>
-  );
-}

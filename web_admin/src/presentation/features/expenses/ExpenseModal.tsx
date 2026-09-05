@@ -14,7 +14,7 @@
 //    the schema's existing pattern — the guide's own reference does the same.
 //  - Receipt upload IS kept (the guide's "not built" note doesn't apply to
 //    this repo) — ported from the old ExpenseFormPage, restyled to tokens.
-import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useExpense, useCreateExpense, useDeleteExpense, useUpdateExpense } from '@/presentation/hooks/useExpenses';
 import { useActiveCategories } from '@/presentation/hooks/useCategories';
@@ -24,7 +24,7 @@ import { deleteExpenseReceipt, uploadExpenseReceipt } from '@/data/expenseReceip
 import { PaymentMethod, paymentMethodDisplayName } from '@/domain/enums';
 import { hasPermission, Permission } from '@/domain/permissions/Permission';
 import { useAuthStore } from '@/presentation/stores/authStore';
-import { formatInShopZone, formatShopDateTime, shopIsoDate } from '@/domain/time/shopTime';
+import { formatInShopZone, shopIsoDate } from '@/domain/time/shopTime';
 import { Spinner } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { Dialog } from '@/presentation/components/common/Dialog';
@@ -32,6 +32,7 @@ import { Modal } from '@/presentation/components/ui/Modal';
 import { toast } from '@/presentation/components/ui/toast';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import { cn } from '@/core/utils/cn';
+import { controlH, inputCls, Field, SectionLabel, HistoryEntry } from '@/presentation/components/ui/formKit';
 import type { Expense } from '@/domain/entities';
 
 interface Draft {
@@ -468,8 +469,20 @@ function ExpenseModalForm({ target }: { target: Expense | null }) {
             <section className="flex flex-col gap-2">
               <SectionLabel>Record history</SectionLabel>
               <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-2.5">
-                <HistoryEntry label="Created by" who={target.createdByName} when={target.createdAt} />
-                <HistoryEntry label="Last updated by" who={target.updatedByName} when={target.updatedAt} />
+                <HistoryEntry
+                  label="Created by"
+                  who={target.createdByName}
+                  when={target.createdAt}
+                  emptyWhenText="Never edited"
+                  inset
+                />
+                <HistoryEntry
+                  label="Last updated by"
+                  who={target.updatedByName}
+                  when={target.updatedAt}
+                  emptyWhenText="Never edited"
+                  inset
+                />
               </div>
             </section>
           ) : null}
@@ -533,40 +546,6 @@ function ExpenseModalForm({ target }: { target: Expense | null }) {
   );
 }
 
-const controlH = 'h-[42px]';
-
-function inputCls(hasError: boolean): string {
-  return cn(
-    'h-[42px] w-full rounded-ctl border bg-surface-2 px-3 py-2.5 text-[13px] text-ink outline-none transition-colors placeholder:text-ink-3',
-    hasError ? 'border-neg' : 'border-line focus:border-accent-line',
-  );
-}
-
-function Field({
-  label,
-  group = false,
-  children,
-}: {
-  label: string;
-  /** Composite content (chip rows, the receipt block) must NOT sit in a
-   *  <label> — a label associates with its first labelable descendant and
-   *  would steal its accessible name. */
-  group?: boolean;
-  children: ReactNode;
-}) {
-  const Tag = group ? 'div' : 'label';
-  return (
-    <Tag className="flex flex-col gap-[7px]">
-      <span className="text-[11.5px] font-semibold text-ink-2">{label}</span>
-      {children}
-    </Tag>
-  );
-}
-
-function SectionLabel({ children }: { children: ReactNode }) {
-  return <span className="text-[10px] font-semibold uppercase tracking-[1px] text-ink-3">{children}</span>;
-}
-
 function WarningGlyph() {
   return (
     <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="var(--neg)" strokeWidth="1.8" aria-hidden>
@@ -574,23 +553,5 @@ function WarningGlyph() {
       <line x1="10" y1="8.4" x2="10" y2="12" />
       <circle cx="10" cy="14.2" r=".6" fill="var(--neg)" />
     </svg>
-  );
-}
-
-/** One Record-history entry: label / person / timestamp. Person and
- *  timestamp read as ONE fact ("Bern recorded it on Sep 2"), not two
- *  separate fields. An unedited record (updatedAt null) shows "—" and
- *  "Never edited" rather than repeating the creator. A legacy doc whose
- *  updatedAt is set but updatedByName is missing shows "—" with the real
- *  timestamp — it WAS edited, just before this field existed. */
-function HistoryEntry({ label, who, when }: { label: string; who: string | null; when: Date | null }) {
-  const name = who?.trim() ? who : null;
-  const whenText = when ? formatShopDateTime(when) : 'Never edited';
-  return (
-    <div className="flex flex-col gap-[3px] rounded-ctl border border-line bg-surface-2 px-3 py-2.5">
-      <span className="text-[10px] font-semibold uppercase tracking-[0.8px] text-ink-3">{label}</span>
-      <span className={cn('text-[12.5px] font-semibold', name ? 'text-ink' : 'text-ink-3')}>{name ?? '—'}</span>
-      <span className="font-mono text-[10.5px] text-ink-3">{whenText}</span>
-    </div>
   );
 }
