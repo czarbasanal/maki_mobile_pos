@@ -3,7 +3,7 @@
 // common question without opening anything. A Link, so it's keyboard
 // reachable and activatable.
 import type { ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, type To } from 'react-router-dom';
 import { ChevronRightIcon } from '@heroicons/react/24/outline';
 import { cn } from '@/core/utils/cn';
 import { Skeleton } from '@/presentation/components/ui/Skeleton';
@@ -24,7 +24,7 @@ export function ReportNavCard({
   rangeNote,
   loading = false,
 }: {
-  to: string;
+  to: To;
   icon: ReactNode;
   title: string;
   description: string;

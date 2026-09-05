@@ -2,7 +2,12 @@
 // segmented control's presets, the resolved range, and the note that frames
 // each headline figure ("in the last 7 days"). Daily-only roles (cashier)
 // clamp to today regardless of the control — derived, not forced into state.
-import { useMemo } from 'react';
+//
+// The range rides in the URL (?range=last7 · ?range=custom&from=&to=) so the
+// index cards, the reports and the back button all share one scope, as the
+// reference does — pick 30 days on the index, open Sales, see 30 days.
+import { useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { resolvePreset, type RangePreset } from '@/domain/reports/dateRange';
 import { useDateRangeControlState } from '@/presentation/hooks/useDateRangeControlState';
 
@@ -35,8 +40,43 @@ const WIDEN_LABEL: Record<Exclude<ReportPreset, 'custom'>, string> = {
   last30: 'Show last 30 days',
 };
 
+const PRESET_VALUES = new Set<string>(REPORT_RANGE_OPTIONS.map((o) => o.value));
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Parses ?range / ?from / ?to; anything malformed reads as "not set". */
+function seedFromSearch(params: URLSearchParams) {
+  const range = params.get('range') ?? '';
+  const from = params.get('from') ?? '';
+  const to = params.get('to') ?? '';
+  if (!PRESET_VALUES.has(range)) return {};
+  if (range === 'custom') {
+    return ISO_DAY.test(from) && ISO_DAY.test(to) && from <= to
+      ? { preset: 'custom' as const, customStart: from, customEnd: to }
+      : {};
+  }
+  return { preset: range as ReportPreset };
+}
+
 export function useReportRange(defaultPreset: Exclude<ReportPreset, 'custom'>, dailyOnly = false) {
-  const ctl = useDateRangeControlState<ReportPreset>(defaultPreset);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const ctl = useDateRangeControlState<ReportPreset>(defaultPreset, dailyOnly ? {} : seedFromSearch(searchParams));
+
+  // Write the scope back (replace, never push — Back should leave the
+  // report, not step through every pill click). Other params are preserved.
+  const { preset, customStart, customEnd } = ctl;
+  useEffect(() => {
+    if (dailyOnly) return;
+    const next = new URLSearchParams(searchParams);
+    next.set('range', preset);
+    if (preset === 'custom' && customStart && customEnd) {
+      next.set('from', customStart);
+      next.set('to', customEnd);
+    } else {
+      next.delete('from');
+      next.delete('to');
+    }
+    if (next.toString() !== searchParams.toString()) setSearchParams(next, { replace: true });
+  }, [dailyOnly, preset, customStart, customEnd, searchParams, setSearchParams]);
   const effectiveRange = useMemo(
     () => (dailyOnly ? resolvePreset('today') : ctl.range),
     [dailyOnly, ctl.range],

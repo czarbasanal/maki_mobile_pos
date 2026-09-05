@@ -2,6 +2,7 @@
 // figures for the active range. One scoped fetch feeds every card, so the
 // profit figure can never sit above a smaller gross figure again.
 import { useEffect, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { ChartBarIcon, ArrowTrendingUpIcon, WrenchIcon, TagIcon } from '@heroicons/react/24/outline';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import { useAuthStore } from '@/presentation/stores/authStore';
@@ -24,6 +25,8 @@ export function ReportsHubPage() {
   const can = (p: Permission) => !!user && hasPermission(user.role, p);
   const dailyOnly = can(Permission.viewDailySalesOnly);
   const range = useReportRange('last7', dailyOnly);
+  // The cards hand the selected range to the report they open.
+  const { search } = useLocation();
 
   const salesData = useReportData(range.effectiveRange);
   const prices = usePriceChangeReport(range.effectiveRange, { enabled: can(Permission.viewProductCost) });
@@ -112,7 +115,7 @@ export function ReportsHubPage() {
           .map((c) => (
             <ReportNavCard
               key={c.to}
-              to={c.to}
+              to={{ pathname: c.to, search }}
               icon={c.icon}
               title={c.title}
               description={c.description}

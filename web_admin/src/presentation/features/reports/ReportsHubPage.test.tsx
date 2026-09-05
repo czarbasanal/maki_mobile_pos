@@ -63,4 +63,14 @@ describe('ReportsHubPage — live figures', () => {
     await waitFor(() => expect(within(salesCard).getByText('₱400.00')).toBeInTheDocument());
     expect(within(salesCard).getByText('2')).toBeInTheDocument();
   });
+
+  it('the cards carry the selected range into the report they open', async () => {
+    renderReport(<ReportsHubPage />, { sales: [s1] });
+    const salesCard = (await screen.findByText('Sales report')).closest('a') as HTMLAnchorElement;
+    expect(salesCard.getAttribute('href')).toBe('/reports/sales?range=last7');
+    await userEvent.click(screen.getByRole('radio', { name: '30 days' }));
+    expect(salesCard.getAttribute('href')).toBe('/reports/sales?range=last30');
+    const profitCard = screen.getByText('Profit report').closest('a') as HTMLAnchorElement;
+    expect(profitCard.getAttribute('href')).toBe('/reports/profit?range=last30');
+  });
 });

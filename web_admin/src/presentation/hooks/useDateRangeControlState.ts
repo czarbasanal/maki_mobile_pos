@@ -13,10 +13,20 @@ import { instantOf, shopWall } from '@/domain/time/shopTime';
  * `defaultPreset` itself can't be 'custom' — there'd be no dates to resolve
  * before the operator has picked any.
  */
-export function useDateRangeControlState<T extends RangePreset>(defaultPreset: Exclude<T, 'custom'>) {
-  const [preset, setPreset] = useState<T>(defaultPreset);
-  const [customStart, setCustomStart] = useState('');
-  const [customEnd, setCustomEnd] = useState('');
+export interface DateRangeControlSeed<T extends RangePreset> {
+  preset?: T;
+  customStart?: string;
+  customEnd?: string;
+}
+
+export function useDateRangeControlState<T extends RangePreset>(
+  defaultPreset: Exclude<T, 'custom'>,
+  /** Initial state handed in from outside (e.g. the URL) — used on first render only. */
+  seed: DateRangeControlSeed<T> = {},
+) {
+  const [preset, setPreset] = useState<T>(seed.preset ?? defaultPreset);
+  const [customStart, setCustomStart] = useState(seed.customStart ?? '');
+  const [customEnd, setCustomEnd] = useState(seed.customEnd ?? '');
 
   const range = useMemo<DateRange>(() => {
     if ((preset as RangePreset) === 'custom') {

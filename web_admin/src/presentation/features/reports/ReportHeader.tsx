@@ -1,7 +1,7 @@
 // The row every report screen opens with (reports guide §3):
 //   [back to Reports] ............ [date range | daily lock] [CSV]
 // Same place on all four so the control never has to be hunted for.
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import { BackButton } from '@/presentation/components/ui/BackButton';
@@ -40,9 +40,13 @@ export function ReportHeader({
   back?: boolean;
 }) {
   const navigate = useNavigate();
+  const { search } = useLocation();
   return (
     <div className="flex flex-wrap items-center gap-2.5">
-      {back ? <BackButton label="Reports" onClick={() => navigate(RoutePaths.reports)} /> : null}
+      {back ? (
+        // Back keeps the range: the index re-opens on the scope the report was read at.
+        <BackButton label="Reports" onClick={() => navigate({ pathname: RoutePaths.reports, search })} />
+      ) : null}
       <div className="ml-auto flex items-center gap-[9px]">
         {lock ? <DailyLockNotice>{lock}</DailyLockNotice> : <ReportRangeControl range={range} />}
         {onExport ? (
