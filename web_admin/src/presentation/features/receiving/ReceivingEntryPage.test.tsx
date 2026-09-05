@@ -3,13 +3,14 @@
 // line model, the cost-variation price lock and the meta fields are all
 // exercised through the actual page + hook wiring.
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor, within, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
 import { ReceivingEntryPage } from './ReceivingEntryPage';
 import { useAuthStore } from '@/presentation/stores/authStore';
+import { shopIsoDate } from '@/domain/time/shopTime';
 import type { Product, Receiving, Supplier } from '@/domain/entities';
 
 function signIn() {
@@ -328,18 +329,22 @@ describe('ReceivingEntryPage — meta fields persist into buildInput', () => {
     await userEvent.click(await searchResults().findByRole('button', { name: /Brake Pad/ }));
 
     await userEvent.type(screen.getByPlaceholderText("From the supplier's paperwork"), 'INV-55');
-    // A real date picker fires ONE change event carrying the complete new
-    // value — never an intermediate empty string the way clear()+type()
-    // would simulate (which would now legitimately fall back to today, per
-    // the empty-string guard covered separately in the hook tests).
-    const dateInput = document.querySelector('input[type="date"]') as HTMLInputElement;
-    fireEvent.change(dateInput, { target: { value: '2026-08-30' } });
+    // The shared DateField calendar replaced the native input: open it, step
+    // back a month, pick the 1st — always a valid past day, whatever today
+    // is. Picking fires ONE complete value, never an intermediate empty
+    // string (the empty-string guard is covered in the hook tests).
+    const today = shopIsoDate(new Date());
+    const [y, m] = today.split('-').map(Number);
+    const expected = m === 1 ? `${y - 1}-12-01` : `${y}-${String(m - 1).padStart(2, '0')}-01`;
+    await userEvent.click(screen.getByRole('button', { name: 'Received date' }));
+    await userEvent.click(screen.getByTitle('Previous month'));
+    await userEvent.click(await screen.findByRole('button', { name: expected }));
 
     await userEvent.click(screen.getByRole('button', { name: 'Save draft' }));
 
     await waitFor(() =>
       expect(receivingRepo.create).toHaveBeenCalledWith(
-        expect.objectContaining({ invoiceNumber: 'INV-55', receivedOn: '2026-08-30' }),
+        expect.objectContaining({ invoiceNumber: 'INV-55', receivedOn: expected }),
         'u1',
       ),
     );

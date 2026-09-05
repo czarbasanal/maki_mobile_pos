@@ -120,7 +120,7 @@ describe('ExpenseModal — add mode validity', () => {
     expect(save).not.toHaveAttribute('aria-disabled');
   });
 
-  it('Save goes inert again when the date is cleared, even with description/amount/category filled', async () => {
+  it('the date cannot be emptied — the calendar field always holds a valid day', async () => {
     signIn();
     harness();
     await userEvent.type(screen.getByLabelText('Description'), 'Fuel');
@@ -130,8 +130,12 @@ describe('ExpenseModal — add mode validity', () => {
     // both filled once description/amount are, so Save is live here.
     expect(save).not.toHaveAttribute('aria-disabled');
 
-    await userEvent.clear(screen.getByLabelText('Date'));
-    expect(save).toHaveAttribute('aria-disabled', 'true');
+    // The shared DateField replaced the native input: it is a picker button,
+    // not an editable field, so the empty-date invalid state the old test
+    // covered is unreachable from the UI (the validity guard itself stays,
+    // as a belt against future callers seeding an empty draft).
+    expect(screen.getByRole('button', { name: 'Date' })).not.toHaveTextContent('Pick a date');
+    expect(save).not.toHaveAttribute('aria-disabled');
   });
 
   it('Save stays inert with no category selected (an empty category list never auto-picks one)', async () => {
@@ -220,7 +224,7 @@ describe('ExpenseModal — edit prefill + update', () => {
 
     expect(await screen.findByDisplayValue('Oil change')).toBeInTheDocument();
     expect(screen.getByLabelText('Amount')).toHaveValue(750);
-    expect(screen.getByLabelText('Date')).toHaveValue('2026-07-10');
+    expect(screen.getByRole('button', { name: 'Date' })).toHaveTextContent('Jul 10, 2026');
     expect(screen.getByDisplayValue('note here')).toBeInTheDocument();
     // The active category/paid-via chips reflect the target.
     expect(screen.getByRole('button', { name: 'Transportation' })).toHaveAttribute('aria-pressed', 'true');

@@ -29,6 +29,7 @@ import { DataTable, type Column } from '@/presentation/components/ui/DataTable';
 import { FirstRunState } from '@/presentation/components/ui/TableEmptyStates';
 import { SearchInput } from '@/presentation/components/ui/SearchInput';
 import { SelectFilter } from '@/presentation/components/ui/SelectFilter';
+import { DateField } from '@/presentation/components/ui/DateField';
 import { StickyActionBar } from '@/presentation/components/ui/StickyActionBar';
 import { Field, inputCls } from '@/presentation/components/ui/formKit';
 import { useEscapeLayer } from '@/presentation/components/ui/escapeLayers';
@@ -384,12 +385,11 @@ export function ReceivingEntryPage() {
               className={cn(inputCls(), 'font-mono')}
             />
           </Field>
-          <Field label="Received">
-            <input
-              type="date"
+          <Field group label="Received">
+            <DateField
+              ariaLabel="Received date"
               value={entry.receivedOn}
-              onChange={(e) => entry.setReceivedOn(e.target.value)}
-              className={cn(inputCls(), 'font-mono')}
+              onChange={entry.setReceivedOn}
             />
           </Field>
         </div>

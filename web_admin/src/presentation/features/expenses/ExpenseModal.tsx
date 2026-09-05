@@ -10,7 +10,7 @@
 //  - No EXP-#### id in the subtitle — edit mode reads CATEGORY · spentOn date.
 //  - No updatedVia — Record history shows createdByName/createdAt and
 //    updatedByName/updatedAt only.
-//  - The date field is a native <input type="date"> (yyyy-MM-dd), matching
+//  - The date field is the shared DateField calendar (yyyy-MM-dd), matching
 //    the schema's existing pattern — the guide's own reference does the same.
 //  - Receipt upload IS kept (the guide's "not built" note doesn't apply to
 //    this repo) — ported from the old ExpenseFormPage, restyled to tokens.
@@ -29,6 +29,7 @@ import { Spinner } from '@/presentation/components/common/LoadingView';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
 import { Dialog } from '@/presentation/components/common/Dialog';
 import { Modal } from '@/presentation/components/ui/Modal';
+import { DateField } from '@/presentation/components/ui/DateField';
 import { toast } from '@/presentation/components/ui/toast';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import { cn } from '@/core/utils/cn';
@@ -366,12 +367,11 @@ function ExpenseModalForm({ target }: { target: Expense | null }) {
                 />
               </div>
             </Field>
-            <Field label="Date">
-              <input
-                type="date"
+            <Field group label="Date">
+              <DateField
+                ariaLabel="Date"
                 value={draft.date}
-                onChange={(e) => setDraft((d) => ({ ...d, date: e.target.value }))}
-                className={cn(inputCls(false), 'font-mono')}
+                onChange={(v) => setDraft((d) => ({ ...d, date: v }))}
               />
             </Field>
           </div>
