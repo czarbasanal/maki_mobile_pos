@@ -574,8 +574,14 @@ service cloud.firestore {
         request.resource.data.requestedBy == request.auth.uid &&
         request.resource.data.status == 'pending';
 
-      // Only admin resolves (approve/reject) or marks read.
-      allow update: if isAdmin() && isActiveUser();
+      // Only admin resolves (approve/reject) or marks read. Whoever raised
+      // the request cannot decide it — a cashier with an admin login must not
+      // void their own sales. A write that leaves status alone (markAllRead's
+      // read: true) is unaffected, so the badge batch never trips on the
+      // admin's own request.
+      allow update: if isAdmin() && isActiveUser() &&
+        (request.resource.data.status == resource.data.status ||
+         resource.data.requestedBy != request.auth.uid);
 
       // Audit trail — no deletes.
       allow delete: if false;

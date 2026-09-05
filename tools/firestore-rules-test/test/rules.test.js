@@ -964,6 +964,41 @@ describe("/void_requests", () => {
   it("no one can delete", async () => {
     await assertFails(as("admin").collection("void_requests").doc("vr-1").delete());
   });
+
+  // Whoever raised the request cannot decide it — a cashier promoted to
+  // admin (or an admin who rang the sale) must not void their own sales.
+  describe("requester cannot decide their own request (2026-09-05)", () => {
+    beforeEach(async () => {
+      await testEnv.withSecurityRulesDisabled(async (ctx) => {
+        await ctx.firestore().collection("void_requests").doc("vr-own").set({
+          ...newReq(USERS.admin.uid), requestedByRole: "admin",
+        });
+      });
+    });
+
+    it("admin cannot approve or reject a request they raised", async () => {
+      await assertFails(
+        as("admin").collection("void_requests").doc("vr-own").update({
+          status: "approved", resolvedBy: USERS.admin.uid, resolvedAt: new Date(),
+        }));
+      await assertFails(
+        as("admin").collection("void_requests").doc("vr-own").update({
+          status: "rejected", rejectionReason: "no", resolvedBy: USERS.admin.uid, resolvedAt: new Date(),
+        }));
+    });
+
+    it("admin can still mark their own request read (status unchanged) — the badge batch must not trip", async () => {
+      await assertSucceeds(
+        as("admin").collection("void_requests").doc("vr-own").update({ read: true }));
+    });
+
+    it("admin can still decide someone else's request", async () => {
+      await assertSucceeds(
+        as("admin").collection("void_requests").doc("vr-1").update({
+          status: "rejected", rejectionReason: "sale is correct", resolvedBy: USERS.admin.uid, resolvedAt: new Date(),
+        }));
+    });
+  });
 });
 
 // ===================================================================
