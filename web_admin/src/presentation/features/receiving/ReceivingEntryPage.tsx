@@ -114,21 +114,38 @@ export function ReceivingEntryPage() {
     return costsDiffer(l.unitCost, product.cost) ? (l.unitPrice ?? product.price) : product.price;
   }
 
-  function handleSearchKeyDown(e: KeyboardEvent<HTMLInputElement>) {
-    if (!dropdownOpen || entry.matches.length === 0) return;
+  function handleSearchKeyDown(e: KeyboardEvent<HTMLInputElement>, currentText: string) {
     if (e.key === 'ArrowDown') {
+      if (!dropdownOpen || entry.matches.length === 0) return;
       e.preventDefault();
       setHighlight((h) => Math.min(h + 1, entry.matches.length - 1));
-    } else if (e.key === 'ArrowUp') {
+      return;
+    }
+    if (e.key === 'ArrowUp') {
+      if (!dropdownOpen || entry.matches.length === 0) return;
       e.preventDefault();
       setHighlight((h) => Math.max(h - 1, 0));
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      // A wedge scanner's Enter follows the last character almost instantly:
-      // with exactly one match, add it outright rather than depend on the
-      // highlight having caught up.
-      const chosen = entry.matches.length === 1 ? entry.matches[0] : entry.matches[highlight];
-      if (chosen) pick(chosen);
+      return;
+    }
+    if (e.key === 'Enter') {
+      // A wedge scanner's Enter follows its last character almost instantly
+      // — well inside the 250ms debounce — so this resolves against the
+      // LIVE input text (currentText, straight from the DOM), never
+      // entry.matches (debounced). No dropdownOpen gate here: a scan can
+      // fire before the dropdown has ever opened.
+      const sole = entry.resolveSoleMatch(currentText);
+      if (sole) {
+        e.preventDefault();
+        pick(sole);
+        return;
+      }
+      // Otherwise: Enter selects whatever is highlighted in the (debounced,
+      // already-rendered) dropdown — a deliberate arrow-key pick, not a scan.
+      if (dropdownOpen && entry.matches.length > 0) {
+        e.preventDefault();
+        const chosen = entry.matches[highlight] ?? entry.matches[0];
+        pick(chosen);
+      }
     }
   }
 
@@ -248,7 +265,7 @@ export function ReceivingEntryPage() {
         return (
           <input
             type="number"
-            aria-label="Price"
+            aria-label={`Price for ${l.name}`}
             title={editable ? undefined : 'Price applies when a cost change spawns a variation'}
             value={editable ? l.unitPrice ?? product.price : product.price}
             disabled={!editable}
@@ -386,7 +403,7 @@ export function ReceivingEntryPage() {
                 entry.setSearch(v);
                 setSuppressDropdown(false);
               }}
-              onKeyDown={(e) => handleSearchKeyDown(e)}
+              onKeyDown={(e, currentText) => handleSearchKeyDown(e, currentText)}
               placeholder="Search a part by name or SKU — or scan a barcode"
               variant="hero"
               debounce={0}

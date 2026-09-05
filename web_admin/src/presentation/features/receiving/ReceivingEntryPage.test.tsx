@@ -3,7 +3,7 @@
 // line model, the cost-variation price lock and the meta fields are all
 // exercised through the actual page + hook wiring.
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
@@ -170,7 +170,7 @@ describe('ReceivingEntryPage — cost-variation price lock', () => {
     await typeSearch('Brake');
     await userEvent.click(await searchResults().findByRole('button', { name: /Brake Pad/ }));
 
-    const price = await screen.findByLabelText('Price');
+    const price = await screen.findByLabelText('Price for Brake Pad');
     expect(price).toBeDisabled();
     expect(price).toHaveValue(1600);
 
@@ -180,14 +180,14 @@ describe('ReceivingEntryPage — cost-variation price lock', () => {
     await userEvent.type(cost, '1350');
 
     expect(screen.getByLabelText('Unit cost for Brake Pad').className).toContain('border-accent-text');
-    expect(screen.getByLabelText('Price')).toBeEnabled();
+    expect(screen.getByLabelText('Price for Brake Pad')).toBeEnabled();
 
     // Typing a price stores it, and the cell takes the accent border too.
-    const priceInput = screen.getByLabelText('Price');
+    const priceInput = screen.getByLabelText('Price for Brake Pad');
     await userEvent.clear(priceInput);
     await userEvent.type(priceInput, '1700');
-    expect(screen.getByLabelText('Price')).toHaveValue(1700);
-    expect(screen.getByLabelText('Price').className).toContain('border-accent-text');
+    expect(screen.getByLabelText('Price for Brake Pad')).toHaveValue(1700);
+    expect(screen.getByLabelText('Price for Brake Pad').className).toContain('border-accent-text');
   });
 
   it('reverting the cost back to the catalog value re-disables Price at the catalog figure', async () => {
@@ -201,7 +201,7 @@ describe('ReceivingEntryPage — cost-variation price lock', () => {
     await userEvent.clear(screen.getByLabelText('Unit cost for Brake Pad'));
     await userEvent.type(screen.getByLabelText('Unit cost for Brake Pad'), '1200');
 
-    const price = screen.getByLabelText('Price');
+    const price = screen.getByLabelText('Price for Brake Pad');
     expect(price).toBeDisabled();
     expect(price).toHaveValue(1600);
   });
@@ -270,12 +270,14 @@ describe('ReceivingEntryPage — no-results create-new prefill', () => {
 });
 
 describe('ReceivingEntryPage — search keyboard', () => {
-  it('Enter with exactly one match adds it and clears the search', async () => {
+  it('a wedge scanner\'s Enter (typed then Enter with no pause) adds the sole match without waiting on the 250ms-debounced dropdown', async () => {
+    // Realistic scanner timing: type the full query and hit Enter in the
+    // SAME uninterrupted burst — no waitFor on the dropdown first. If Enter
+    // resolved against the debounced entry.matches (still empty this fast),
+    // the scan would silently no-op.
     harness({ products: [product()] });
-    await typeSearch('Brake Pad');
-    await waitFor(() => expect(screen.getByRole('button', { name: /Brake Pad/ })).toBeInTheDocument());
+    await userEvent.type(screen.getByPlaceholderText(/Search a part/), 'Brake Pad{Enter}');
 
-    await userEvent.keyboard('{Enter}');
     expect(await screen.findByLabelText('Quantity for Brake Pad')).toHaveValue(1);
     expect(screen.getByPlaceholderText(/Search a part/)).toHaveValue('');
   });
@@ -326,9 +328,12 @@ describe('ReceivingEntryPage — meta fields persist into buildInput', () => {
     await userEvent.click(await searchResults().findByRole('button', { name: /Brake Pad/ }));
 
     await userEvent.type(screen.getByPlaceholderText("From the supplier's paperwork"), 'INV-55');
+    // A real date picker fires ONE change event carrying the complete new
+    // value — never an intermediate empty string the way clear()+type()
+    // would simulate (which would now legitimately fall back to today, per
+    // the empty-string guard covered separately in the hook tests).
     const dateInput = document.querySelector('input[type="date"]') as HTMLInputElement;
-    await userEvent.clear(dateInput);
-    await userEvent.type(dateInput, '2026-08-30');
+    fireEvent.change(dateInput, { target: { value: '2026-08-30' } });
 
     await userEvent.click(screen.getByRole('button', { name: 'Save draft' }));
 

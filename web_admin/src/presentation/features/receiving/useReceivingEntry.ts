@@ -58,7 +58,12 @@ export function useReceivingEntry() {
   const [invoiceNumber, setInvoiceNumber] = useState('');
   // Seeded to the shop's calendar today — a delivery counted the next
   // morning must be dateable to the day it actually arrived, not the device's.
-  const [receivedOn, setReceivedOn] = useState(() => shopIsoDate(new Date()));
+  const [receivedOn, setReceivedOnRaw] = useState(() => shopIsoDate(new Date()));
+  // Clearing the native date input fires an empty string — never let that
+  // reach buildInput; fall back to today's shop day instead of persisting ''.
+  function setReceivedOn(value: string) {
+    setReceivedOnRaw(value || shopIsoDate(new Date()));
+  }
   const [lines, setLines] = useState<ReceivingItem[]>([]);
   const [search, setSearch] = useState('');
   const [savedId, setSavedId] = useState<string | null>(id ?? null);
@@ -118,6 +123,24 @@ export function useReceivingEntry() {
   );
   const matches = useMemo(() => allMatches.slice(0, MAX_VISIBLE_MATCHES), [allMatches]);
   const moreMatches = allMatches.length - matches.length;
+
+  /** For the wedge-scanner Enter path ONLY — `matches` above is derived from
+   *  the 250ms-debounced query, and a scanner's Enter follows its last
+   *  character almost instantly, well inside that window. Reading `matches`
+   *  there would silently no-op the scan (SearchInput.tsx's Enter-handler
+   *  contract: never read debounced state). This runs the same filter
+   *  synchronously against whatever live text the caller hands it. */
+  function resolveSoleMatch(query: string): Product | null {
+    const q = query.trim();
+    if (!q || !products) return null;
+    const found = filterProducts(products, {
+      search: q,
+      stock: 'all',
+      category: 'all',
+      status: 'active',
+    });
+    return found.length === 1 ? found[0] : null;
+  }
 
   const totals = useMemo(
     () => ({
@@ -322,6 +345,7 @@ export function useReceivingEntry() {
     setSearch,
     matches,
     moreMatches,
+    resolveSoleMatch,
     lines,
     addExisting,
     addNew,

@@ -328,4 +328,17 @@ describe('useReceivingEntry — invoice/received-on meta fields', () => {
     expect(result.current.invoiceNumber).toBe('');
     expect(result.current.receivedOn).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
+
+  it('setReceivedOn falls back to today\'s shop day when cleared to an empty string (the date input\'s clear button)', async () => {
+    const { result } = renderHook(() => useReceivingEntry(), {
+      wrapper: wrap({
+        getById: vi.fn(async () => draft({ receivedOn: '2026-08-20' })),
+        update: vi.fn(async () => {}),
+      } as Partial<Container['receivingRepo']>),
+    });
+
+    await waitFor(() => expect(result.current.receivedOn).toBe('2026-08-20'));
+    act(() => result.current.setReceivedOn(''));
+    expect(result.current.receivedOn).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
 });
