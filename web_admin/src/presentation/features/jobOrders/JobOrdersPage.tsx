@@ -35,8 +35,8 @@ import type { JobOrder } from '@/domain/entities';
 import { Dialog } from '@/presentation/components/common/Dialog';
 import { NewJobOrderDialog } from './NewJobOrderDialog';
 import { nextJobOrderNumber } from '@/domain/jobOrders/joNumber';
-import { resolvePreset, type DateRange, type RangePreset } from '@/domain/reports/dateRange';
-import { instantOf, shopWall } from '@/domain/time/shopTime';
+import { type RangePreset } from '@/domain/reports/dateRange';
+import { useDateRangeControlState } from '@/presentation/hooks/useDateRangeControlState';
 
 type StatusView = 'all' | 'open' | 'billed';
 type DatePreset = Extract<RangePreset, 'today' | 'yesterday' | 'last7' | 'last30'> | 'custom';
@@ -67,27 +67,11 @@ export function JobOrdersPage() {
   const deleteJobOrder = useDeleteJobOrder();
   const navigate = useNavigate();
 
-  // Today by default: the list is opened to work the day's tickets.
-  const [preset, setPreset] = useState<DatePreset>('today');
-  // Custom range: DateRangeControl's popover with the browser's own date
-  // inputs; picked dates are SHOP calendar days.
-  const [customStart, setCustomStart] = useState('');
-  const [customEnd, setCustomEnd] = useState('');
-  const range = useMemo<DateRange>(() => {
-    if (preset === 'custom') {
-      if (customStart && customEnd) {
-        const [sy, sm, sd] = customStart.split('-').map(Number);
-        const [ey, em, ed] = customEnd.split('-').map(Number);
-        return {
-          start: instantOf(shopWall(sy, sm, sd)),
-          end: instantOf(shopWall(ey, em, ed, 23, 59, 59, 999)),
-        };
-      }
-      // Until both dates are picked, keep the default day under the rows.
-      return resolvePreset('today');
-    }
-    return resolvePreset(preset);
-  }, [preset, customStart, customEnd]);
+  // Today by default: the list is opened to work the day's tickets. Custom
+  // range: DateRangeControl's popover with the browser's own date inputs;
+  // picked dates are SHOP calendar days.
+  const { preset, setPreset, customStart, setCustomStart, customEnd, setCustomEnd, range } =
+    useDateRangeControlState<DatePreset>('today');
   const [view, setView] = useState<StatusView>('all');
   const [search, setSearch] = useState('');
   const [mechanicId, setMechanicId] = useState('');

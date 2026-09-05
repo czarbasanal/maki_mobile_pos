@@ -24,6 +24,14 @@ const PRESETS: RangePreset[] = [
  * with a concrete {start,end} whenever the effective range changes. The parent
  * owns the range; default preset is 'last7' unless overridden with defaultPreset,
  * and must match the parent's initial.
+ *
+ * NOTE: this predates useDateRangeControlState (src/presentation/hooks) and
+ * doesn't share it — this component owns its preset/custom-date state
+ * internally and only pushes the resolved DateRange out via onChange, so
+ * there's no parent-visible preset/customStart/customEnd to lift into the
+ * shared hook without changing this component's API. JobOrdersPage,
+ * ReceivingListPage and ExpensesPage (the reskinned pages, which DO expose
+ * that state to drive DateRangeControl) use the shared hook instead.
  */
 export function DateRangePicker({
   onChange,

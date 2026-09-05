@@ -17,8 +17,9 @@ import { useReceivings } from '@/presentation/hooks/useReceivings';
 import { useDraftReceivings } from '@/presentation/hooks/useDraftReceivings';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import type { Receiving, ReceivingStatus } from '@/domain/entities';
-import { formatInShopZone, instantOf, shopWall } from '@/domain/time/shopTime';
-import { resolvePreset, type DateRange, type RangePreset } from '@/domain/reports/dateRange';
+import { formatInShopZone } from '@/domain/time/shopTime';
+import { resolvePreset } from '@/domain/reports/dateRange';
+import { useDateRangeControlState } from '@/presentation/hooks/useDateRangeControlState';
 import { formatMoney } from '@/core/utils/money';
 import { cn } from '@/core/utils/cn';
 import { ErrorView } from '@/presentation/components/common/ErrorView';
@@ -72,36 +73,23 @@ export function ReceivingListPage() {
   }, []);
   const navigate = useNavigate();
 
-  const [range, setRange] = useState<Range>('last30');
   // Custom range: the pill opens DateRangeControl's popover with the
   // browser's own date inputs. Dates are SHOP calendar days.
-  const [customStart, setCustomStart] = useState('');
-  const [customEnd, setCustomEnd] = useState('');
+  const {
+    preset: range,
+    setPreset: setRange,
+    customStart,
+    setCustomStart,
+    customEnd,
+    setCustomEnd,
+    range: dateRange,
+  } = useDateRangeControlState<Range>('last30');
   const [view, setView] = useState<StatusView>('all');
   const [search, setSearch] = useState('');
   const [supplier, setSupplier] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = usePageSize('receiving');
   const [now] = useState(() => new Date());
-
-  const dateRange = useMemo<DateRange>(() => {
-    if (range === 'custom') {
-      if (customStart && customEnd) {
-        // Plain yyyy-MM-dd means the SHOP day the operator picked — parsing
-        // via new Date() would shift by the browser zone (same rule as
-        // DateRangePicker's custom inputs).
-        const [sy, sm, sd] = customStart.split('-').map(Number);
-        const [ey, em, ed] = customEnd.split('-').map(Number);
-        return {
-          start: instantOf(shopWall(sy, sm, sd)),
-          end: instantOf(shopWall(ey, em, ed, 23, 59, 59, 999)),
-        };
-      }
-      // Until both dates are picked, keep the default window under the rows.
-      return resolvePreset('last30');
-    }
-    return resolvePreset(range as Exclude<RangePreset, 'custom'>);
-  }, [range, customStart, customEnd]);
 
   const { data: ranged, isLoading, error } = useReceivings(dateRange);
   const { data: drafts } = useDraftReceivings();

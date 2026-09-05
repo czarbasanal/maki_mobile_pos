@@ -16,8 +16,9 @@ import { useNavigate, Outlet } from 'react-router-dom';
 import { ArrowDownTrayIcon, PaperClipIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { useExpenses, useExpenseTotals } from '@/presentation/hooks/useExpenses';
 import { paymentMethodDisplayName } from '@/domain/enums';
-import { resolvePreset, PRESET_LABELS, type DateRange, type RangePreset } from '@/domain/reports/dateRange';
-import { instantOf, shopWall, formatInShopZone } from '@/domain/time/shopTime';
+import { PRESET_LABELS, type RangePreset } from '@/domain/reports/dateRange';
+import { formatInShopZone } from '@/domain/time/shopTime';
+import { useDateRangeControlState } from '@/presentation/hooks/useDateRangeControlState';
 import { hasPermission, Permission } from '@/domain/permissions/Permission';
 import { useAuthStore } from '@/presentation/stores/authStore';
 import { RoutePaths } from '@/presentation/router/routePaths';
@@ -75,23 +76,8 @@ export function ExpensesPage() {
   const canAdd = !!user && hasPermission(user.role, Permission.addExpense);
 
   // Default last7 — matches the page's previous default.
-  const [preset, setPreset] = useState<DatePreset>('last7');
-  const [customStart, setCustomStart] = useState('');
-  const [customEnd, setCustomEnd] = useState('');
-  const range = useMemo<DateRange>(() => {
-    if (preset === 'custom') {
-      if (customStart && customEnd) {
-        const [sy, sm, sd] = customStart.split('-').map(Number);
-        const [ey, em, ed] = customEnd.split('-').map(Number);
-        return {
-          start: instantOf(shopWall(sy, sm, sd)),
-          end: instantOf(shopWall(ey, em, ed, 23, 59, 59, 999)),
-        };
-      }
-      return resolvePreset('last7');
-    }
-    return resolvePreset(preset);
-  }, [preset, customStart, customEnd]);
+  const { preset, setPreset, customStart, setCustomStart, customEnd, setCustomEnd, range } =
+    useDateRangeControlState<DatePreset>('last7');
   const rangeLabel =
     preset === 'custom' && customStart && customEnd
       ? `${dateFmt(new Date(`${customStart}T00:00:00`))} – ${dateFmt(new Date(`${customEnd}T00:00:00`))}`
