@@ -38,8 +38,9 @@ export function DeleteUserModal({
       {target ? (
         <div className="flex flex-col gap-3.5">
           <p className="text-ctl-sm text-ink-2 [text-wrap:pretty]">
-            {target.displayName || target.email} loses their login for good. Their sales, job orders,
-            receipts and activity logs stay in the system, still attributed to them by name.
+            {target.displayName || target.email} is removed from Users for good and can no longer use the
+            app. Their sales, job orders, receipts and activity logs stay, still attributed to them by name.
+            The old sign-in credential is cleared afterwards with the auth cleanup script.
           </p>
           <Field label={`Type ${target.email} to confirm`}>
             <input

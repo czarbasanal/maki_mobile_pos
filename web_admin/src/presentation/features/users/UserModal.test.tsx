@@ -92,7 +92,53 @@ describe('UserModal — manage', () => {
     expect(within(added).getByText('Czar')).toBeInTheDocument();
     const updated = within(dialog).getByText('Last updated by').parentElement as HTMLElement;
     expect(within(updated).getByText('Czar')).toBeInTheDocument();
-    expect(within(dialog).getByRole('link', { name: 'View activity for this user →' })).toHaveAttribute('href', '/logs');
+    expect(within(dialog).getByRole('link', { name: 'View activity logs →' })).toHaveAttribute('href', '/logs');
+  });
+
+  it('offers Send password reset (or Resend invite for a never-signed-in account) and reports the result', async () => {
+    const { authRepo } = harness('/users/edit/c1', [me, belle]);
+    const dialog = await screen.findByRole('dialog', { name: 'Manage user' });
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Send password reset' }));
+    await waitFor(() => expect(authRepo.sendPasswordResetEmail).toHaveBeenCalledWith('belle@shop.test'));
+  });
+
+  it('labels the reset action Resend invite when the person has never signed in', async () => {
+    harness('/users/edit/c1', [me, user({ ...belle, lastLoginAt: null })]);
+    const dialog = await screen.findByRole('dialog', { name: 'Manage user' });
+    expect(within(dialog).getByRole('button', { name: 'Resend invite' })).toBeInTheDocument();
+    expect(within(dialog).getByText('invite not accepted')).toBeInTheDocument();
+  });
+
+  it('an unknown id says the account no longer exists instead of a blank form', async () => {
+    harness('/users/edit/ghost', [me, belle]);
+    const dialog = await screen.findByRole('dialog', { name: 'Manage user' });
+    expect(within(dialog).getByText('This account no longer exists.')).toBeInTheDocument();
+    expect(within(dialog).queryByLabelText('Name')).not.toBeInTheDocument();
+    // The header ✕ and the footer button both read Close; no Save remains.
+    expect(within(dialog).getAllByRole('button', { name: 'Close' }).length).toBeGreaterThanOrEqual(2);
+    expect(within(dialog).queryByRole('button', { name: 'Save changes' })).not.toBeInTheDocument();
+  });
+
+  it('a rename sends no role, so a role changed elsewhere is never reverted', async () => {
+    const { userRepo } = harness('/users/edit/c1', [me, belle]);
+    const dialog = await screen.findByRole('dialog', { name: 'Manage user' });
+    await waitFor(() => expect(within(dialog).getByLabelText('Name')).toHaveValue('Belle'));
+    await userEvent.clear(within(dialog).getByLabelText('Name'));
+    await userEvent.type(within(dialog).getByLabelText('Name'), 'Maybelle');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Save changes' }));
+    await waitFor(() => expect(userRepo.update).toHaveBeenCalled());
+    const [input] = (userRepo.update as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(input).toEqual({ id: 'c1', displayName: 'Maybelle', role: undefined, isActive: undefined });
+  });
+
+  it('a one-letter name is refused on the field', async () => {
+    const { userRepo } = harness('/users/add', [me]);
+    const dialog = screen.getByRole('dialog', { name: 'Add user' });
+    await userEvent.type(within(dialog).getByLabelText('Name'), 'J');
+    await userEvent.type(within(dialog).getByLabelText('Email'), 'j@shop.test');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Send invite' }));
+    expect(await within(dialog).findByText('Name must be at least 2 characters')).toBeInTheDocument();
+    expect(userRepo.create).not.toHaveBeenCalled();
   });
 
   it('Save changes updates name and role', async () => {
@@ -127,12 +173,16 @@ describe('UserModal — manage', () => {
     expect(within(dialog).getByRole('radio', { name: /Admin/ })).toHaveAttribute('aria-checked', 'true');
   });
 
-  it('Delete is inert while the account is active; Deactivate is the way in', async () => {
+  it('Delete is inert while the account is active; Deactivate confirms before writing', async () => {
     const { userRepo } = harness('/users/edit/c1', [me, belle]);
     const dialog = await screen.findByRole('dialog', { name: 'Manage user' });
     expect(within(dialog).getByRole('button', { name: 'Delete account' })).toBeDisabled();
     expect(within(dialog).getByText(/Deactivate first/)).toBeInTheDocument();
     await userEvent.click(within(dialog).getByRole('button', { name: 'Deactivate account' }));
+    expect(userRepo.deactivate).not.toHaveBeenCalled();
+    const confirm = screen.getByRole('dialog', { name: 'Deactivate account?' });
+    expect(within(confirm).getByText(/Belle will no longer be able to sign in/)).toBeInTheDocument();
+    await userEvent.click(within(confirm).getByRole('button', { name: 'Deactivate' }));
     await waitFor(() => expect(userRepo.deactivate).toHaveBeenCalledWith('c1', 'me'));
   });
 

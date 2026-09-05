@@ -238,11 +238,18 @@ export function UsersListPage() {
           loading={isLoading}
           minWidth="940px"
           empty={
-            <NoMatchesState
-              title="No users match these filters"
-              hint="Try another role, or clear the search."
-              onClear={isFiltered ? clearFilters : undefined}
-            />
+            isFiltered ? (
+              <NoMatchesState
+                title="No users match these filters"
+                hint="Try another role, or clear the search."
+                onClear={clearFilters}
+              />
+            ) : (
+              <NoMatchesState
+                title={status === 'inactive' ? 'No inactive accounts' : 'No accounts yet'}
+                hint={status === 'inactive' ? 'Everyone can sign in. Switch to Active or All to see them.' : 'Add a user to get started.'}
+              />
+            )
           }
         />
         {rows.length > 0 && !isLoading ? (

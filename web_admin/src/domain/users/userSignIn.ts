@@ -3,6 +3,7 @@
 // ≤7 days quiet, 8–29 amber, ≥30 red, never red with the invite line.
 import type { User } from '../entities';
 import { UserRole } from '../enums';
+import { shopStartOfDay } from '../time/shopTime';
 
 export type StalenessTone = 'ink-3' | 'accent-text' | 'neg';
 
@@ -15,8 +16,13 @@ export interface SignInStaleness {
 
 export function signInStaleness(lastLoginAt: Date | null, now: Date): SignInStaleness {
   if (!lastLoginAt) return { label: 'invite not accepted', tone: 'neg', days: null };
-  const days = Math.max(0, Math.floor((now.getTime() - lastLoginAt.getTime()) / 86_400_000));
-  const label = days <= 1 ? 'today' : `${days} days ago`;
+  // Whole SHOP days apart, so "today" means the shop's today and the bands
+  // roll at the shop-day boundary like every other screen.
+  const days = Math.max(
+    0,
+    Math.round((shopStartOfDay(now).getTime() - shopStartOfDay(lastLoginAt).getTime()) / 86_400_000),
+  );
+  const label = days === 0 ? 'today' : days === 1 ? 'yesterday' : `${days} days ago`;
   const tone: StalenessTone = days >= 30 ? 'neg' : days > 7 ? 'accent-text' : 'ink-3';
   return { label, tone, days };
 }

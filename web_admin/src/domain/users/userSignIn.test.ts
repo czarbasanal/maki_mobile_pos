@@ -18,9 +18,11 @@ function u(o: Partial<User> = {}): User {
 }
 
 describe('signInStaleness', () => {
-  it('today / days ago, quiet up to a week, amber to 29, red from 30', () => {
+  it('counts whole SHOP days: today / yesterday / N days ago; quiet to a week, amber to 29, red from 30', () => {
     expect(signInStaleness(daysAgo(0), NOW)).toEqual({ label: 'today', tone: 'ink-3', days: 0 });
-    expect(signInStaleness(daysAgo(1), NOW)).toEqual({ label: 'today', tone: 'ink-3', days: 1 });
+    // 20 hours ago but across the shop midnight — yesterday, not "today".
+    expect(signInStaleness(new Date(NOW.getTime() - 20 * 3_600_000), NOW).label).toBe('yesterday');
+    expect(signInStaleness(daysAgo(1), NOW)).toEqual({ label: 'yesterday', tone: 'ink-3', days: 1 });
     expect(signInStaleness(daysAgo(7), NOW)).toEqual({ label: '7 days ago', tone: 'ink-3', days: 7 });
     expect(signInStaleness(daysAgo(8), NOW)).toEqual({ label: '8 days ago', tone: 'accent-text', days: 8 });
     expect(signInStaleness(daysAgo(29), NOW).tone).toBe('accent-text');

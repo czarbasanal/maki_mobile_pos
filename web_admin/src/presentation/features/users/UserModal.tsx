@@ -16,11 +16,11 @@ import { useAuthStore } from '@/presentation/stores/authStore';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import { UserRole, userRoleDisplayName } from '@/domain/enums';
 import { roleScope, signInStaleness, summarizeUsers } from '@/domain/users/userSignIn';
-import { formatInShopZone, formatShopDateTime } from '@/domain/time/shopTime';
 import { cn } from '@/core/utils/cn';
 import { Modal } from '@/presentation/components/ui/Modal';
 import { Button } from '@/presentation/components/ui/Button';
-import { Field, inputCls } from '@/presentation/components/ui/formKit';
+import { Field, HistoryEntry, inputCls } from '@/presentation/components/ui/formKit';
+import { Skeleton } from '@/presentation/components/ui/Skeleton';
 import { toast } from '@/presentation/components/ui/toast';
 import { RoleBadge } from './RoleBadge';
 import { DeleteUserModal } from './DeleteUserModal';
@@ -35,7 +35,8 @@ export function UserModal() {
   const close = () => navigate(RoutePaths.users);
   const me = useAuthStore((s) => s.user);
   const now = useNow();
-  const { data } = useUsers(true);
+  const { data, error: usersError } = useUsers(true);
+  const loaded = data !== undefined;
   const users = useMemo(() => data ?? [], [data]);
   const target = useMemo(() => (id ? users.find((u) => u.id === id) ?? null : null), [users, id]);
   const summary = useMemo(() => summarizeUsers(users, now), [users, now]);
@@ -52,6 +53,8 @@ export function UserModal() {
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<UserRole>(UserRole.cashier);
   const [emailError, setEmailError] = useState<string | null>(null);
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [confirmDeactivate, setConfirmDeactivate] = useState(false);
   const [hydratedFor, setHydratedFor] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   /** Set when the account was minted but the invite email failed. */
@@ -77,11 +80,16 @@ export function UserModal() {
 
   const save = async () => {
     if (!canSave) return;
+    let invalid = false;
+    if (name.trim().length < 2) {
+      setNameError('Name must be at least 2 characters');
+      invalid = true;
+    } else setNameError(null);
     if (!EMAIL.test(email.trim())) {
       setEmailError('Enter a valid email address');
-      return;
-    }
-    setEmailError(null);
+      invalid = true;
+    } else setEmailError(null);
+    if (invalid) return;
     try {
       if (mode === 'add') {
         const result = await create.mutateAsync({ email: email.trim(), displayName: name.trim(), role });
@@ -93,14 +101,35 @@ export function UserModal() {
           toast.error('Account created, but the invite email failed', result.user.email);
         }
       } else if (target) {
-        await update.mutateAsync({ target, displayName: name.trim(), role });
+        // Only send the role when THIS form changed it: a role someone else
+        // changed while the modal was open must not be reverted by a rename.
+        await update.mutateAsync({
+          target,
+          displayName: name.trim(),
+          role: role !== target.role ? role : undefined,
+        });
         toast.success('User saved', target.email);
         close();
       }
     } catch (e) {
       const msg = (e as Error).message ?? '';
-      if (/already/i.test(msg)) setEmailError('This email already has an account');
+      if (/email-already-in-use/i.test(msg)) {
+        setEmailError('This email still has a login from a deleted account. Clear it with the auth cleanup script before re-adding.');
+      } else if (/already/i.test(msg)) {
+        setEmailError('This email already has an account');
+      } else if (/invalid-email/i.test(msg)) {
+        setEmailError('Enter a valid email address');
+      }
     }
+  };
+
+  const sendReset = () => {
+    if (!target) return;
+    const invite = target.lastLoginAt === null;
+    resend
+      .mutateAsync(target.email)
+      .then(() => toast.success(invite ? 'Invite sent' : 'Password reset sent', target.email))
+      .catch(() => undefined);
   };
 
   const onRoleKey = (e: KeyboardEvent<HTMLDivElement>) => {
@@ -113,22 +142,7 @@ export function UserModal() {
   };
 
   const initial = (name || email || '?').charAt(0).toUpperCase();
-  const history = target
-    ? [
-        { label: 'Added by', who: nameOf(target.createdBy), when: formatShopDateTime(target.createdAt), dim: false },
-        target.updatedBy
-          ? { label: 'Last updated by', who: nameOf(target.updatedBy), when: target.updatedAt ? formatShopDateTime(target.updatedAt) : '', dim: false }
-          : { label: 'Last updated by', who: '—', when: 'Never edited', dim: true },
-        target.lastLoginAt
-          ? {
-              label: 'Last sign-in',
-              who: formatInShopZone(target.lastLoginAt, { month: 'short', day: 'numeric', year: 'numeric' }),
-              when: formatInShopZone(target.lastLoginAt, { hour: 'numeric', minute: '2-digit', hour12: true }),
-              dim: false,
-            }
-          : { label: 'Last sign-in', who: 'Never', when: signInStaleness(null, now).label, dim: true },
-      ]
-    : [];
+  const missing = mode === 'edit' && loaded && !target;
 
   return (
     <>
@@ -147,11 +161,11 @@ export function UserModal() {
         footer={
           <div className="flex items-center gap-[9px]">
             <span className="text-[11px] text-ink-3">
-              {mode === 'edit' ? 'Saving records you as the last editor' : 'An invite email goes out on save'}
+              {missing ? '' : mode === 'edit' ? 'Saving records you as the last editor' : 'An invite email goes out on save'}
             </span>
             <div className="ml-auto flex gap-2">
-              <Button variant="secondary" onClick={close} disabled={busy}>Cancel</Button>
-              {inviteFailedFor ? (
+              <Button variant="secondary" onClick={close} disabled={busy}>{missing ? 'Close' : 'Cancel'}</Button>
+              {missing ? null : inviteFailedFor ? (
                 <Button
                   variant="primary"
                   loading={resend.isPending}
@@ -162,7 +176,7 @@ export function UserModal() {
                   Resend invite
                 </Button>
               ) : (
-                <Button variant="primary" onClick={save} disabled={!canSave} loading={create.isPending || update.isPending}>
+                <Button variant="primary" onClick={save} disabled={!canSave || (mode === 'edit' && !target)} loading={create.isPending || update.isPending}>
                   {mode === 'edit' ? 'Save changes' : 'Send invite'}
                 </Button>
               )}
@@ -170,10 +184,21 @@ export function UserModal() {
           </div>
         }
       >
+        {mode === 'edit' && !loaded ? (
+          <div className="flex flex-col gap-3" aria-busy="true">
+            <Skeleton height="42px" />
+            <Skeleton height="42px" />
+            <Skeleton height="150px" />
+          </div>
+        ) : missing ? (
+          <p className="py-6 text-center text-ctl-md text-ink-2">
+            {usersError ? 'Could not load this account.' : 'This account no longer exists.'}
+          </p>
+        ) : (
         <div className="flex flex-col gap-4">
           <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3">
-            <Field label="Name">
-              <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Full name" autoComplete="name" className={inputCls(false)} />
+            <Field label="Name" error={nameError ?? undefined}>
+              <input type="text" value={name} onChange={(e) => { setName(e.target.value); setNameError(null); }} placeholder="Full name" autoComplete="name" className={inputCls(!!nameError)} />
             </Field>
             <Field label="Email" error={emailError ?? undefined}>
               <input
@@ -251,25 +276,36 @@ export function UserModal() {
             </div>
           ) : null}
 
-          {saveError && !emailError ? <p className="text-ctl-sm text-neg">{saveError}</p> : null}
+          {saveError && !emailError && !nameError ? <p className="text-ctl-sm text-neg">{saveError}</p> : null}
+          {inviteFailedFor && resend.error ? <p className="text-ctl-sm text-neg">Invite email failed again: {resend.error.message}</p> : null}
 
           {mode === 'edit' && target ? (
             <>
-              {/* Account history */}
+              {/* Account history — person + timestamp as ONE entry each (shared HistoryEntry) */}
               <div className="flex flex-col gap-2">
                 <span className="text-micro-caps uppercase text-ink-3">Account history</span>
                 <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-2.5">
-                  {history.map((h) => (
-                    <div key={h.label} className="flex min-w-0 flex-col gap-[3px] rounded-ctl border border-line bg-surface-2 px-3 py-2.5">
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.8px] text-ink-3">{h.label}</span>
-                      <span className={cn('text-ctl-md font-semibold', h.dim ? 'text-ink-3' : 'text-ink')}>{h.who}</span>
-                      <span className="font-mono text-[10.5px] text-ink-3">{h.when}</span>
-                    </div>
-                  ))}
+                  <HistoryEntry inset label="Added by" who={nameOf(target.createdBy)} when={target.createdAt} />
+                  <HistoryEntry inset label="Last updated by" who={target.updatedBy ? nameOf(target.updatedBy) : null} when={target.updatedAt} emptyWhenText="Never edited" />
+                  <HistoryEntry
+                    inset
+                    label="Last sign-in"
+                    who={target.lastLoginAt ? signInStaleness(target.lastLoginAt, now).label : 'Never'}
+                    when={target.lastLoginAt}
+                    emptyWhenText="invite not accepted"
+                  />
                 </div>
-                <Link to={RoutePaths.userLogs} className="w-fit border-b border-line text-[11.5px] text-ink-2 hover:text-accent-text">
-                  View activity for this user →
-                </Link>
+                <div className="flex flex-wrap items-center gap-3">
+                  <Link to={RoutePaths.userLogs} className="w-fit border-b border-line text-[11.5px] text-ink-2 hover:text-accent-text">
+                    View activity logs →
+                  </Link>
+                  <div className="ml-auto flex items-center gap-2">
+                    {resend.error && !inviteFailedFor ? <span className="text-[11.5px] text-neg">{resend.error.message}</span> : null}
+                    <Button variant="secondary" size="sm" loading={resend.isPending} onClick={sendReset}>
+                      {target.lastLoginAt ? 'Send password reset' : 'Resend invite'}
+                    </Button>
+                  </div>
+                </div>
               </div>
 
               {/* Danger zone */}
@@ -291,20 +327,17 @@ export function UserModal() {
                       <Button
                         variant="secondary"
                         size="sm"
-                        loading={deactivate.isPending || reactivate.isPending}
+                        loading={reactivate.isPending}
                         onClick={() =>
-                          (target.isActive
-                            ? deactivate.mutateAsync(target).then(() => toast.info('Account deactivated', target.displayName))
-                            : reactivate.mutateAsync(target).then(() => toast.success('Account reactivated', target.displayName))
-                          ).catch(() => undefined)
+                          target.isActive
+                            ? (deactivate.reset(), setConfirmDeactivate(true))
+                            : reactivate.mutateAsync(target).then(() => toast.success('Account reactivated', target.displayName)).catch(() => undefined)
                         }
                       >
                         {target.isActive ? 'Deactivate account' : 'Reactivate account'}
                       </Button>
                     </div>
-                    {(deactivate.error ?? reactivate.error) ? (
-                      <p className="text-ctl-sm text-neg">{(deactivate.error ?? reactivate.error)!.message}</p>
-                    ) : null}
+                    {reactivate.error ? <p className="text-ctl-sm text-neg">{reactivate.error.message}</p> : null}
                     <div className="flex flex-wrap items-center gap-3 border-t border-line-2 pt-2.5">
                       <span className="min-w-[150px] flex-1 text-[11.5px] text-ink-3 [text-wrap:pretty]">
                         {target.isActive
@@ -321,6 +354,42 @@ export function UserModal() {
             </>
           ) : null}
         </div>
+        )}
+      </Modal>
+
+      {/* Deactivation confirms — a mis-click here signs a cashier out mid-shift. */}
+      <Modal
+        open={confirmDeactivate && !!target}
+        onClose={() => { if (!deactivate.isPending) setConfirmDeactivate(false); }}
+        size="sm"
+        title="Deactivate account?"
+        initialFocus="none"
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button variant="secondary" onClick={() => setConfirmDeactivate(false)} disabled={deactivate.isPending}>Cancel</Button>
+            <Button
+              variant="danger"
+              loading={deactivate.isPending}
+              onClick={() =>
+                target
+                  ? deactivate.mutateAsync(target).then(() => { toast.info('Account deactivated', target.displayName); setConfirmDeactivate(false); }).catch(() => undefined)
+                  : undefined
+              }
+            >
+              Deactivate
+            </Button>
+          </div>
+        }
+      >
+        {target ? (
+          <div className="flex flex-col gap-3">
+            <p className="text-ctl-sm text-ink-2 [text-wrap:pretty]">
+              {target.displayName || target.email} will no longer be able to sign in, and any open session ends now.
+              Their history stays, and you can reactivate them later.
+            </p>
+            {deactivate.error ? <p className="text-ctl-sm text-neg">{deactivate.error.message}</p> : null}
+          </div>
+        ) : null}
       </Modal>
 
       <DeleteUserModal

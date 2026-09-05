@@ -59,7 +59,7 @@ const roster = [
   me,
   user({ id: 'a2', displayName: 'Admin', email: 'admin@test.com', role: UserRole.admin, lastLoginAt: ago(43) }),
   user({ id: 's1', displayName: 'Sam', email: 'staff@test.com', role: UserRole.staff, lastLoginAt: ago(65) }),
-  user({ id: 'c1', displayName: 'Belle', email: 'belle@shop.test', lastLoginAt: ago(1) }),
+  user({ id: 'c1', displayName: 'Belle', email: 'belle@shop.test', lastLoginAt: new Date() }),
   user({ id: 'c2', displayName: 'Tess', email: 'cashier@test.com', lastLoginAt: ago(12) }),
   user({ id: 'j', displayName: 'Jeric', email: 'jeric@shop.test', role: UserRole.staff, isActive: false, lastLoginAt: null }),
 ];
@@ -114,6 +114,13 @@ describe('UsersListPage — filters', () => {
     await userEvent.type(screen.getByPlaceholderText('Search name or email'), 'test.com');
     expect(await screen.findByText('3 accounts')).toBeInTheDocument();
     expect(screen.queryByText('Belle')).not.toBeInTheDocument();
+  });
+
+  it('an empty Inactive view says so instead of blaming filters that are not set', async () => {
+    harness([me]);
+    await userEvent.click(screen.getByRole('radio', { name: 'Inactive' }));
+    expect(screen.getByText('No inactive accounts')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Clear filters' })).not.toBeInTheDocument();
   });
 
   it('a search that matches nothing blames the filters', async () => {
