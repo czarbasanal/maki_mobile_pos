@@ -155,6 +155,21 @@ describe("/users", () => {
     );
   });
 
+  // 2026-09-05 (users guide §3 rule 1): nobody changes their OWN role or
+  // status, admins included — the last admin demoting themselves locks
+  // everyone out. Own non-role edits still work.
+  it("admin CANNOT change their own role or isActive", async () => {
+    await assertFails(
+      as("admin").collection("users").doc(USERS.admin.uid).update({ role: "staff" }));
+    await assertFails(
+      as("admin").collection("users").doc(USERS.admin.uid).update({ isActive: false }));
+  });
+
+  it("admin can still edit their own displayName", async () => {
+    await assertSucceeds(
+      as("admin").collection("users").doc(USERS.admin.uid).update({ displayName: "Renamed" }));
+  });
+
   it("admin cannot delete an ACTIVE user (deactivate-first)", async () => {
     await assertFails(
       as("admin").collection("users").doc(USERS.cashier.uid).delete()

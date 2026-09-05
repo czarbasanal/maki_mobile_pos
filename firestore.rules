@@ -93,12 +93,15 @@ service cloud.firestore {
       // auth session was valid (regression caught by the rules suite).
       allow create: if isAdmin() && isActiveUser();
 
-      // Users can update their own non-role fields (displayName, password handled by Auth).
-      // Admins can update any user.
+      // Anyone can update their OWN non-role fields (displayName; password is
+      // handled by Auth). Admins can update any OTHER user. Nobody — admin
+      // included — may change their own role or isActive: the last admin
+      // demoting themselves would lock everyone out of Users, Reports and
+      // void approval (users guide §3 rule 1, 2026-09-05).
       allow update: if isAuthenticated() && isActiveUser() && (
         (request.auth.uid == userId &&
           !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'isActive'])) ||
-        isAdmin()
+        (isAdmin() && request.auth.uid != userId)
       );
 
       // Delete is deactivate-first and never self: only an active admin may

@@ -1,476 +1,258 @@
-// /admin/users — admin user management. Mirrors the Flutter users_screen:
-// summary tiles, role filter, show-inactive toggle, table with row actions
-// (edit / deactivate / reactivate).
-
+// Users — per design/maki-pos-users-redesign. Summary row (Accounts by role
+// card whose rows filter · three sign-in KPIs), then the views row (role
+// chips · Active/Inactive/All · + Add user), the filters row (search · clear
+// · count), then the table card. A row (or Manage) opens the add/manage modal
+// as a child route over this list. ONE subscription (every account, active
+// or not) feeds the card, the KPIs, the chip counts and the table.
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import {
-  EllipsisHorizontalIcon,
-  EyeIcon,
-  EyeSlashIcon,
-  PencilIcon,
-  PlusIcon,
-  TrashIcon,
-  UserIcon,
-  UserMinusIcon,
-  UserPlusIcon,
-} from '@heroicons/react/24/outline';
+import { Outlet, useNavigate } from 'react-router-dom';
+import { PlusIcon } from '@heroicons/react/24/outline';
 import { useUsers } from '@/presentation/hooks/useUsers';
-import {
-  useDeactivateUser,
-  useDeleteUser,
-  useReactivateUser,
-} from '@/presentation/hooks/useUserMutations';
 import { useAuthStore } from '@/presentation/stores/authStore';
-import { LoadingView } from '@/presentation/components/common/LoadingView';
-import { ErrorView } from '@/presentation/components/common/ErrorView';
-import { EmptyState } from '@/presentation/components/common/EmptyState';
-import { Pager } from '@/presentation/components/common/Pager';
+import { useNow } from '@/presentation/hooks/useNow';
 import { usePageClamp } from '@/presentation/hooks/usePageClamp';
 import { usePageSize } from '@/presentation/hooks/usePageSize';
-import { Dialog } from '@/presentation/components/common/Dialog';
-import { Spinner } from '@/presentation/components/common/LoadingView';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import { UserRole, userRoleDisplayName } from '@/domain/enums';
 import type { User } from '@/domain/entities';
-import { RoleBadge } from './RoleBadge';
+import { roleScope, signInStaleness, summarizeUsers } from '@/domain/users/userSignIn';
+import { formatInShopZone, formatShopDateTime } from '@/domain/time/shopTime';
 import { cn } from '@/core/utils/cn';
+import { StatCard } from '@/presentation/components/ui/StatCard';
+import { BreakdownCard } from '@/presentation/components/ui/BreakdownCard';
+import { DataTable, type Column } from '@/presentation/components/ui/DataTable';
+import { Button } from '@/presentation/components/ui/Button';
+import { SearchInput } from '@/presentation/components/ui/SearchInput';
+import { ViewChips } from '@/presentation/components/ui/ViewChips';
+import { Segmented } from '@/presentation/components/ui/Segmented';
+import { NoMatchesState } from '@/presentation/components/ui/TableEmptyStates';
+import { TableFooter } from '@/presentation/components/ui/TableFooter';
+import { ErrorState } from '@/presentation/components/ui/ErrorState';
+import { RoleBadge, roleColor } from './RoleBadge';
+
+type StatusFilter = 'active' | 'inactive' | 'all';
+type RoleFilter = UserRole | 'all';
+const ROLES: UserRole[] = [UserRole.admin, UserRole.staff, UserRole.cashier];
+
+const staleCls = { 'ink-3': 'text-ink-3', 'accent-text': 'text-accent-text', neg: 'text-neg' } as const;
 
 export function UsersListPage() {
   const navigate = useNavigate();
   const me = useAuthStore((s) => s.user);
-  const [showInactive, setShowInactive] = useState(false);
-  const [roleFilter, setRoleFilter] = useState<UserRole | null>(null);
+  const now = useNow();
+  const { data, isLoading, error } = useUsers(true);
+  const users = useMemo(() => data ?? [], [data]);
+
+  const [status, setStatus] = useState<StatusFilter>('active');
+  const [role, setRole] = useState<RoleFilter>('all');
+  const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = usePageSize('users');
-
-  const { data: users, isLoading, error } = useUsers(showInactive);
 
   useEffect(() => {
     document.title = 'Users · MAKI POS Admin';
   }, []);
-
-  const filtered = useMemo(() => {
-    if (!users) return [];
-    let out = users;
-    if (roleFilter) out = out.filter((u) => u.role === roleFilter);
-    out = [...out].sort((a, b) => {
-      if (a.isActive !== b.isActive) return a.isActive ? -1 : 1;
-      return a.displayName.localeCompare(b.displayName);
-    });
-    return out;
-  }, [users, roleFilter]);
-
-  // Filters changed — a page number from the previous result set may now
-  // point past the end (or simply be stale), so snap back to page 1.
   useEffect(() => {
     setPage(1);
-  }, [roleFilter, showInactive]);
+  }, [status, role, query]);
 
-  usePageClamp(page, setPage, filtered.length, pageSize);
-  const paged = useMemo(
-    () => filtered.slice((page - 1) * pageSize, page * pageSize),
-    [filtered, page, pageSize],
+  const summary = useMemo(() => summarizeUsers(users, now), [users, now]);
+
+  // Status + search scope the set the chip counts read; only the table
+  // narrows further by role — or the chips contradict the rows.
+  const scoped = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return users.filter((u) => {
+      if (status === 'active' && !u.isActive) return false;
+      if (status === 'inactive' && u.isActive) return false;
+      if (!q) return true;
+      return u.displayName.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
+    });
+  }, [users, status, query]);
+  const rows = useMemo(
+    () =>
+      scoped
+        .filter((u) => role === 'all' || u.role === role)
+        .sort((a, b) => (a.isActive !== b.isActive ? (a.isActive ? -1 : 1) : a.displayName.localeCompare(b.displayName))),
+    [scoped, role],
   );
+  usePageClamp(page, setPage, rows.length, pageSize);
+  const paged = useMemo(() => rows.slice((page - 1) * pageSize, page * pageSize), [rows, page, pageSize]);
 
-  const summary = useMemo(() => {
-    if (!users) return { total: 0, admin: 0, staff: 0, cashier: 0 };
-    const active = users.filter((u) => u.isActive);
-    return {
-      total: active.length,
-      admin: active.filter((u) => u.role === UserRole.admin).length,
-      staff: active.filter((u) => u.role === UserRole.staff).length,
-      cashier: active.filter((u) => u.role === UserRole.cashier).length,
-    };
-  }, [users]);
-
-  if (error) return <ErrorView title="Could not load users" message={error.message} />;
-
-  return (
-    <div className="space-y-tk-xl">
-      <div className="flex justify-end">
-        <button
-          type="button"
-          onClick={() => navigate(RoutePaths.userAdd)}
-          className="flex items-center gap-tk-xs rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background hover:bg-primary-dark"
-        >
-          <PlusIcon className="h-3.5 w-3.5" />
-          Add user
-        </button>
-      </div>
-
-      <div className="grid grid-cols-2 gap-tk-md sm:grid-cols-4">
-        <SummaryTile label="Total active" value={summary.total} active={roleFilter === null} onClick={() => setRoleFilter(null)} />
-        <SummaryTile label="Admins" value={summary.admin} active={roleFilter === UserRole.admin} onClick={() => setRoleFilter(UserRole.admin)} />
-        <SummaryTile label="Staff" value={summary.staff} active={roleFilter === UserRole.staff} onClick={() => setRoleFilter(UserRole.staff)} />
-        <SummaryTile label="Cashiers" value={summary.cashier} active={roleFilter === UserRole.cashier} onClick={() => setRoleFilter(UserRole.cashier)} />
-      </div>
-
-      <div className="flex flex-wrap items-center gap-tk-sm">
-        {roleFilter ? (
-          <button
-            type="button"
-            onClick={() => setRoleFilter(null)}
-            className="inline-flex items-center gap-tk-xs rounded-full bg-light-subtle px-tk-sm py-[2px] text-bodySmall text-light-text"
-          >
-            {userRoleDisplayName[roleFilter]}
-            <span aria-hidden>×</span>
-          </button>
-        ) : null}
-        <button
-          type="button"
-          onClick={() => setShowInactive((v) => !v)}
-          className="inline-flex items-center gap-tk-xs rounded-md border border-light-border px-tk-sm py-[4px] text-bodySmall text-light-text hover:bg-light-subtle"
-        >
-          {showInactive ? (
-            <EyeSlashIcon className="h-3.5 w-3.5" />
-          ) : (
-            <EyeIcon className="h-3.5 w-3.5" />
-          )}
-          {showInactive ? 'Hide inactive' : 'Show inactive'}
-        </button>
-      </div>
-
-      {isLoading || !users ? (
-        <LoadingView label="Loading users…" />
-      ) : filtered.length === 0 ? (
-        <EmptyState title="No users found" description="Try clearing the filter or adding a new user." />
-      ) : (
-        <>
-          <UsersTable users={paged} myId={me?.id ?? ''} />
-          <Pager total={filtered.length} page={page} onPage={setPage} pageSize={pageSize}
-            onPageSize={(n) => { setPageSize(n); setPage(1); }} />
-        </>
-      )}
-    </div>
-  );
-}
-
-function SummaryTile({
-  label,
-  value,
-  active,
-  onClick,
-}: {
-  label: string;
-  value: number;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        'flex flex-col items-start rounded-lg border p-tk-md text-left transition-colors',
-        active
-          ? 'border-light-text bg-light-subtle'
-          : 'border-light-hairline bg-light-card hover:bg-light-subtle',
-      )}
-    >
-      <span className="text-bodySmall text-light-text-secondary">{label}</span>
-      <span className="mt-tk-xs text-headingSmall font-semibold tabular-nums text-light-text">
-        {value}
-      </span>
-    </button>
-  );
-}
-
-function UsersTable({ users, myId }: { users: User[]; myId: string }) {
-  const deactivate = useDeactivateUser();
-  const reactivate = useReactivateUser();
-  const deleteUser = useDeleteUser();
-  const [confirm, setConfirm] = useState<null | {
-    user: User;
-    mode: 'deactivate' | 'reactivate' | 'delete';
-  }>(null);
-
-  const pending =
-    deactivate.isPending || reactivate.isPending || deleteUser.isPending;
-  const mutationError = deactivate.error ?? reactivate.error ?? deleteUser.error;
-
-  const onConfirm = async () => {
-    if (!confirm) return;
-    if (confirm.mode === 'deactivate') {
-      await deactivate.mutateAsync(confirm.user);
-    } else if (confirm.mode === 'reactivate') {
-      await reactivate.mutateAsync(confirm.user);
-    } else {
-      await deleteUser.mutateAsync(confirm.user);
-    }
-    setConfirm(null);
+  const isFiltered = role !== 'all' || query.trim() !== '';
+  const clearFilters = () => {
+    setRole('all');
+    setQuery('');
   };
 
-  const confirmLabel =
-    confirm?.mode === 'deactivate'
-      ? 'Deactivate'
-      : confirm?.mode === 'delete'
-        ? 'Delete'
-        : 'Reactivate';
+  const columns: Array<Column<User>> = [
+    {
+      key: 'user', header: 'User',
+      render: (u) => {
+        const c = roleColor[u.role];
+        return (
+          <div className="flex min-w-0 items-center gap-3">
+            <div
+              className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-ctl border"
+              style={{ background: c.soft, borderColor: c.fill }}
+            >
+              <span className="font-mono text-[13px] font-semibold" style={{ color: c.text }}>
+                {(u.displayName || u.email).charAt(0).toUpperCase()}
+              </span>
+            </div>
+            <div className="flex min-w-0 flex-col gap-0.5">
+              <div className="flex items-center gap-[7px]">
+                <span className="text-[13px] font-semibold tracking-[-0.15px] text-ink">{u.displayName || '—'}</span>
+                {me && u.id === me.id ? (
+                  <span className="rounded-[5px] bg-accent-soft px-1.5 py-[2px] text-[9.5px] font-bold tracking-[0.8px] text-accent-text">YOU</span>
+                ) : null}
+              </div>
+              <span className="truncate text-[11.5px] text-ink-3">{u.email}</span>
+            </div>
+          </div>
+        );
+      },
+    },
+    { key: 'role', header: 'Role', width: '110px', render: (u) => <RoleBadge role={u.role} /> },
+    {
+      key: 'seen', header: 'Last sign-in', width: '176px',
+      render: (u) => {
+        const s = signInStaleness(u.lastLoginAt, now);
+        return (
+          <div className="flex flex-col gap-0.5">
+            <span className="font-mono text-[12px] text-ink-2">{u.lastLoginAt ? formatShopDateTime(u.lastLoginAt) : 'Never'}</span>
+            <span className={cn('text-[10.5px]', staleCls[s.tone])}>{s.label}</span>
+          </div>
+        );
+      },
+    },
+    {
+      key: 'added', header: 'Added', width: '118px', mono: true,
+      render: (u) => <span className="text-[11.5px] text-ink-3">{formatInShopZone(u.createdAt, { month: 'short', day: 'numeric', year: 'numeric' })}</span>,
+    },
+    {
+      key: 'status', header: 'Status', width: '104px',
+      render: (u) => (
+        <span className={cn('flex items-center gap-1.5 text-[12px] font-medium', u.isActive ? 'text-pos' : 'text-ink-3')}>
+          <span className={cn('h-1.5 w-1.5 rounded-full', u.isActive ? 'bg-pos' : 'bg-ink-3')} />
+          {u.isActive ? 'Active' : 'Inactive'}
+        </span>
+      ),
+    },
+    {
+      key: 'manage', header: '', width: '96px',
+      render: (u) => (
+        <div className="flex justify-end">
+          <Button variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); navigate(`/users/edit/${u.id}`); }}>
+            Manage
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
+  if (error) return <ErrorState message="Could not load users." onRetry={() => window.location.reload()} />;
 
   return (
-    <>
-      <div className="overflow-x-auto rounded-lg border border-light-hairline bg-light-card">
-        <table className="w-full text-bodySmall">
-          <thead className="border-b border-light-hairline bg-light-subtle text-light-text-secondary">
-            <tr>
-              <Th>User</Th>
-              <Th>Role</Th>
-              <Th>Last sign-in</Th>
-              <Th>Status</Th>
-              <Th className="text-right">Actions</Th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-light-hairline">
-            {users.map((user) => (
-              <UserRow
-                key={user.id}
-                user={user}
-                isMe={user.id === myId}
-                onDeactivate={() => setConfirm({ user, mode: 'deactivate' })}
-                onReactivate={() => setConfirm({ user, mode: 'reactivate' })}
-                onDelete={() => setConfirm({ user, mode: 'delete' })}
-              />
-            ))}
-          </tbody>
-        </table>
+    <div className="flex flex-col gap-3">
+      {/* Summary row */}
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(236px,1fr))] gap-3">
+        <BreakdownCard
+          testId="accounts-by-role"
+          label="Accounts by role"
+          total={`${summary.active} active`}
+          bar={ROLES.map((r) => ({ key: r, color: roleColor[r].fill, pct: summary.active ? (summary.byRole[r] / summary.active) * 100 : 0 }))}
+          rows={ROLES.map((r) => ({
+            key: r,
+            label: userRoleDisplayName[r],
+            color: roleColor[r].fill,
+            active: role === r,
+            onClick: () => setRole(role === r ? 'all' : r),
+            value: (
+              <>
+                <span className="text-[10.5px] text-ink-3">{roleScope[r].can}</span>
+                <span className="w-5 text-right font-mono text-[13px] font-semibold text-ink">{summary.byRole[r]}</span>
+              </>
+            ),
+          }))}
+        />
+        <StatCard label="Signed in this week" value={summary.signedInThisWeek} format="number" loading={isLoading}
+          note={`of ${summary.active} active ${summary.active === 1 ? 'account' : 'accounts'}`} />
+        <StatCard label="Dormant 30+ days" value={summary.dormant30} format="number" loading={isLoading}
+          valueTone={summary.dormant30 ? 'neg' : 'pos'}
+          note={summary.dormant30 ? 'review whether they still need access' : 'everyone is current'} />
+        <StatCard label="Never signed in" value={summary.neverSignedIn} format="number" loading={isLoading}
+          note={summary.neverSignedIn ? 'invite may not have been opened' : 'all invites accepted'} />
       </div>
 
-      <Dialog
-        open={confirm !== null}
-        onClose={() => {
-          if (pending) return;
-          setConfirm(null);
-          deactivate.reset();
-          reactivate.reset();
-          deleteUser.reset();
-        }}
-        title={
-          confirm?.mode === 'deactivate'
-            ? 'Deactivate user'
-            : confirm?.mode === 'delete'
-              ? 'Delete user'
-              : 'Reactivate user'
-        }
-        description={
-          confirm
-            ? confirm.mode === 'deactivate'
-              ? `${confirm.user.displayName || confirm.user.email} will no longer be able to sign in.`
-              : confirm.mode === 'delete'
-                ? `${confirm.user.displayName || confirm.user.email} will be permanently deleted. Past sales and activity logs keep their name.`
-                : `${confirm.user.displayName || confirm.user.email} will be able to sign in again.`
-            : undefined
-        }
-        dismissable={!pending}
-      >
-        {mutationError ? (
-          <p className="mb-tk-md text-bodySmall text-error">
-            {mutationError.message}
-          </p>
-        ) : null}
-        <div className="flex justify-end gap-tk-sm">
-          <button
-            type="button"
-            onClick={() => setConfirm(null)}
-            disabled={pending}
-            className="rounded-md px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle disabled:opacity-60"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            disabled={pending}
-            className={cn(
-              'flex items-center gap-tk-xs rounded-md px-tk-md py-tk-sm text-bodySmall font-semibold disabled:opacity-60',
-              confirm?.mode === 'reactivate'
-                ? 'bg-light-text text-light-background hover:bg-primary-dark'
-                : 'bg-error text-white hover:bg-error-dark',
-            )}
-          >
-            {pending ? <Spinner className="h-3.5 w-3.5" /> : null}
-            {confirmLabel}
-          </button>
-        </div>
-      </Dialog>
-    </>
-  );
-}
-
-function Th({ children, className }: { children: React.ReactNode; className?: string }) {
-  return (
-    <th className={cn('px-tk-md py-tk-sm text-left text-[11px] font-semibold uppercase tracking-wider', className)}>
-      {children}
-    </th>
-  );
-}
-
-const dateFmt = new Intl.DateTimeFormat('en-PH', {
-  dateStyle: 'medium',
-  timeStyle: 'short',
-});
-
-function UserRow({
-  user,
-  isMe,
-  onDeactivate,
-  onReactivate,
-  onDelete,
-}: {
-  user: User;
-  isMe: boolean;
-  onDeactivate: () => void;
-  onReactivate: () => void;
-  onDelete: () => void;
-}) {
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  return (
-    <tr className={cn(!user.isActive && 'opacity-60')}>
-      <td className="px-tk-md py-tk-sm">
-        <div className="flex items-center gap-tk-sm">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary-dark text-[12px] font-semibold text-white">
-            {(user.displayName || user.email)[0]?.toUpperCase() ?? '?'}
-          </span>
-          <div className="min-w-0">
-            <div className="flex items-center gap-tk-xs text-bodyMedium font-medium text-light-text">
-              <span className="truncate">{user.displayName || '—'}</span>
-              {isMe ? (
-                <span className="rounded-full bg-light-subtle px-tk-xs py-[1px] text-[10px] uppercase tracking-wider text-light-text-secondary">
-                  You
-                </span>
-              ) : null}
-            </div>
-            <div className="truncate text-[12px] text-light-text-secondary">{user.email}</div>
-          </div>
-        </div>
-      </td>
-      <td className="px-tk-md py-tk-sm">
-        <RoleBadge role={user.role} />
-      </td>
-      <td className="px-tk-md py-tk-sm text-[12px] text-light-text-secondary">
-        {user.lastLoginAt ? dateFmt.format(user.lastLoginAt) : '—'}
-      </td>
-      <td className="px-tk-md py-tk-sm">
-        <span
-          className={cn(
-            'inline-flex items-center gap-tk-xs text-[12px] font-medium',
-            user.isActive ? 'text-success-dark' : 'text-light-text-secondary',
-          )}
-        >
-          <span
-            className="h-1.5 w-1.5 rounded-full"
-            style={{ backgroundColor: user.isActive ? '#16a34a' : '#a3a3a3' }}
+      {/* Views row */}
+      <div className="flex flex-wrap items-center gap-2">
+        <ViewChips
+          value={role}
+          onChange={setRole}
+          options={[
+            { value: 'all' as RoleFilter, label: 'All roles', count: scoped.length },
+            ...ROLES.map((r) => ({ value: r as RoleFilter, label: userRoleDisplayName[r], count: scoped.filter((u) => u.role === r).length })),
+          ]}
+        />
+        <div className="ml-auto flex items-center gap-[9px]">
+          <Segmented
+            label="Status"
+            value={status}
+            onChange={setStatus}
+            options={[
+              { value: 'active', label: 'Active' },
+              { value: 'inactive', label: 'Inactive' },
+              { value: 'all', label: 'All' },
+            ]}
           />
-          {user.isActive ? 'Active' : 'Inactive'}
-        </span>
-      </td>
-      <td className="px-tk-md py-tk-sm text-right">
-        <div className="relative inline-flex">
-          <Link
-            to={`/users/edit/${user.id}`}
-            className="inline-flex items-center gap-tk-xs rounded-md px-tk-sm py-tk-xs text-bodySmall text-light-text hover:bg-light-subtle"
-          >
-            <PencilIcon className="h-3.5 w-3.5" />
-            Edit
-          </Link>
-          {!isMe ? (
-            <>
-              <button
-                type="button"
-                onClick={() => setMenuOpen((v) => !v)}
-                aria-label="More actions"
-                className="ml-tk-xs rounded-md p-tk-xs text-light-text-secondary hover:bg-light-subtle"
-              >
-                <EllipsisHorizontalIcon className="h-4 w-4" />
-              </button>
-              {menuOpen ? (
-                <RowMenu
-                  user={user}
-                  onClose={() => setMenuOpen(false)}
-                  onDeactivate={() => {
-                    setMenuOpen(false);
-                    onDeactivate();
-                  }}
-                  onReactivate={() => {
-                    setMenuOpen(false);
-                    onReactivate();
-                  }}
-                  onDelete={() => {
-                    setMenuOpen(false);
-                    onDelete();
-                  }}
-                />
-              ) : null}
-            </>
-          ) : null}
+          <Button variant="primary" icon={<PlusIcon className="h-3.5 w-3.5" />} onClick={() => navigate(RoutePaths.userAdd)}>
+            Add user
+          </Button>
         </div>
-      </td>
-    </tr>
-  );
-}
+      </div>
 
-function RowMenu({
-  user,
-  onClose,
-  onDeactivate,
-  onReactivate,
-  onDelete,
-}: {
-  user: User;
-  onClose: () => void;
-  onDeactivate: () => void;
-  onReactivate: () => void;
-  onDelete: () => void;
-}) {
-  useEffect(() => {
-    const onClick = () => onClose();
-    document.addEventListener('mousedown', onClick);
-    return () => document.removeEventListener('mousedown', onClick);
-  }, [onClose]);
+      {/* Filters row */}
+      <div className="flex flex-wrap items-center gap-2.5">
+        <div className="w-[290px]">
+          <SearchInput variant="bar" value={query} onChange={setQuery} placeholder="Search name or email" />
+        </div>
+        {isFiltered ? (
+          <button type="button" onClick={clearFilters} className="border-b border-line text-[11.5px] text-ink-3 hover:text-neg">
+            Clear filters
+          </button>
+        ) : null}
+        <span className="ml-auto font-mono text-[12px] text-ink-3">
+          {rows.length.toLocaleString('en-PH')} {rows.length === 1 ? 'account' : 'accounts'}
+        </span>
+      </div>
 
-  return (
-    <div
-      onMouseDown={(e) => e.stopPropagation()}
-      className="absolute right-0 top-full z-10 mt-tk-xs w-44 overflow-hidden rounded-md border border-light-hairline bg-light-card shadow-lg"
-    >
-      {user.isActive ? (
-        <button
-          type="button"
-          onClick={onDeactivate}
-          className="flex w-full items-center gap-tk-sm px-tk-md py-tk-sm text-left text-bodySmall text-error-dark hover:bg-error-light/40"
-        >
-          <UserMinusIcon className="h-4 w-4" />
-          Deactivate
-        </button>
-      ) : (
-        <>
-          <button
-            type="button"
-            onClick={onReactivate}
-            className="flex w-full items-center gap-tk-sm px-tk-md py-tk-sm text-left text-bodySmall text-light-text hover:bg-light-subtle"
-          >
-            <UserPlusIcon className="h-4 w-4" />
-            Reactivate
-          </button>
-          <button
-            type="button"
-            onClick={onDelete}
-            className="flex w-full items-center gap-tk-sm px-tk-md py-tk-sm text-left text-bodySmall text-error-dark hover:bg-error-light/40"
-          >
-            <TrashIcon className="h-4 w-4" />
-            Delete
-          </button>
-        </>
-      )}
-      <Link
-        to={`/users/edit/${user.id}`}
-        onMouseDown={(e) => e.stopPropagation()}
-        className="flex w-full items-center gap-tk-sm border-t border-light-hairline px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle"
-      >
-        <UserIcon className="h-4 w-4" />
-        View details
-      </Link>
+      {/* Table card */}
+      <section className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
+        <DataTable
+          columns={columns}
+          rows={paged}
+          rowKey={(u) => u.id}
+          onRowClick={(u) => navigate(`/users/edit/${u.id}`)}
+          rowClassName={(u) => (u.isActive ? undefined : 'opacity-[.62]')}
+          loading={isLoading}
+          minWidth="940px"
+          empty={
+            <NoMatchesState
+              title="No users match these filters"
+              hint="Try another role, or clear the search."
+              onClear={isFiltered ? clearFilters : undefined}
+            />
+          }
+        />
+        {rows.length > 0 && !isLoading ? (
+          <TableFooter total={rows.length} page={page} pageSize={pageSize} onPage={setPage}
+            onPageSize={(n) => { setPageSize(n); setPage(1); }} />
+        ) : null}
+      </section>
+
+      {/* /users/add and /users/edit/:id render the modal here, over the list. */}
+      <Outlet />
     </div>
   );
 }

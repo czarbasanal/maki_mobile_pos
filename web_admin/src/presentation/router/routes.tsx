@@ -16,7 +16,7 @@ import { AboutPage } from '@/presentation/features/settings/AboutPage';
 import { CostCodeSettingsPage } from '@/presentation/features/settings/CostCodeSettingsPage';
 import { TimezoneSettingsPage } from '@/presentation/features/settings/TimezoneSettingsPage';
 import { UsersListPage } from '@/presentation/features/users/UsersListPage';
-import { UserFormPage } from '@/presentation/features/users/UserFormPage';
+import { UserModal } from '@/presentation/features/users/UserModal';
 import { ActivityLogsPage } from '@/presentation/features/logs/ActivityLogsPage';
 import { ReportsHubPage } from '@/presentation/features/reports/ReportsHubPage';
 import { SalesReportPage } from '@/presentation/features/reports/SalesReportPage';
@@ -296,6 +296,8 @@ export const router = createBrowserRouter(
           element: <SaleDetailPage />,
           handle: { title: 'Sale detail' } satisfies PageChrome,
         },
+        // The add/manage modal renders OVER the list (child routes, like
+        // Inventory): the list stays mounted with its filters and page.
         {
           path: RoutePaths.users,
           element: <UsersListPage />,
@@ -303,16 +305,10 @@ export const router = createBrowserRouter(
             title: 'Users',
             subtitle: 'Add, edit, and manage admin users and staff accounts.',
           } satisfies PageChrome,
-        },
-        {
-          path: RoutePaths.userAdd,
-          element: <UserFormPage />,
-          handle: { title: 'New user' } satisfies PageChrome,
-        },
-        {
-          path: RoutePaths.userEdit,
-          element: <UserFormPage />,
-          handle: { title: 'Edit user' } satisfies PageChrome,
+          children: [
+            { path: 'add', element: <UserModal /> },
+            { path: 'edit/:id', element: <UserModal /> },
+          ],
         },
         {
           path: RoutePaths.userLogs,

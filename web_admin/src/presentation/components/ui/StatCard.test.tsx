@@ -79,3 +79,10 @@ describe('StatCard — text and null values', () => {
     expect(screen.queryByText(/%/)).not.toBeInTheDocument();
   });
 });
+
+describe('StatCard — valueTone', () => {
+  it('colours the figure when the number is itself the news', () => {
+    render(<StatCard label="Dormant 30+ days" value={3} format="number" valueTone="neg" />);
+    expect(screen.getByText('3').className).toContain('text-neg');
+  });
+});

@@ -36,11 +36,14 @@ function makeUser(overrides: Partial<User> = {}): User {
   };
 }
 
+const sendPasswordResetEmail = vi.fn(async () => {});
+
 function wrap(userRepo: Partial<Container['userRepo']>, activityLog: ReturnType<typeof vi.fn>) {
   const qc = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
   const activityLogRepo = { log: activityLog } as unknown as Container['activityLogRepo'];
+  const authRepo = { sendPasswordResetEmail } as unknown as Container['authRepo'];
   return ({ children }: { children: ReactNode }) => (
-    <DiProvider override={{ userRepo: userRepo as Container['userRepo'], activityLogRepo }}>
+    <DiProvider override={{ userRepo: userRepo as Container['userRepo'], activityLogRepo, authRepo }}>
       <QueryClientProvider client={qc}>{children}</QueryClientProvider>
     </DiProvider>
   );
@@ -75,26 +78,40 @@ describe('user mutation activity logging', () => {
     useAuthStore.setState({ user: null, status: 'signedOut' });
   });
 
-  it('useCreateUser logs type user_created', async () => {
+  it('useCreateUser mints with a hidden random password, sends the invite, and logs user_created', async () => {
     useAuthStore.setState({ user: actor, status: 'signedIn' });
     const log = vi.fn().mockResolvedValue(undefined);
     const created = makeUser({ id: 'u3', displayName: 'New Staff', role: UserRole.staff });
     const create = vi.fn().mockResolvedValue(created);
+    sendPasswordResetEmail.mockClear();
     const { result } = renderHook(() => useCreateUser(), { wrapper: wrap({ create }, log) });
 
     act(() => {
-      result.current.mutate({
-        email: created.email,
-        displayName: created.displayName,
-        role: created.role,
-        password: 'secret123',
-      });
+      result.current.mutate({ email: created.email, displayName: created.displayName, role: created.role });
     });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    const [input] = create.mock.calls[0];
+    expect(input.password.length).toBeGreaterThan(20);
+    expect(sendPasswordResetEmail).toHaveBeenCalledWith(created.email);
+    expect(result.current.data).toEqual({ user: created, inviteSent: true });
     expect(log).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'user_created', entityId: 'u3' }),
     );
+    useAuthStore.setState({ user: null, status: 'signedOut' });
+  });
+
+  it('useCreateUser reports inviteSent: false when the account exists but the email failed', async () => {
+    useAuthStore.setState({ user: actor, status: 'signedIn' });
+    const created = makeUser({ id: 'u3' });
+    const create = vi.fn().mockResolvedValue(created);
+    sendPasswordResetEmail.mockRejectedValueOnce(new Error('smtp'));
+    const { result } = renderHook(() => useCreateUser(), { wrapper: wrap({ create }, vi.fn()) });
+    act(() => {
+      result.current.mutate({ email: created.email, displayName: created.displayName, role: created.role });
+    });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data?.inviteSent).toBe(false);
     useAuthStore.setState({ user: null, status: 'signedOut' });
   });
 

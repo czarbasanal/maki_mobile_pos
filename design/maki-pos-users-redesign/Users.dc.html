@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg:#f3f5f7; --surface:#ffffff; --surface-2:#f8fafb; --surface-3:#eef1f4;
+  --border:#e4e8ed; --border-2:#eef1f4;
+  --text:#14171c; --text-2:#69727f; --text-3:#98a1ad;
+  --accent:#f2c418; --accent-ink:#1d1a08; --accent-soft:#fdf4d2; --accent-line:#e0b200; --accent-text:#8a6300;
+  --pos:#12866a; --pos-soft:#e3f4ef; --neg:#c04b38; --neg-soft:#fbeae6;
+  --info:#3f68d6; --info-soft:#e9eefc;
+  --shadow:0 1px 2px rgba(16,24,40,.04), 0 10px 28px -12px rgba(16,24,40,.10);
+}
+:root[data-theme="dark"]{
+  --bg:#0d0f12; --surface:#15181d; --surface-2:#1a1e24; --surface-3:#222731;
+  --border:#252b34; --border-2:#1e232a;
+  --text:#eceff3; --text-2:#98a1ad; --text-3:#6a7482;
+  --accent:#f2c418; --accent-ink:#1d1a08; --accent-soft:#332a0a; --accent-line:#f0c53a; --accent-text:#f0c53a;
+  --pos:#3fc79f; --pos-soft:#132a25; --neg:#e5806c; --neg-soft:#2c1a17;
+  --info:#7d9bf0; --info-soft:#182034;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -12px rgba(0,0,0,.6);
+}
+html,body{margin:0;padding:0;background:var(--bg);}
+*{box-sizing:border-box;}
+a{color:var(--text);text-decoration:none;}
+a:hover{color:var(--accent-text);}
+input::placeholder{color:var(--text-3);}
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:8px;border:3px solid transparent;background-clip:content-box;}
+@keyframes rise{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+</style>
+</helmet>
+
+<div style="display:flex;min-height:100vh;width:100%;background:var(--bg);font-family:'IBM Plex Sans',system-ui,sans-serif;color:var(--text);">
+
+  <aside style="width:248px;flex:0 0 248px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;">
+    <div style="padding:20px 18px 16px 18px;display:flex;align-items:center;gap:11px;">
+      <div style="width:34px;height:34px;border-radius:10px;background:var(--accent);display:flex;align-items:center;justify-content:center;flex:0 0 34px;box-shadow:0 2px 8px -2px var(--accent-line);">
+        <span style="font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:14px;color:var(--accent-ink);letter-spacing:-.5px;">M</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:1px;min-width:0;">
+        <span style="font-size:14px;font-weight:600;letter-spacing:.3px;">MAKI MOTOR PARTS</span>
+        <span style="font-size:10.5px;color:var(--text-3);">Point of sale</span>
+      </div>
+    </div>
+
+    <div style="padding:2px 10px;">
+      <button onClick="{{ pickDash }}" style="all:unset;cursor:pointer;box-sizing:border-box;width:100%;display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:10px;font-size:13.5px;color:var(--text-2);font-weight:500;" style-hover="background:var(--surface-2);color:var(--text);">
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2.5" y="2.5" width="6.4" height="6.4" rx="1.8"></rect><rect x="11.1" y="2.5" width="6.4" height="6.4" rx="1.8"></rect><rect x="2.5" y="11.1" width="6.4" height="6.4" rx="1.8"></rect><rect x="11.1" y="11.1" width="6.4" height="6.4" rx="1.8"></rect></svg>
+        Dashboard
+      </button>
+    </div>
+
+    <div style="flex:1;overflow-y:auto;padding:0 10px 8px 10px;display:flex;flex-direction:column;gap:2px;">
+      <sc-for list="{{ navGroups }}" as="g" hint-placeholder-count="4">
+        <div style="display:flex;flex-direction:column;gap:2px;">
+          <div style="padding:16px 11px 6px 11px;font-size:10px;letter-spacing:1.1px;text-transform:uppercase;color:var(--text-3);font-weight:600;">{{ g.label }}</div>
+          <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="3">
+            <button onClick="{{ it.pick }}" style="all:unset;cursor:pointer;box-sizing:border-box;width:100%;display:flex;align-items:center;gap:11px;padding:8px 11px;border-radius:10px;font-size:13.5px;background:{{ it.bg }};color:{{ it.fg }};font-weight:{{ it.fw }};">
+              <span style="width:16px;height:16px;display:flex;align-items:center;justify-content:center;flex:0 0 16px;">
+                <span style="width:7px;height:7px;border-radius:2px;background:{{ it.dot }};display:block;"></span>
+              </span>
+              {{ it.name }}
+            </button>
+          </sc-for>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="padding:10px;border-top:1px solid var(--border-2);">
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 9px;border-radius:11px;background:var(--surface-2);">
+        <div style="width:32px;height:32px;border-radius:9px;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:var(--text-2);flex:0 0 32px;">C</div>
+        <div style="display:flex;flex-direction:column;min-width:0;">
+          <span style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px;">czarbasanal@gmail.com</span>
+          <span style="font-size:10px;letter-spacing:.7px;color:var(--text-3);font-weight:600;">ADMIN</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column;">
+
+    <header style="display:flex;align-items:center;gap:14px;padding:18px 28px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:20;">
+      <div style="display:flex;flex-direction:column;gap:3px;">
+        <h1 style="margin:0;font-size:20px;font-weight:600;letter-spacing:-.4px;">Users</h1>
+        <span style="font-size:12.5px;color:var(--text-3);">Add, edit, and manage admin users and staff accounts.</span>
+      </div>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:9px;">
+        <span style="font-size:12.5px;font-weight:600;letter-spacing:-.1px;padding-right:3px;">Saturday, Sep 5 2026</span>
+        <div style="display:flex;align-items:center;gap:7px;padding:8px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2);font-size:12.5px;color:var(--text-2);">
+          <span style="width:6px;height:6px;border-radius:50%;background:var(--text-3);"></span>
+          Register closed
+        </div>
+        <button onClick="{{ toggleTheme }}" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:7px;padding:8px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2);font-size:12.5px;color:var(--text-2);" style-hover="color:var(--text);">
+          {{ themeIcon }} {{ themeLabel }}
+        </button>
+      </div>
+    </header>
+
+    <div style="flex:1;padding:20px 28px 36px 28px;display:flex;flex-direction:column;gap:12px;animation:rise .3s ease both;">
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(236px,1fr));gap:12px;">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:15px 17px;display:flex;flex-direction:column;gap:11px;">
+          <div style="display:flex;align-items:baseline;gap:9px;">
+            <span style="font-size:11.5px;color:var(--text-2);font-weight:500;">Accounts by role</span>
+            <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--text-3);">{{ totalActive }} active</span>
+          </div>
+          <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;gap:2px;">
+            <sc-for list="{{ roleBar }}" as="r" hint-placeholder-count="3">
+              <div style="width:{{ r.pct }}%;background:{{ r.color }};"></div>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:7px;">
+            <sc-for list="{{ roleBar }}" as="r" hint-placeholder-count="3">
+              <button onClick="{{ r.pick }}" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:8px;padding:1px 0;">
+                <span style="width:7px;height:7px;border-radius:2px;background:{{ r.color }};flex:0 0 7px;"></span>
+                <span style="font-size:12px;color:{{ r.fg }};font-weight:{{ r.fw }};">{{ r.name }}</span>
+                <span style="margin-left:auto;font-size:10.5px;color:var(--text-3);">{{ r.can }}</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;width:20px;text-align:right;">{{ r.count }}</span>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+
+        <sc-for list="{{ stats }}" as="s" hint-placeholder-count="3">
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:15px 17px;display:flex;flex-direction:column;gap:8px;">
+            <span style="font-size:11.5px;color:var(--text-2);font-weight:500;">{{ s.label }}</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;letter-spacing:-1px;font-feature-settings:'tnum';color:{{ s.fg }};">{{ s.value }}</span>
+            <span style="font-size:11px;color:var(--text-3);">{{ s.note }}</span>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <sc-for list="{{ views }}" as="v" hint-placeholder-count="4">
+          <button onClick="{{ v.pick }}" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:7px;padding:7px 13px;border-radius:20px;font-size:12.5px;white-space:nowrap;font-weight:{{ v.fw }};background:{{ v.bg }};color:{{ v.fg }};border:1px solid {{ v.bd }};">
+            {{ v.label }}
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;opacity:.7;">{{ v.count }}</span>
+          </button>
+        </sc-for>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:9px;">
+          <div style="display:flex;gap:4px;padding:3px;border-radius:11px;background:var(--surface-3);">
+            <sc-for list="{{ statuses }}" as="s" hint-placeholder-count="3">
+              <button onClick="{{ s.pick }}" style="all:unset;cursor:pointer;padding:6px 13px;border-radius:8px;font-size:12px;white-space:nowrap;font-weight:{{ s.fw }};background:{{ s.bg }};color:{{ s.fg }};">{{ s.label }}</button>
+            </sc-for>
+          </div>
+          <button onClick="{{ openAdd }}" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:7px;padding:9px 15px;border-radius:10px;background:var(--accent);color:var(--accent-ink);font-size:12.5px;font-weight:600;white-space:nowrap;box-shadow:0 4px 14px -8px var(--accent-line);">
+            <span style="font-size:14px;line-height:1;">+</span> Add user
+          </button>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:9px 13px;width:290px;box-shadow:var(--shadow);">
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="var(--text-3)" stroke-width="1.8" style="flex:0 0 14px;"><circle cx="9" cy="9" r="5.6"></circle><line x1="13.2" y1="13.2" x2="17" y2="17"></line></svg>
+          <input value="{{ query }}" onChange="{{ onQuery }}" placeholder="Search name or email" style="all:unset;font-family:'IBM Plex Sans',sans-serif;font-size:12.5px;color:var(--text);width:100%;" />
+        </div>
+        <sc-if value="{{ anyFilter }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ clearFilters }}" style="all:unset;cursor:pointer;font-size:11.5px;color:var(--text-3);border-bottom:1px solid var(--border);" style-hover="color:var(--neg);">Clear filters</button>
+        </sc-if>
+        <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-3);">{{ rowCount }}</span>
+      </div>
+
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;">
+        <div style="overflow-x:auto;">
+          <table style="width:100%;min-width:940px;border-collapse:collapse;">
+            <thead>
+              <tr style="background:var(--surface-2);">
+                <th style="text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 20px;border-bottom:1px solid var(--border);">User</th>
+                <th style="text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 14px;border-bottom:1px solid var(--border);width:110px;">Role</th>
+                <th style="text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 14px;border-bottom:1px solid var(--border);width:176px;">Last sign-in</th>
+                <th style="text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 14px;border-bottom:1px solid var(--border);width:118px;">Added</th>
+                <th style="text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:11px 14px;border-bottom:1px solid var(--border);width:104px;">Status</th>
+                <th style="border-bottom:1px solid var(--border);width:96px;"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{ rows }}" as="u" hint-placeholder-count="7">
+                <tr onClick="{{ u.open }}" style="cursor:pointer;opacity:{{ u.rowOpacity }};" style-hover="background:var(--surface-2);">
+                  <td style="padding:11px 20px;border-bottom:1px solid var(--border-2);">
+                    <div style="display:flex;align-items:center;gap:12px;min-width:0;">
+                      <div style="width:34px;height:34px;border-radius:10px;background:{{ u.avBg }};border:1px solid {{ u.avBd }};display:flex;align-items:center;justify-content:center;flex:0 0 34px;">
+                        <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:{{ u.avFg }};">{{ u.initial }}</span>
+                      </div>
+                      <div style="display:flex;flex-direction:column;gap:2px;min-width:0;">
+                        <div style="display:flex;align-items:center;gap:7px;">
+                          <span style="font-size:13px;font-weight:600;letter-spacing:-.15px;">{{ u.name }}</span>
+                          <sc-if value="{{ u.isYou }}" hint-placeholder-val="{{ false }}">
+                            <span style="font-size:9.5px;letter-spacing:.8px;font-weight:700;padding:2px 6px;border-radius:5px;background:var(--accent-soft);color:var(--accent-text);">YOU</span>
+                          </sc-if>
+                        </div>
+                        <span style="font-size:11.5px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ u.email }}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td style="padding:11px 14px;border-bottom:1px solid var(--border-2);">
+                    <span style="font-size:10.5px;font-weight:600;letter-spacing:.5px;padding:3px 8px;border-radius:6px;background:{{ u.roleBg }};color:{{ u.roleFg }};white-space:nowrap;">{{ u.role }}</span>
+                  </td>
+                  <td style="padding:11px 14px;border-bottom:1px solid var(--border-2);">
+                    <div style="display:flex;flex-direction:column;gap:2px;">
+                      <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-2);">{{ u.lastSeen }}</span>
+                      <span style="font-size:10.5px;color:{{ u.staleFg }};">{{ u.stale }}</span>
+                    </div>
+                  </td>
+                  <td style="padding:11px 14px;border-bottom:1px solid var(--border-2);font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--text-3);">{{ u.added }}</td>
+                  <td style="padding:11px 14px;border-bottom:1px solid var(--border-2);">
+                    <span style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:{{ u.statusFg }};">
+                      <span style="width:6px;height:6px;border-radius:50%;background:{{ u.statusFg }};flex:0 0 6px;"></span>
+                      {{ u.status }}
+                    </span>
+                  </td>
+                  <td style="padding:11px 20px 11px 0;border-bottom:1px solid var(--border-2);text-align:right;">
+                    <button onClick="{{ u.open }}" style="all:unset;cursor:pointer;padding:6px 13px;border-radius:9px;border:1px solid var(--border);font-size:11.5px;font-weight:500;color:var(--text-2);white-space:nowrap;" style-hover="border-color:var(--accent-line);color:var(--text);">Manage</button>
+                  </td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+
+        <sc-if value="{{ noMatches }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:52px 20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:7px;">
+            <span style="font-size:13px;color:var(--text-2);font-weight:500;">No users match these filters</span>
+            <span style="font-size:12px;color:var(--text-3);">Try another role, or clear the search.</span>
+            <button onClick="{{ clearFilters }}" style="all:unset;cursor:pointer;margin-top:6px;padding:8px 14px;border-radius:10px;border:1px solid var(--border);font-size:12px;font-weight:500;color:var(--text-2);" style-hover="border-color:var(--accent-line);color:var(--text);">Clear filters</button>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </main>
+
+  <sc-if value="{{ formOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeForm }}" style="position:fixed;inset:0;z-index:60;background:rgba(12,16,22,.4);display:flex;align-items:center;justify-content:center;padding:32px 24px;font-family:'IBM Plex Sans',system-ui,sans-serif;color:var(--text);">
+      <div onClick="{{ stop }}" style="width:100%;max-width:540px;max-height:100%;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:0 32px 72px -24px rgba(0,0,0,.5);overflow:hidden;animation:rise .2s ease both;">
+
+        <div style="display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--border-2);">
+          <div style="width:34px;height:34px;border-radius:10px;background:var(--accent-soft);border:1px solid var(--accent-line);display:flex;align-items:center;justify-content:center;flex:0 0 34px;">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:var(--accent-text);">{{ formInitial }}</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:2px;min-width:0;">
+            <span style="font-size:15px;font-weight:600;letter-spacing:-.25px;">{{ formTitle }}</span>
+            <span style="font-size:11.5px;color:var(--text-3);">{{ formSub }}</span>
+          </div>
+          <button onClick="{{ closeForm }}" title="Close" style="all:unset;cursor:pointer;margin-left:auto;display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:var(--surface-2);color:var(--text-2);flex:0 0 28px;" style-hover="background:var(--surface-3);color:var(--text);">
+            <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="5" x2="15" y2="15"></line><line x1="15" y1="5" x2="5" y2="15"></line></svg>
+          </button>
+        </div>
+
+        <div style="padding:18px 20px;display:flex;flex-direction:column;gap:16px;overflow-y:auto;">
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
+            <div style="display:flex;flex-direction:column;gap:7px;min-width:0;">
+              <label style="font-size:11.5px;font-weight:600;color:var(--text-2);">Name</label>
+              <input value="{{ d.name }}" onChange="{{ setName }}" placeholder="Full name" style="all:unset;box-sizing:border-box;width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-family:'IBM Plex Sans',sans-serif;font-size:13px;color:var(--text);" />
+            </div>
+            <div style="display:flex;flex-direction:column;gap:7px;min-width:0;">
+              <label style="font-size:11.5px;font-weight:600;color:var(--text-2);">Email</label>
+              <input value="{{ d.email }}" onChange="{{ setEmail }}" placeholder="name@example.com" style="all:unset;box-sizing:border-box;width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-family:'IBM Plex Sans',sans-serif;font-size:13px;color:var(--text);" />
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <label style="font-size:11.5px;font-weight:600;color:var(--text-2);">Role</label>
+
+            <sc-if value="{{ roleLocked }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:9px;padding:12px 13px;border-radius:11px;background:var(--surface-2);border:1px solid var(--border);">
+                <div style="display:flex;align-items:center;gap:9px;">
+                  <span style="font-size:10.5px;font-weight:600;letter-spacing:.5px;padding:3px 8px;border-radius:6px;background:{{ lockedRoleBg }};color:{{ lockedRoleFg }};">{{ lockedRole }}</span>
+                  <span style="font-size:11.5px;color:var(--text-2);">{{ lockedRoleDesc }}</span>
+                </div>
+                <span style="font-size:11.5px;color:var(--text-3);text-wrap:pretty;">{{ roleLockReason }}</span>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ roleEditable }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <sc-for list="{{ roleOptions }}" as="r" hint-placeholder-count="3">
+                  <button onClick="{{ r.pick }}" style="all:unset;cursor:{{ r.cursor }};box-sizing:border-box;width:100%;display:flex;align-items:flex-start;gap:11px;padding:11px 13px;border-radius:11px;background:{{ r.bg }};border:1px solid {{ r.bd }};opacity:{{ r.opacity }};">
+                    <span style="width:15px;height:15px;border-radius:50%;border:1px solid {{ r.dotBd }};background:{{ r.dotBg }};display:flex;align-items:center;justify-content:center;flex:0 0 15px;margin-top:1px;">
+                      <span style="width:6px;height:6px;border-radius:50%;background:{{ r.dotIn }};display:block;"></span>
+                    </span>
+                    <div style="display:flex;flex-direction:column;gap:2px;min-width:0;">
+                      <span style="font-size:12.5px;font-weight:600;color:{{ r.fg }};">{{ r.name }}</span>
+                      <span style="font-size:11.5px;color:var(--text-3);text-wrap:pretty;">{{ r.desc }}</span>
+                    </div>
+                  </button>
+                </sc-for>
+                <sc-if value="{{ lastAdmin }}" hint-placeholder-val="{{ false }}">
+                  <span style="font-size:11.5px;color:var(--neg);text-wrap:pretty;padding:2px 2px 0 2px;">This is the only active admin. Promote someone else before changing this role.</span>
+                </sc-if>
+              </div>
+            </sc-if>
+          </div>
+
+          <sc-if value="{{ isAdd }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:11px;background:var(--info-soft);border:1px solid var(--info);">
+              <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="var(--info)" stroke-width="1.8" style="flex:0 0 15px;"><circle cx="10" cy="10" r="7"></circle><line x1="10" y1="9" x2="10" y2="13.6"></line><circle cx="10" cy="6.4" r=".6" fill="var(--info)"></circle></svg>
+              <span style="font-size:11.5px;color:var(--info);text-wrap:pretty;">They will get an email to set their own password. You never see or set it.</span>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isEdit }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:9px;">
+              <span style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);font-weight:600;">Account history</span>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;">
+                <sc-for list="{{ audit }}" as="a" hint-placeholder-count="3">
+                  <div style="display:flex;flex-direction:column;gap:3px;padding:10px 12px;border-radius:10px;background:var(--surface-2);border:1px solid var(--border);min-width:0;">
+                    <span style="font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:var(--text-3);font-weight:600;">{{ a.label }}</span>
+                    <span style="font-size:12.5px;font-weight:600;color:{{ a.fg }};">{{ a.who }}</span>
+                    <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--text-3);">{{ a.when }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <button onClick="{{ viewLogs }}" style="all:unset;cursor:pointer;font-size:11.5px;color:var(--text-2);width:fit-content;border-bottom:1px solid var(--border);" style-hover="color:var(--accent-text);">View activity for this user →</button>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:11px;padding:13px 14px;border-radius:11px;border:1px solid var(--neg);">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="var(--neg)" stroke-width="1.8" style="flex:0 0 14px;"><path d="M10 3.2 17.6 16.4H2.4Z"></path><line x1="10" y1="8.4" x2="10" y2="12"></line><circle cx="10" cy="14.2" r=".6" fill="var(--neg)"></circle></svg>
+                <span style="font-size:11.5px;font-weight:600;color:var(--neg);letter-spacing:.2px;">Danger zone</span>
+              </div>
+
+              <sc-if value="{{ isSelf }}" hint-placeholder-val="{{ false }}">
+                <span style="font-size:11.5px;color:var(--text-3);text-wrap:pretty;">This is your own account. Ask another admin to deactivate it.</span>
+              </sc-if>
+
+              <sc-if value="{{ notSelf }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;flex-direction:column;gap:9px;">
+                  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                    <span style="font-size:11.5px;color:var(--text-3);flex:1;min-width:150px;text-wrap:pretty;">{{ deactivateNote }}</span>
+                    <button onClick="{{ toggleActive }}" style="all:unset;cursor:pointer;padding:8px 14px;border-radius:9px;border:1px solid var(--neg);font-size:12px;font-weight:600;color:var(--neg);white-space:nowrap;" style-hover="background:var(--neg-soft);">{{ deactivateLabel }}</button>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-top:9px;border-top:1px solid var(--border-2);">
+                    <span style="font-size:11.5px;color:var(--text-3);flex:1;min-width:150px;text-wrap:pretty;">{{ deleteNote }}</span>
+                    <button onClick="{{ deleteUser }}" style="all:unset;cursor:{{ deleteCursor }};padding:8px 14px;border-radius:9px;border:1px solid {{ deleteBd }};font-size:12px;font-weight:600;color:{{ deleteFg }};white-space:nowrap;opacity:{{ deleteOpacity }};">Delete account</button>
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+          </sc-if>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:9px;padding:14px 20px;background:var(--surface-2);border-top:1px solid var(--border);">
+          <span style="font-size:11px;color:var(--text-3);">{{ formFootNote }}</span>
+          <button onClick="{{ closeForm }}" style="all:unset;cursor:pointer;margin-left:auto;padding:10px 15px;border-radius:10px;border:1px solid var(--border);background:var(--surface);font-size:12.5px;font-weight:500;color:var(--text-2);" style-hover="color:var(--text);border-color:var(--text-3);">Cancel</button>
+          <button onClick="{{ saveForm }}" style="all:unset;cursor:pointer;padding:10px 17px;border-radius:10px;background:var(--accent);color:var(--accent-ink);font-size:12.5px;font-weight:600;opacity:{{ saveOpacity }};">{{ saveLabel }}</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;left:50%;bottom:32px;transform:translateX(-50%);z-index:80;display:flex;align-items:center;gap:10px;padding:11px 18px;border-radius:12px;background:var(--surface);border:1px solid var(--border);box-shadow:0 18px 44px -14px rgba(0,0,0,.35);font-family:'IBM Plex Sans',sans-serif;color:var(--text);animation:rise .18s ease both;">
+      <span style="width:18px;height:18px;border-radius:50%;background:{{ toastBg }};color:{{ toastFg }};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex:0 0 18px;">✓</span>
+      <span style="font-size:12.5px;font-weight:500;">{{ toast }}</span>
+      <sc-if value="{{ toastDetail }}" hint-placeholder-val="{{ false }}">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-3);">{{ toastDetail }}</span>
+      </sc-if>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1500,&quot;height&quot;:950}}">
+const USERS = [
+  {name:'Admin',      email:'admin@test.com',              role:'ADMIN',   lastSeen:'Jul 24, 2026 · 7:24 AM',  daysAgo:43, added:'Jul 2, 2026',  active:true,  you:false,
+   addedBy:'Czar', changedBy:'Czar', changedAt:'Jul 24, 2026 · 7:30 AM'},
+  {name:'Belle',      email:'tamposmaybelle01@gmail.com',  role:'CASHIER', lastSeen:'Sep 4, 2026 · 7:09 AM',   daysAgo:1,  added:'Jul 20, 2026', active:true,  you:false,
+   addedBy:'Czar', changedBy:'Czar', changedAt:'Aug 12, 2026 · 2:15 PM'},
+  {name:'Bern',       email:'bernadettecoyoca2@gmail.com', role:'CASHIER', lastSeen:'Sep 4, 2026 · 11:03 AM',  daysAgo:1,  added:'Jul 20, 2026', active:true,  you:false,
+   addedBy:'Czar', changedBy:null,  changedAt:null},
+  {name:'Cashier',    email:'cashier@test.com',            role:'CASHIER', lastSeen:'Jul 26, 2026 · 3:18 AM',  daysAgo:41, added:'Jul 2, 2026',  active:true,  you:false,
+   addedBy:'Czar', changedBy:null,  changedAt:null},
+  {name:'Czar',       email:'czarbasanal@gmail.com',       role:'ADMIN',   lastSeen:'Sep 4, 2026 · 8:53 PM',   daysAgo:1,  added:'Jul 1, 2026',  active:true,  you:true,
+   addedBy:'System', changedBy:'Czar', changedAt:'Sep 1, 2026 · 9:02 AM'},
+  {name:'MAKI Staff', email:'makimoto.contact@gmail.com',  role:'STAFF',   lastSeen:'Jul 24, 2026 · 3:13 PM',  daysAgo:43, added:'Jul 15, 2026', active:true,  you:false,
+   addedBy:'Czar', changedBy:null,  changedAt:null},
+  {name:'Staff',      email:'staff@test.com',              role:'STAFF',   lastSeen:'Jul 2, 2026 · 7:49 PM',   daysAgo:65, added:'Jul 2, 2026',  active:true,  you:false,
+   addedBy:'Czar', changedBy:null,  changedAt:null},
+  {name:'Jeric',      email:'jeric.mechanic@gmail.com',    role:'STAFF',   lastSeen:'never',                   daysAgo:999,added:'Aug 3, 2026',  active:false, you:false,
+   addedBy:'Czar', changedBy:'Czar', changedAt:'Aug 20, 2026 · 4:40 PM'}
+];
+
+const ROLES = [
+  {name:'ADMIN',   color:'var(--accent)', bg:'var(--accent-soft)', fg:'var(--accent-text)',
+   can:'full access', desc:'Everything, including users, voids, pricing and reports.'},
+  {name:'STAFF',   color:'var(--pos)',    bg:'var(--pos-soft)',    fg:'var(--pos)',
+   can:'stock & jobs', desc:'Job orders, inventory and receiving. No money screens or users.'},
+  {name:'CASHIER', color:'var(--info)',   bg:'var(--info-soft)',   fg:'var(--info)',
+   can:'register only', desc:'The register and their own sales. Voids need approval.'}
+];
+
+const GROUPS = [
+  {label:'SELL',  items:[{name:'POS'}, {name:'Job Orders'}]},
+  {label:'STOCK', items:[{name:'Inventory'}, {name:'Price History'}, {name:'Receiving'}, {name:'Purchase Orders'}, {name:'Suppliers'}]},
+  {label:'MONEY', items:[{name:'Expenses'}, {name:'Reports'}]},
+  {label:'ADMIN', items:[{name:'Void Requests'}, {name:'Users'}, {name:'Activity Logs'}, {name:'HR'}, {name:'Settings'}]}
+];
+
+const roleOf = (n) => ROLES.filter(r => r.name === n)[0] || ROLES[0];
+
+class Component extends DCLogic {
+  state = {theme:'light', active:'Users', role:'All', status:'Active', query:'',
+    form:null, rec:null, draft:{}, deactivated:[], toast:null, toastDetail:null, toastTone:'pos'};
+
+  componentDidMount(){
+    let t = 'light';
+    try { t = localStorage.getItem('maki-pos-theme') || 'light'; } catch(e) {}
+    document.documentElement.setAttribute('data-theme', t);
+    this.setState({theme:t});
+    this._key = (e) => { if(e.key === 'Escape' && this.state.form) this.setState({form:null}); };
+    document.addEventListener('keydown', this._key, true);
+  }
+  componentWillUnmount(){
+    clearTimeout(this._t);
+    document.removeEventListener('keydown', this._key, true);
+  }
+
+  setTheme(t){
+    document.documentElement.setAttribute('data-theme', t);
+    try { localStorage.setItem('maki-pos-theme', t); } catch(e) {}
+    this.setState({theme:t});
+  }
+
+  notify(msg, detail, tone){
+    clearTimeout(this._t);
+    this.setState({toast:msg, toastDetail:detail || null, toastTone:tone || 'pos'});
+    this._t = setTimeout(() => this.setState({toast:null, toastDetail:null}), 1900);
+  }
+
+  set(key){
+    return (e) => {
+      const v = e.target.value;
+      this.setState(s => ({draft: Object.assign({}, s.draft, {[key]:v})}));
+    };
+  }
+
+  chip(on){
+    return on
+      ? {bg:'var(--accent-soft)', fg:'var(--accent-text)', bd:'var(--accent-text)', fw:'600'}
+      : {bg:'var(--surface)', fg:'var(--text-2)', bd:'var(--border)', fw:'500'};
+  }
+
+  renderVals(){
+    const st = this.state;
+    const q = st.query.trim().toLowerCase();
+    const d = st.draft || {};
+
+    // one set drives every count
+    const all = USERS.map(u => Object.assign({}, u, {
+      active: st.deactivated.indexOf(u.email) > -1 ? !u.active : u.active
+    }));
+
+    const scoped = all.filter(u =>
+      st.status === 'All' ? true : st.status === 'Active' ? u.active : !u.active);
+
+    const rows = scoped
+      .filter(u => st.role === 'All' || u.role === st.role)
+      .filter(u => !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q));
+
+    const activeUsers = all.filter(u => u.active);
+    const totalActive = activeUsers.length || 1;
+    const stale = activeUsers.filter(u => u.daysAgo >= 30).length;
+    const never = all.filter(u => u.lastSeen === 'never').length;
+    const anyFilter = st.role !== 'All' || q.length > 0;
+
+    const rec = st.rec;
+    const isEdit = st.form === 'edit';
+    const isSelf = !!(rec && rec.you);
+    const canSave = (d.name || '').trim().length > 0 && (d.email || '').trim().length > 0;
+    const recActive = rec ? all.filter(u => u.email === rec.email)[0].active : true;
+    const activeAdmins = activeUsers.filter(u => u.role === 'ADMIN').length;
+    const lastAdmin = isEdit && !isSelf && rec && rec.role === 'ADMIN' && activeAdmins <= 1;
+
+    return {
+      themeLabel: st.theme === 'light' ? 'Dark' : 'Light',
+      themeIcon: st.theme === 'light' ? '☾' : '☀',
+      toggleTheme: () => this.setTheme(st.theme === 'light' ? 'dark' : 'light'),
+      stop: (e) => e.stopPropagation(),
+
+      pickDash: () => this.setState({active:'Dashboard'}),
+      navGroups: GROUPS.map(g => ({
+        label:g.label,
+        items: g.items.map(it => {
+          const on = st.active === it.name;
+          return {
+            name:it.name,
+            bg: on ? 'var(--accent-soft)' : 'transparent',
+            fg: on ? 'var(--accent-text)' : 'var(--text-2)',
+            fw: on ? '600' : '500',
+            dot: on ? 'var(--accent-line)' : 'var(--border)',
+            pick: () => this.setState({active:it.name})
+          };
+        })
+      })),
+
+      totalActive: String(activeUsers.length),
+      roleBar: ROLES.map(r => {
+        const n = activeUsers.filter(u => u.role === r.name).length;
+        const on = st.role === r.name;
+        return {
+          name: r.name.charAt(0) + r.name.slice(1).toLowerCase(),
+          count: n, can: r.can, color: r.color,
+          pct: (n / totalActive * 100).toFixed(1),
+          fg: on ? 'var(--text)' : 'var(--text-2)',
+          fw: on ? '600' : '500',
+          pick: () => this.setState({role: on ? 'All' : r.name})
+        };
+      }),
+
+      stats: [
+        {label:'Signed in this week', value: String(activeUsers.filter(u => u.daysAgo <= 7).length),
+         note:'of ' + activeUsers.length + ' active accounts', fg:'var(--text)'},
+        {label:'Dormant 30+ days', value: String(stale),
+         note: stale ? 'review whether they still need access' : 'everyone is current',
+         fg: stale ? 'var(--neg)' : 'var(--pos)'},
+        {label:'Never signed in', value: String(never),
+         note: never ? 'invite may not have been opened' : 'all invites accepted', fg:'var(--text)'}
+      ],
+
+      views: ['All'].concat(ROLES.map(r => r.name)).map(v => {
+        const n = v === 'All' ? scoped.length : scoped.filter(u => u.role === v).length;
+        return Object.assign({label: v === 'All' ? 'All roles' : v, count:n,
+          pick: () => this.setState({role:v})}, this.chip(st.role === v));
+      }),
+
+      statuses: ['Active','Inactive','All'].map(s => {
+        const on = st.status === s;
+        return {label:s, pick: () => this.setState({status:s}),
+          bg: on ? 'var(--surface)' : 'transparent', fg: on ? 'var(--text)' : 'var(--text-2)',
+          fw: on ? '600' : '500'};
+      }),
+
+      query: st.query,
+      onQuery: (e) => this.setState({query:e.target.value}),
+      anyFilter: anyFilter,
+      clearFilters: () => this.setState({role:'All', query:''}),
+      rowCount: rows.length + (rows.length === 1 ? ' account' : ' accounts'),
+      noMatches: rows.length === 0,
+
+      rows: rows.map(u => {
+        const r = roleOf(u.role);
+        const never2 = u.lastSeen === 'never';
+        return {
+          name:u.name, email:u.email, initial: u.name.charAt(0).toUpperCase(),
+          isYou: u.you,
+          role:u.role, roleBg:r.bg, roleFg:r.fg,
+          avBg: r.bg, avBd: r.color, avFg: r.fg,
+          lastSeen: never2 ? 'Never' : u.lastSeen,
+          stale: never2 ? 'invite not accepted'
+               : u.daysAgo <= 1 ? 'today'
+               : u.daysAgo <= 7 ? u.daysAgo + ' days ago'
+               : u.daysAgo + ' days ago',
+          staleFg: never2 ? 'var(--neg)' : u.daysAgo >= 30 ? 'var(--neg)' : u.daysAgo > 7 ? 'var(--accent-text)' : 'var(--text-3)',
+          added:u.added,
+          status: u.active ? 'Active' : 'Inactive',
+          statusFg: u.active ? 'var(--pos)' : 'var(--text-3)',
+          rowOpacity: u.active ? '1' : '.62',
+          open: (e) => {
+            if(e && e.stopPropagation) e.stopPropagation();
+            this.setState({form:'edit', rec:u, draft:{name:u.name, email:u.email, role:u.role}});
+          }
+        };
+      }),
+
+      openAdd: () => this.setState({form:'add', rec:null, draft:{name:'', email:'', role:'CASHIER'}}),
+      closeForm: () => this.setState({form:null}),
+      formOpen: !!st.form,
+      isAdd: st.form === 'add',
+      isEdit: isEdit,
+      formTitle: isEdit ? 'Manage user' : 'Add user',
+      formSub: isEdit && rec ? rec.email : 'They set their own password from an invite email',
+      formInitial: (d.name || '?').charAt(0).toUpperCase(),
+      formFootNote: isEdit ? 'Saving records you as the last editor' : 'An invite email goes out on save',
+      saveLabel: isEdit ? 'Save changes' : 'Send invite',
+      saveOpacity: canSave ? '1' : '.45',
+
+      d: {name: d.name || '', email: d.email || ''},
+      setName: this.set('name'),
+      setEmail: this.set('email'),
+
+      // you cannot change your own role, and the last active admin cannot be demoted.
+      // both are enforced server-side too — a client guard on permissions is a courtesy.
+      roleLocked: isEdit && isSelf,
+      roleEditable: !(isEdit && isSelf),
+      lockedRole: rec ? rec.role : '',
+      lockedRoleBg: rec ? roleOf(rec.role).bg : 'var(--surface-3)',
+      lockedRoleFg: rec ? roleOf(rec.role).fg : 'var(--text-2)',
+      lockedRoleDesc: rec ? roleOf(rec.role).can : '',
+      roleLockReason: 'This is your own account. Ask another admin to change your role.',
+      lastAdmin: lastAdmin,
+
+      roleOptions: ROLES.map(r => {
+        const on = d.role === r.name;
+        const blocked = lastAdmin && r.name !== 'ADMIN';
+        return {
+          name: r.name.charAt(0) + r.name.slice(1).toLowerCase(),
+          desc: blocked ? 'Unavailable while this is the only admin.' : r.desc,
+          bg: on ? 'var(--accent-soft)' : 'var(--surface-2)',
+          bd: on ? 'var(--accent-text)' : 'var(--border)',
+          fg: on ? 'var(--accent-text)' : 'var(--text)',
+          dotBd: on ? 'var(--accent-text)' : 'var(--border)',
+          dotBg: on ? 'var(--accent)' : 'var(--surface)',
+          dotIn: on ? 'var(--accent-ink)' : 'transparent',
+          cursor: blocked ? 'not-allowed' : 'pointer',
+          opacity: blocked ? '.5' : '1',
+          pick: blocked
+            ? () => this.notify('Promote another admin first', null, 'neg')
+            : () => this.setState(s => ({draft: Object.assign({}, s.draft, {role:r.name})}))
+        };
+      }),
+
+      audit: rec ? [
+        {label:'Added by', who: rec.addedBy, when: rec.added, fg:'var(--text)'},
+        {label:'Last updated by', who: rec.changedBy || '—', when: rec.changedAt || 'Never edited',
+         fg: rec.changedBy ? 'var(--text)' : 'var(--text-3)'},
+        {label:'Last sign-in', who: rec.lastSeen === 'never' ? 'Never' : rec.lastSeen.split(' · ')[0],
+         when: rec.lastSeen === 'never' ? 'invite not accepted' : rec.lastSeen.split(' · ')[1] || '',
+         fg: rec.lastSeen === 'never' ? 'var(--text-3)' : 'var(--text)'}
+      ] : [],
+      viewLogs: () => this.notify('Activity Logs', rec ? rec.email : ''),
+
+      isSelf: isSelf,
+      notSelf: !isSelf,
+      deactivateLabel: recActive ? 'Deactivate account' : 'Reactivate account',
+      deactivateNote: recActive
+        ? 'They keep their history but cannot sign in. Reversible.'
+        : 'They can sign in again with the same password.',
+      deleteNote: recActive
+        ? 'Deactivate first. Their sales and job orders stay in the system either way.'
+        : 'Removes the login. Their sales, job orders and logs stay, still attributed to them.',
+      deleteCursor: recActive ? 'not-allowed' : 'pointer',
+      deleteBd: recActive ? 'var(--border)' : 'var(--neg)',
+      deleteFg: recActive ? 'var(--text-3)' : 'var(--neg)',
+      deleteOpacity: recActive ? '.55' : '1',
+
+      toggleActive: () => {
+        if(!rec) return;
+        this.setState(s => ({deactivated: s.deactivated.indexOf(rec.email) > -1
+          ? s.deactivated.filter(x => x !== rec.email)
+          : s.deactivated.concat([rec.email])}));
+        this.notify(recActive ? 'Account deactivated' : 'Account reactivated', rec.name,
+          recActive ? 'neg' : 'pos');
+      },
+      deleteUser: () => {
+        if(recActive){ this.notify('Deactivate the account first', null, 'neg'); return; }
+        this.setState({form:null});
+        this.notify('Account deleted', rec ? rec.name : '', 'neg');
+      },
+
+      saveForm: () => {
+        if(!canSave){ this.notify('Name and email are required', null, 'neg'); return; }
+        if(isEdit && isSelf && rec && d.role !== rec.role){
+          this.notify('You cannot change your own role', null, 'neg'); return;
+        }
+        if(lastAdmin && d.role !== 'ADMIN'){
+          this.notify('Promote another admin first', null, 'neg'); return;
+        }
+        this.setState({form:null});
+        this.notify(isEdit ? 'User saved' : 'Invite sent', d.email);
+      },
+
+      toast: st.toast,
+      toastDetail: st.toastDetail,
+      toastBg: st.toastTone === 'neg' ? 'var(--neg-soft)' : 'var(--pos-soft)',
+      toastFg: st.toastTone === 'neg' ? 'var(--neg)' : 'var(--pos)'
+    };
+  }
+}
+</script>
+</body>
+</html>

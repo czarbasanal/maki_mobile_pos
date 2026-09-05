@@ -20,6 +20,8 @@ export interface StatCardProps {
   /** The screen's headline metric (reports guide §1): accent tint + accent-line
    *  border, label and note in accent-text. Replaces the old solid-black card. */
   lead?: boolean;
+  /** Colour the figure itself: a result that is good/bad news (users guide: Dormant 30+). */
+  valueTone?: 'pos' | 'neg';
 }
 
 function formatValue(value: number | string | null, format: StatFormat): string {
@@ -37,7 +39,7 @@ function deltaChip(delta: number): { label: string; tone: Tone } {
   return { label: '0.0%', tone: 'neutral' };
 }
 
-export function StatCard({ label, value, format, delta, chip, note, loading = false, lead = false }: StatCardProps) {
+export function StatCard({ label, value, format, delta, chip, note, loading = false, lead = false, valueTone }: StatCardProps) {
   const resolvedChip = chip ?? (delta != null ? deltaChip(delta) : null);
   return (
     <section
@@ -54,7 +56,7 @@ export function StatCard({ label, value, format, delta, chip, note, loading = fa
           </Badge>
         )}
       </div>
-      <div className="tnum mt-1.5 font-mono text-kpi text-ink">
+      <div className={clsx('tnum mt-1.5 font-mono text-kpi', valueTone === 'neg' ? 'text-neg' : valueTone === 'pos' ? 'text-pos' : 'text-ink')}>
         {loading ? <Skeleton width="90px" height="23px" /> : formatValue(value, format)}
       </div>
       {note && !loading && (

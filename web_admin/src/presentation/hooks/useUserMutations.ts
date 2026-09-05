@@ -3,7 +3,7 @@
 
 import { useMutation } from '@tanstack/react-query';
 import { useAuthStore } from '@/presentation/stores/authStore';
-import { useActivityLogRepo, useUserRepo } from '@/infrastructure/di/container';
+import { useActivityLogRepo, useAuthRepo, useUserRepo } from '@/infrastructure/di/container';
 import {
   assertDeactivateAllowed,
   assertDeleteAllowed,
@@ -17,17 +17,38 @@ interface CreateInput {
   email: string;
   displayName: string;
   role: UserRole;
-  password: string;
 }
 
+export interface CreateResult {
+  user: User;
+  /** False when the account was minted but the invite email failed — offer Resend invite. */
+  inviteSent: boolean;
+}
+
+/** A throwaway credential nobody ever sees: the person sets their own via the invite. */
+function randomPassword(): string {
+  const bytes = new Uint8Array(24);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('') + 'Aa1!';
+}
+
+/** No password field anywhere (users guide §4): the account is minted with a
+ *  random password and the person gets a set-your-password email. */
 export function useCreateUser() {
   const repo = useUserRepo();
+  const authRepo = useAuthRepo();
   const activityLogRepo = useActivityLogRepo();
   const actor = useAuthStore((s) => s.user);
-  return useMutation<User, Error, CreateInput>({
+  return useMutation<CreateResult, Error, CreateInput>({
     mutationFn: async (input) => {
       if (!actor) throw new Error('Not signed in');
-      const created = await repo.create(input, actor.id);
+      const created = await repo.create({ ...input, password: randomPassword() }, actor.id);
+      let inviteSent = true;
+      try {
+        await authRepo.sendPasswordResetEmail(created.email);
+      } catch {
+        inviteSent = false;
+      }
       logActivity(activityLogRepo, () => ({
         type: ActivityType.userCreated,
         action: `Created user: ${created.displayName}`,
@@ -36,7 +57,7 @@ export function useCreateUser() {
         entityType: 'user',
         metadata: { newUserName: created.displayName, newUserRole: created.role },
       }));
-      return created;
+      return { user: created, inviteSent };
     },
   });
 }

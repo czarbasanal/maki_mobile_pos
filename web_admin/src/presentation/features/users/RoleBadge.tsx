@@ -1,22 +1,25 @@
-// Tonal pill for the user role. Same hue as the role's UserRole color in the
-// Flutter app (admin -> violet, staff -> green, cashier -> blue) routed
-// through our shared tonal palette.
+// Role as a tone-coded tag on the shared Badge (users guide §1): Admin amber,
+// Staff green, Cashier blue — the same tones the avatar tile and role card use.
+import { userRoleDisplayName, type UserRole } from '@/domain/enums';
+import { Badge, type Tone } from '@/presentation/components/ui/Badge';
 
-import { UserRole, userRoleDisplayName } from '@/domain/enums';
-import { toneBadgeClasses, type Tone } from '@/core/theme/tones';
+export const roleTone: Record<UserRole, Tone> = {
+  admin: 'warning',
+  staff: 'positive',
+  cashier: 'info',
+};
 
-const tones: Record<UserRole, Tone> = {
-  admin: 'violet',
-  staff: 'green',
-  cashier: 'blue',
+/** Token vars matching roleTone, for the avatar tile and the role card bar. */
+export const roleColor: Record<UserRole, { fill: string; soft: string; text: string }> = {
+  admin: { fill: 'var(--accent)', soft: 'var(--accent-soft)', text: 'var(--accent-text)' },
+  staff: { fill: 'var(--pos)', soft: 'var(--pos-soft)', text: 'var(--pos)' },
+  cashier: { fill: 'var(--info)', soft: 'var(--info-soft)', text: 'var(--info)' },
 };
 
 export function RoleBadge({ role }: { role: UserRole }) {
   return (
-    <span
-      className={`inline-flex items-center rounded-full px-tk-sm py-[1px] text-[11px] font-semibold uppercase tracking-wider ${toneBadgeClasses[tones[role]]}`}
-    >
-      {userRoleDisplayName[role]}
-    </span>
+    <Badge tone={roleTone[role]} shape="tag">
+      <span className="text-[10.5px] font-semibold uppercase tracking-[0.5px]">{userRoleDisplayName[role]}</span>
+    </Badge>
   );
 }
