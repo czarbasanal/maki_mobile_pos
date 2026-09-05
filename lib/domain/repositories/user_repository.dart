@@ -66,10 +66,11 @@ abstract class UserRepository {
 
   // ==================== DELETE ====================
 
-  /// Deletes a user's Firestore document. Deactivate-first and no-self-delete
-  /// are enforced by [DeleteUserUseCase] and by Firestore rules; this is the
-  /// raw doc delete. The Firebase Auth credential is NOT touched (client SDKs
-  /// cannot delete another user's credential — see scripts/delete-auth-user.mjs).
+  /// Deletes a user for good: their Firebase Auth login AND their users/{uid}
+  /// document, through the `deleteUserAccount` Cloud Function (the client SDK
+  /// cannot delete another person's credential). Deactivate-first and
+  /// no-self-delete are enforced by [DeleteUserUseCase] here and again by the
+  /// function. scripts/delete-auth-user.mjs is the offline fallback.
   Future<void> deleteUser(String userId);
 
   // ==================== UTILITY ====================

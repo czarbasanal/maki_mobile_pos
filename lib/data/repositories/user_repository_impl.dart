@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:maki_mobile_pos/core/constants/firestore_collections.dart';
@@ -21,11 +22,26 @@ class UserRepositoryImpl implements UserRepository {
   /// admin's session even by accident.
   final Future<FirebaseAuth> Function() _provisioningAuth;
 
+  /// The `deleteUserAccount` Cloud Function (functions/src/index.ts): removes
+  /// the Auth login AND the users/{uid} doc together. Only the Admin SDK can
+  /// delete another person's credential, so the client never does the doc
+  /// delete itself any more. Injectable for tests.
+  final Future<void> Function(Map<String, dynamic> data) _deleteAccount;
+
   UserRepositoryImpl({
     FirebaseFirestore? firestore,
     Future<FirebaseAuth> Function()? provisioningAuth,
+    Future<void> Function(Map<String, dynamic> data)? deleteAccount,
   })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        _provisioningAuth = provisioningAuth ?? _defaultProvisioningAuth;
+        _provisioningAuth = provisioningAuth ?? _defaultProvisioningAuth,
+        _deleteAccount = deleteAccount ?? _defaultDeleteAccount;
+
+  /// Same region as Firestore and the web client.
+  static Future<void> _defaultDeleteAccount(Map<String, dynamic> data) async {
+    await FirebaseFunctions.instanceFor(region: 'asia-southeast1')
+        .httpsCallable('deleteUserAccount')
+        .call<Map<String, dynamic>>(data);
+  }
 
   /// Auth bound to a SECONDARY FirebaseApp, used solely to create accounts.
   ///
@@ -357,7 +373,15 @@ class UserRepositoryImpl implements UserRepository {
   @override
   Future<void> deleteUser(String userId) async {
     try {
-      await _usersRef.doc(userId).delete();
+      await _deleteAccount({'uid': userId});
+    } on FirebaseFunctionsException catch (e) {
+      // The function's own messages ("Deactivate this user before deleting
+      // them") are the ones the admin should read — pass them through.
+      throw DatabaseException(
+        message: e.message ?? 'Failed to delete user',
+        code: e.code,
+        originalError: e,
+      );
     } on FirebaseException catch (e) {
       throw DatabaseException(
         message: 'Failed to delete user: ${e.message}',
