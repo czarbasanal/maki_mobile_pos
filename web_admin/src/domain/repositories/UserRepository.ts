@@ -43,10 +43,13 @@ export interface UserRepository {
   deactivate(id: string, actorId: string): Promise<void>;
   reactivate(id: string, actorId: string): Promise<void>;
   recordLogin(id: string): Promise<void>;
-  // Removes the users/{uid} Firestore doc only — the Auth credential is
-  // cleaned up out-of-band (scripts/delete-auth-user.mjs). Deactivate-first
-  // and no-self-delete are enforced by the guard + Firestore rules.
+  // Removes the Auth login AND the users/{uid} doc via the deleteUserAccount
+  // Cloud Function (admin-only, deactivate-first, never yourself — enforced
+  // there as well as by the client guard). scripts/delete-auth-user.mjs
+  // remains the offline fallback.
   delete(id: string): Promise<void>;
+  /** Clears a login whose profile doc is already gone (an earlier doc-only delete). */
+  deleteOrphanedLogin(email: string): Promise<void>;
 
   // Utility
   emailExists(email: string): Promise<boolean>;

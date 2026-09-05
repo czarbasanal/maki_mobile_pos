@@ -8,6 +8,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DiProvider, type Container } from '@/infrastructure/di/container';
 import { useAuthStore } from '@/presentation/stores/authStore';
 import {
+  useClearOrphanedLogin,
   useCreateUser,
   useDeactivateUser,
   useDeleteUser,
@@ -98,6 +99,18 @@ describe('user mutation activity logging', () => {
     expect(log).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'user_created', entityId: 'u3' }),
     );
+    useAuthStore.setState({ user: null, status: 'signedOut' });
+  });
+
+  it('useClearOrphanedLogin clears the login by email and logs it', async () => {
+    useAuthStore.setState({ user: actor, status: 'signedIn' });
+    const log = vi.fn().mockResolvedValue(undefined);
+    const deleteOrphanedLogin = vi.fn().mockResolvedValue(undefined);
+    const { result } = renderHook(() => useClearOrphanedLogin(), { wrapper: wrap({ deleteOrphanedLogin }, log) });
+    act(() => { result.current.mutate('old@shop.test'); });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(deleteOrphanedLogin).toHaveBeenCalledWith('old@shop.test');
+    expect(log).toHaveBeenCalledWith(expect.objectContaining({ action: 'Cleared orphaned login: old@shop.test' }));
     useAuthStore.setState({ user: null, status: 'signedOut' });
   });
 

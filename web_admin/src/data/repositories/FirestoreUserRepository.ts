@@ -53,7 +53,11 @@ function getSecondaryApp(): FirebaseApp {
 }
 
 export class FirestoreUserRepository implements UserRepository {
-  constructor(private readonly db: Firestore) {}
+  constructor(
+    private readonly db: Firestore,
+    /** The deleteUserAccount callable; absent only in tests, where delete falls back to the doc. */
+    private readonly deleteAccount?: (input: { uid?: string; email?: string }) => Promise<unknown>,
+  ) {}
 
   private col() {
     return collection(this.db, FirestoreCollections.users).withConverter(userConverter);
@@ -199,7 +203,16 @@ export class FirestoreUserRepository implements UserRepository {
   }
 
   async delete(id: string): Promise<void> {
+    if (this.deleteAccount) {
+      await this.deleteAccount({ uid: id });
+      return;
+    }
     await deleteDoc(doc(this.db, FirestoreCollections.users, id));
+  }
+
+  async deleteOrphanedLogin(email: string): Promise<void> {
+    if (!this.deleteAccount) throw new Error('Account deletion is not available here');
+    await this.deleteAccount({ email });
   }
 }
 

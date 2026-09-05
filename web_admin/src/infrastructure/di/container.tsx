@@ -10,6 +10,7 @@ import { FirestoreSaleRepository } from '@/data/repositories/FirestoreSaleReposi
 import { FirestoreProductRepository } from '@/data/repositories/FirestoreProductRepository';
 import { FirestoreCostCodeRepository } from '@/data/repositories/FirestoreCostCodeRepository';
 import { FirestoreUserRepository } from '@/data/repositories/FirestoreUserRepository';
+import { deleteUserAccount } from '@/infrastructure/firebase/functions';
 import { FirestoreActivityLogRepository } from '@/data/repositories/FirestoreActivityLogRepository';
 import { FirestoreSupplierRepository } from '@/data/repositories/FirestoreSupplierRepository';
 import { FirestoreReceivingRepository } from '@/data/repositories/FirestoreReceivingRepository';
@@ -85,7 +86,7 @@ function buildDefaultContainer(): Container {
     saleRepo: new FirestoreSaleRepository(db),
     productRepo: new FirestoreProductRepository(db),
     costCodeRepo: new FirestoreCostCodeRepository(db),
-    userRepo: new FirestoreUserRepository(db),
+    userRepo: new FirestoreUserRepository(db, deleteUserAccount),
     activityLogRepo: new FirestoreActivityLogRepository(db),
     supplierRepo: new FirestoreSupplierRepository(db),
     receivingRepo: new FirestoreReceivingRepository(db, new FirestoreProductRepository(db)),

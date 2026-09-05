@@ -31,6 +31,7 @@ function harness(path: string, users: User[], repo: Partial<Container['userRepo'
     deactivate: vi.fn(async () => {}),
     reactivate: vi.fn(async () => {}),
     delete: vi.fn(async () => {}),
+    deleteOrphanedLogin: vi.fn(async () => {}),
     ...repo,
   } as unknown as Container['userRepo'];
   const authRepo = { sendPasswordResetEmail: vi.fn(async () => {}) } as unknown as Container['authRepo'];
@@ -68,6 +69,26 @@ describe('UserModal — add', () => {
     const [input] = (userRepo.create as ReturnType<typeof vi.fn>).mock.calls[0];
     expect(input).toMatchObject({ email: 'jeric@shop.test', displayName: 'Jeric', role: 'staff' });
     expect(input.password.length).toBeGreaterThan(20);
+    await waitFor(() => expect(authRepo.sendPasswordResetEmail).toHaveBeenCalledWith('jeric@shop.test'));
+    expect(await screen.findByText('list')).toBeInTheDocument();
+  });
+
+  it('a login left behind by an earlier delete can be cleared, after which the invite goes out', async () => {
+    const create = vi
+      .fn()
+      .mockRejectedValueOnce(Object.assign(new Error('Firebase: Error (auth/email-already-in-use).'), { code: 'auth/email-already-in-use' }))
+      .mockResolvedValueOnce(user({ id: 'new', email: 'jeric@shop.test', displayName: 'Jeric', lastLoginAt: null }));
+    const { userRepo, authRepo } = harness('/users/add', [me], { create });
+    const dialog = screen.getByRole('dialog', { name: 'Add user' });
+    await userEvent.type(within(dialog).getByLabelText('Name'), 'Jeric');
+    await userEvent.type(within(dialog).getByLabelText('Email'), 'jeric@shop.test');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Send invite' }));
+    expect(await within(dialog).findByText('This email still has a login from a deleted account.')).toBeInTheDocument();
+
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Clear old login' }));
+
+    await waitFor(() => expect(userRepo.deleteOrphanedLogin).toHaveBeenCalledWith('jeric@shop.test'));
+    await waitFor(() => expect(create).toHaveBeenCalledTimes(2));
     await waitFor(() => expect(authRepo.sendPasswordResetEmail).toHaveBeenCalledWith('jeric@shop.test'));
     expect(await screen.findByText('list')).toBeInTheDocument();
   });

@@ -161,3 +161,10 @@ affected.
 changes the code on 20 products carrying 51 units; a shelf label or Code128 barcode
 holding the old value would no longer scan to that product. The shop confirmed on
 2026-08-28 that no such labels exist.
+
+## delete-auth-user.mjs — offline fallback
+
+Since 2026-09-05 the web admin's Delete account calls the `deleteUserAccount` Cloud Function
+(`functions/`), which removes the Auth login and the `users/{uid}` doc together. This script
+remains the fallback for a stuck credential when the function is unavailable:
+`node scripts/delete-auth-user.mjs <email|uid> --apply`.

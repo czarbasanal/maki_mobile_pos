@@ -163,6 +163,26 @@ export function useReactivateUser() {
   });
 }
 
+/** Clears a login left behind by an earlier doc-only delete so the email can be re-added. */
+export function useClearOrphanedLogin() {
+  const repo = useUserRepo();
+  const activityLogRepo = useActivityLogRepo();
+  const actor = useAuthStore((s) => s.user);
+  return useMutation<void, Error, string>({
+    mutationFn: async (email) => {
+      if (!actor) throw new Error('Not signed in');
+      await repo.deleteOrphanedLogin(email);
+      logActivity(activityLogRepo, () => ({
+        type: ActivityType.userManagement,
+        action: `Cleared orphaned login: ${email}`,
+        details: null,
+        entityId: null,
+        entityType: 'user',
+      }));
+    },
+  });
+}
+
 export function useDeleteUser() {
   const repo = useUserRepo();
   const activityLogRepo = useActivityLogRepo();

@@ -10,7 +10,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { InformationCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { useUsers } from '@/presentation/hooks/useUsers';
 import { useNow } from '@/presentation/hooks/useNow';
-import { useCreateUser, useDeactivateUser, useDeleteUser, useReactivateUser, useUpdateUser } from '@/presentation/hooks/useUserMutations';
+import { useClearOrphanedLogin, useCreateUser, useDeactivateUser, useDeleteUser, useReactivateUser, useUpdateUser } from '@/presentation/hooks/useUserMutations';
 import { useSendPasswordReset } from '@/presentation/hooks/useSendPasswordReset';
 import { useAuthStore } from '@/presentation/stores/authStore';
 import { RoutePaths } from '@/presentation/router/routePaths';
@@ -48,6 +48,9 @@ export function UserModal() {
   const reactivate = useReactivateUser();
   const remove = useDeleteUser();
   const resend = useSendPasswordReset();
+  const clearOrphan = useClearOrphanedLogin();
+  /** Set when Send invite hit a login left behind by an earlier delete. */
+  const [orphanEmail, setOrphanEmail] = useState<string | null>(null);
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -114,7 +117,8 @@ export function UserModal() {
     } catch (e) {
       const msg = (e as Error).message ?? '';
       if (/email-already-in-use/i.test(msg)) {
-        setEmailError('This email still has a login from a deleted account. Clear it with the auth cleanup script before re-adding.');
+        setEmailError('This email still has a login from a deleted account.');
+        setOrphanEmail(email.trim().toLowerCase());
       } else if (/already/i.test(msg)) {
         setEmailError('This email already has an account');
       } else if (/invalid-email/i.test(msg)) {
@@ -204,7 +208,7 @@ export function UserModal() {
               <input
                 type="email"
                 value={email}
-                onChange={(e) => { setEmail(e.target.value); setEmailError(null); }}
+                onChange={(e) => { setEmail(e.target.value); setEmailError(null); setOrphanEmail(null); }}
                 placeholder="name@example.com"
                 autoComplete="email"
                 disabled={mode === 'edit'}
@@ -276,6 +280,27 @@ export function UserModal() {
             </div>
           ) : null}
 
+          {orphanEmail ? (
+            <div className="flex flex-wrap items-center gap-3 rounded-ctl border border-line bg-surface-2 px-[13px] py-[11px]">
+              <span className="min-w-[150px] flex-1 text-[11.5px] text-ink-2 [text-wrap:pretty]">
+                Clear the old login, then the invite goes out to this address.
+              </span>
+              {clearOrphan.error ? <span className="text-[11.5px] text-neg">{clearOrphan.error.message}</span> : null}
+              <Button
+                variant="secondary"
+                size="sm"
+                loading={clearOrphan.isPending}
+                onClick={() =>
+                  clearOrphan
+                    .mutateAsync(orphanEmail)
+                    .then(() => { toast.success('Old login cleared', orphanEmail); setOrphanEmail(null); setEmailError(null); return save(); })
+                    .catch(() => undefined)
+                }
+              >
+                Clear old login
+              </Button>
+            </div>
+          ) : null}
           {saveError && !emailError && !nameError ? <p className="text-ctl-sm text-neg">{saveError}</p> : null}
           {inviteFailedFor && resend.error ? <p className="text-ctl-sm text-neg">Invite email failed again: {resend.error.message}</p> : null}
 
