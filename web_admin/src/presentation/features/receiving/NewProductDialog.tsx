@@ -35,9 +35,19 @@ interface NewProductDialogProps {
   onAdd: (spec: NewProductSpec) => void;
   /** Edit mode: prefill from an already-queued line's spec. */
   initial?: NewProductSpec | null;
+  /** Create mode only: prefills Name from the add bar's no-results query, so
+   *  confirming "not in the catalog" doesn't mean retyping what was just
+   *  searched for. */
+  initialName?: string;
 }
 
-export function NewProductDialog({ open, onClose, onAdd, initial = null }: NewProductDialogProps) {
+export function NewProductDialog({
+  open,
+  onClose,
+  onAdd,
+  initial = null,
+  initialName,
+}: NewProductDialogProps) {
   const { data: productCats } = useActiveCategories(CategoryKind.product);
   const { data: units } = useActiveCategories(CategoryKind.unit);
   const isAdmin = useAuthStore((s) => s.user?.role === UserRole.admin);
@@ -109,6 +119,12 @@ export function NewProductDialog({ open, onClose, onAdd, initial = null }: NewPr
     setSellingOptions(initial.sellingOptions);
     setError(null);
   }, [open, initial]);
+
+  // Create mode only: seed Name from the add bar's no-results query.
+  useEffect(() => {
+    if (!open || initial || !initialName) return;
+    setName(initialName);
+  }, [open, initial, initialName]);
 
   const sellingOptionsError = useMemo(
     () => validateSellingOptions(sellingOptions),

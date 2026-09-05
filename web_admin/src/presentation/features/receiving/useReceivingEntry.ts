@@ -12,9 +12,15 @@ import {
 import { useAuthStore } from '@/presentation/stores/authStore';
 import { useReceivingRepo } from '@/infrastructure/di/container';
 import { filterProducts } from '@/domain/products/filterProducts';
+import { costsDiffer } from '@/domain/products/costVariation';
+import { shopIsoDate } from '@/domain/time/shopTime';
 import { RoutePaths } from '@/presentation/router/routePaths';
 import type { Product, ReceivingItem, SellingOption } from '@/domain/entities';
 import type { ReceivingInput } from '@/domain/repositories/ReceivingRepository';
+
+/** Dropdown cap (guide §2 add bar): mounting every match per keystroke jams
+ *  fast entry, and a wedge scanner needs the box to stay short. */
+const MAX_VISIBLE_MATCHES = 6;
 
 /** A new-product line carries `pendingNewProduct`; an existing-product line has a
  *  real `productId`. Both are persisted as ReceivingItems on the draft. */
@@ -49,6 +55,10 @@ export function useReceivingEntry() {
   const complete = useCompleteReceiving();
 
   const [supplierId, setSupplierId] = useState('');
+  const [invoiceNumber, setInvoiceNumber] = useState('');
+  // Seeded to the shop's calendar today — a delivery counted the next
+  // morning must be dateable to the day it actually arrived, not the device's.
+  const [receivedOn, setReceivedOn] = useState(() => shopIsoDate(new Date()));
   const [lines, setLines] = useState<ReceivingItem[]>([]);
   const [search, setSearch] = useState('');
   const [savedId, setSavedId] = useState<string | null>(id ?? null);
@@ -58,6 +68,11 @@ export function useReceivingEntry() {
   const [version, setVersion] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const hydrated = useRef(false);
+
+  const productsById = useMemo(
+    () => new Map((products ?? []).map((p) => [p.id, p])),
+    [products],
+  );
 
   // New entry: reserve the next RCV-… reference up front, to show while drafting
   // and to reuse on save (create() honors a provided referenceNumber).
@@ -80,11 +95,15 @@ export function useReceivingEntry() {
     setSavedId(existing.data.id);
     setReferenceNumber(existing.data.referenceNumber);
     setVersion(existing.data.version);
+    setInvoiceNumber(existing.data.invoiceNumber ?? '');
+    // Older drafts predate the field — fall back to today rather than
+    // resuming with a blank date input.
+    setReceivedOn(existing.data.receivedOn ?? shopIsoDate(new Date()));
   }, [id, existing.data]);
 
-  // Debounced + capped with a visible remainder: the suggestion box shows
-  // ~4 rows, and mounting every match per keystroke jams fast entry.
-  const debouncedSearch = useDebouncedValue(search);
+  // Debounced 250ms (guide §2): the suggestion box filters the whole
+  // catalog per keystroke, and a wedge scanner's keystrokes arrive fast.
+  const debouncedSearch = useDebouncedValue(search, 250);
   const allMatches = useMemo(
     () =>
       debouncedSearch.trim() && products
@@ -97,7 +116,7 @@ export function useReceivingEntry() {
         : [],
     [debouncedSearch, products],
   );
-  const matches = useMemo(() => allMatches.slice(0, 50), [allMatches]);
+  const matches = useMemo(() => allMatches.slice(0, MAX_VISIBLE_MATCHES), [allMatches]);
   const moreMatches = allMatches.length - matches.length;
 
   const totals = useMemo(
@@ -108,36 +127,69 @@ export function useReceivingEntry() {
     [lines],
   );
 
-  function addExisting(p: Product, quantity: number, unitCost: number, unitPrice: number | null = null) {
-    setLines((ls) => [
-      ...ls,
-      {
-        id: crypto.randomUUID(),
-        productId: p.id,
-        sku: p.sku,
-        name: p.name,
-        quantity,
-        unit: p.unit,
-        unitCost,
-        // Meaningful only when the cost differs (a variation is spawned);
-        // null inherits the base product's price.
-        unitPrice,
-        costCode: p.costCode,
-        isNewVariation: false,
-        newProductId: null,
-        notes: null,
-        pendingNewProduct: null,
-      },
-    ]);
+  /** Direct-add (guide §2): a search-result "Add"/"+1" click, or a wedge
+   *  scanner's Enter. A product already on the receipt gets +1 to its
+   *  quantity instead of a duplicate line — "non-variation-pending" because
+   *  a pending-new line intentionally has no productId to match against. */
+  function addExisting(product: Product) {
+    setLines((ls) => {
+      const idx = ls.findIndex((l) => l.productId === product.id && !l.pendingNewProduct);
+      if (idx !== -1) {
+        const next = [...ls];
+        next[idx] = { ...next[idx], quantity: next[idx].quantity + 1 };
+        return next;
+      }
+      return [
+        ...ls,
+        {
+          id: crypto.randomUUID(),
+          productId: product.id,
+          sku: product.sku,
+          name: product.name,
+          quantity: 1,
+          unit: product.unit,
+          unitCost: product.cost,
+          // Cost-variation policy is law: null until an inline cost edit
+          // actually differs from the catalog (updateLine below) — the same
+          // rule the old confirmExisting box enforced, now inline.
+          unitPrice: null,
+          costCode: product.costCode,
+          isNewVariation: false,
+          newProductId: null,
+          notes: null,
+          pendingNewProduct: null,
+        },
+      ];
+    });
     setSearch('');
   }
 
-  /** Rewrites an existing-product line's editable fields in place. */
-  function updateExisting(
+  /** Inline edit for an existing-product line's qty/cost/price cells.
+   *  Quantity floors at 1 (removing a line is the remove button's job, not
+   *  a zero quantity). A cost edit that lands back within tolerance of the
+   *  catalog cost drops any typed price — the price cell goes back to
+   *  disabled the same instant, so a stale value must not linger on the
+   *  line (exactly today's confirmExisting semantics, now inline). */
+  function updateLine(
     lineId: string,
-    patch: { quantity: number; unitCost: number; unitPrice: number | null },
+    patch: Partial<Pick<ReceivingItem, 'quantity' | 'unitCost' | 'unitPrice'>>,
   ) {
-    setLines((ls) => ls.map((l) => (l.id === lineId ? { ...l, ...patch } : l)));
+    setLines((ls) =>
+      ls.map((l) => {
+        if (l.id !== lineId) return l;
+        const next: ReceivingItem = { ...l, ...patch };
+        if (patch.quantity !== undefined) {
+          next.quantity = Math.max(1, Math.floor(patch.quantity) || 1);
+        }
+        if (patch.unitCost !== undefined && !l.pendingNewProduct) {
+          const product = productsById.get(l.productId ?? '');
+          if (product == null || !costsDiffer(next.unitCost, product.cost)) {
+            next.unitPrice = null;
+          }
+        }
+        return next;
+      }),
+    );
   }
 
   /** Rebuilds a new-product line from an edited spec, keeping the line id. */
@@ -194,6 +246,8 @@ export function useReceivingEntry() {
       notes: null,
       createdBy: actor?.id ?? '',
       createdByName: actor?.displayName ?? '',
+      invoiceNumber: invoiceNumber.trim() || null,
+      receivedOn,
     };
   }
 
@@ -260,6 +314,10 @@ export function useReceivingEntry() {
     suppliers: suppliers ?? [],
     supplierId,
     setSupplierId,
+    invoiceNumber,
+    setInvoiceNumber,
+    receivedOn,
+    setReceivedOn,
     search,
     setSearch,
     matches,
@@ -267,7 +325,7 @@ export function useReceivingEntry() {
     lines,
     addExisting,
     addNew,
-    updateExisting,
+    updateLine,
     updateNew,
     removeLine,
     totals,

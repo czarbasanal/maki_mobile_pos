@@ -25,6 +25,8 @@ const draft = (o: Partial<Receiving> = {}): Receiving => ({
   createdByName: 'Czar',
   completedBy: null,
   version: 4,
+  invoiceNumber: null,
+  receivedOn: null,
   ...o,
 });
 
@@ -119,7 +121,7 @@ describe('useReceivingEntry — concurrent draft edits', () => {
   });
 });
 
-describe('useReceivingEntry — line editing', () => {
+describe('useReceivingEntry — direct-add line model', () => {
   beforeEach(() => {
     useAuthStore.setState({
       user: { id: 'u1', email: 'a@b.c', displayName: 'Czar', role: 'admin', isActive: true } as never,
@@ -144,23 +146,63 @@ describe('useReceivingEntry — line editing', () => {
     });
   }
 
-  it('addExisting stamps the entered unitPrice on the line', async () => {
+  it('addExisting appends a fresh line seeded from the product, qty 1 and no price lock', async () => {
     const { result } = mounted();
     await waitFor(() => expect(result.current.referenceNumber).toBe('RCV-20260829-001'));
-    act(() => result.current.addExisting(productFixture as never, 4, 1312, 1680));
-    expect(result.current.lines[0]).toMatchObject({ quantity: 4, unitCost: 1312, unitPrice: 1680 });
-  });
-
-  it('updateExisting rewrites qty/cost/price in place, keeping the line id', async () => {
-    const { result } = mounted();
-    await waitFor(() => expect(result.current.referenceNumber).toBe('RCV-20260829-001'));
-    act(() => result.current.addExisting(productFixture as never, 4, 1312, null));
-    const id = result.current.lines[0].id;
-    act(() => result.current.updateExisting(id, { quantity: 6, unitCost: 1350, unitPrice: 1700 }));
+    act(() => result.current.addExisting(productFixture as never));
     expect(result.current.lines).toHaveLength(1);
     expect(result.current.lines[0]).toMatchObject({
-      id, quantity: 6, unitCost: 1350, unitPrice: 1700, productId: 'p1',
+      productId: 'p1', sku: '00220004', quantity: 1, unitCost: 1200, unitPrice: null,
     });
+  });
+
+  it('a second addExisting for the same product increments the existing line instead of appending', async () => {
+    const { result } = mounted();
+    await waitFor(() => expect(result.current.referenceNumber).toBe('RCV-20260829-001'));
+    act(() => result.current.addExisting(productFixture as never));
+    act(() => result.current.addExisting(productFixture as never));
+    expect(result.current.lines).toHaveLength(1);
+    expect(result.current.lines[0].quantity).toBe(2);
+  });
+
+  it('addExisting clears the search text (scanner-friendly)', async () => {
+    const { result } = mounted();
+    await waitFor(() => expect(result.current.referenceNumber).toBe('RCV-20260829-001'));
+    act(() => result.current.setSearch('beast'));
+    act(() => result.current.addExisting(productFixture as never));
+    expect(result.current.search).toBe('');
+  });
+
+  it('updateLine rewrites quantity in place, floored at 1', async () => {
+    const { result } = mounted();
+    await waitFor(() => expect(result.current.referenceNumber).toBe('RCV-20260829-001'));
+    act(() => result.current.addExisting(productFixture as never));
+    const id = result.current.lines[0].id;
+    act(() => result.current.updateLine(id, { quantity: 6 }));
+    expect(result.current.lines[0].quantity).toBe(6);
+    act(() => result.current.updateLine(id, { quantity: 0 }));
+    expect(result.current.lines[0].quantity).toBe(1);
+  });
+
+  it('updateLine keeps a typed unitPrice while the cost still differs from the catalog', async () => {
+    const { result } = mounted();
+    await waitFor(() => expect(result.current.referenceNumber).toBe('RCV-20260829-001'));
+    act(() => result.current.addExisting(productFixture as never));
+    const id = result.current.lines[0].id;
+    act(() => result.current.updateLine(id, { unitCost: 1350 }));
+    act(() => result.current.updateLine(id, { unitPrice: 1700 }));
+    expect(result.current.lines[0]).toMatchObject({ unitCost: 1350, unitPrice: 1700 });
+  });
+
+  it('updateLine resets unitPrice to null the moment the cost lands back at the catalog value — exactly confirmExisting semantics, now inline', async () => {
+    const { result } = mounted();
+    await waitFor(() => expect(result.current.referenceNumber).toBe('RCV-20260829-001'));
+    act(() => result.current.addExisting(productFixture as never));
+    const id = result.current.lines[0].id;
+    act(() => result.current.updateLine(id, { unitCost: 1350 }));
+    act(() => result.current.updateLine(id, { unitPrice: 1700 }));
+    act(() => result.current.updateLine(id, { unitCost: 1200 })); // back to catalog cost
+    expect(result.current.lines[0]).toMatchObject({ unitCost: 1200, unitPrice: null });
   });
 
   it('updateNew rebuilds a pending-new line from the edited spec, keeping the line id', async () => {
@@ -177,5 +219,113 @@ describe('useReceivingEntry — line editing', () => {
     expect(result.current.lines).toHaveLength(1);
     expect(result.current.lines[0]).toMatchObject({ id, name: 'Squid Large', unitCost: 95, quantity: 5 });
     expect(result.current.lines[0].pendingNewProduct).toMatchObject({ price: 140 });
+  });
+});
+
+describe('useReceivingEntry — invoice/received-on meta fields', () => {
+  beforeEach(() => {
+    useAuthStore.setState({
+      user: { id: 'u1', email: 'a@b.c', displayName: 'Czar', role: 'admin', isActive: true } as never,
+    });
+  });
+
+  it('defaults receivedOn to today (shop calendar) and invoiceNumber to blank for a fresh entry', async () => {
+    const create = vi.fn(async () => draft({ id: 'new1' }));
+    const { result } = renderHook(() => useReceivingEntry(), {
+      wrapper: ({ children }) => {
+        const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+        return (
+          <QueryClientProvider client={qc}>
+            <DiProvider
+              override={
+                {
+                  receivingRepo: {
+                    nextReferenceNumber: vi.fn(async () => 'RCV-20260905-001'),
+                    create,
+                  },
+                  productRepo: { watchAll: () => () => {} },
+                  supplierRepo: { watchAll: () => () => {} },
+                  activityLogRepo: { create: vi.fn() },
+                } as unknown as Container
+              }
+            >
+              <MemoryRouter initialEntries={['/receiving/new']}>
+                <Routes><Route path="/receiving/new" element={<>{children}</>} /></Routes>
+              </MemoryRouter>
+            </DiProvider>
+          </QueryClientProvider>
+        );
+      },
+    });
+
+    await waitFor(() => expect(result.current.referenceNumber).toBe('RCV-20260905-001'));
+    expect(result.current.invoiceNumber).toBe('');
+    expect(result.current.receivedOn).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it('buildInput carries a trimmed invoiceNumber (null when blank) and the raw receivedOn string', async () => {
+    const create = vi.fn(async () => draft({ id: 'new1' }));
+    const { result } = renderHook(() => useReceivingEntry(), {
+      wrapper: ({ children }) => {
+        const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+        return (
+          <QueryClientProvider client={qc}>
+            <DiProvider
+              override={
+                {
+                  receivingRepo: {
+                    nextReferenceNumber: vi.fn(async () => 'RCV-20260905-001'),
+                    create,
+                  },
+                  productRepo: { watchAll: () => () => {} },
+                  supplierRepo: { watchAll: () => () => {} },
+                  activityLogRepo: { create: vi.fn() },
+                } as unknown as Container
+              }
+            >
+              <MemoryRouter initialEntries={['/receiving/new']}>
+                <Routes><Route path="/receiving/new" element={<>{children}</>} /></Routes>
+              </MemoryRouter>
+            </DiProvider>
+          </QueryClientProvider>
+        );
+      },
+    });
+
+    await waitFor(() => expect(result.current.referenceNumber).toBe('RCV-20260905-001'));
+    act(() => result.current.setReceivedOn('2026-09-01'));
+    act(() => result.current.setInvoiceNumber('  INV-77  '));
+    await act(async () => { await result.current.saveDraft(); });
+
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({ invoiceNumber: 'INV-77', receivedOn: '2026-09-01' }),
+      'u1',
+    );
+  });
+
+  it('hydrates invoiceNumber/receivedOn from a resumed draft, and falls back to today when the draft predates the fields', async () => {
+    const { result } = renderHook(() => useReceivingEntry(), {
+      wrapper: wrap({
+        getById: vi.fn(async () => draft({ invoiceNumber: 'INV-9', receivedOn: '2026-08-20' })),
+        update: vi.fn(async () => {}),
+      } as Partial<Container['receivingRepo']>),
+    });
+
+    await waitFor(() => expect(result.current.referenceNumber).toBe('RCV-20260829-001'));
+    expect(result.current.invoiceNumber).toBe('INV-9');
+    expect(result.current.receivedOn).toBe('2026-08-20');
+  });
+
+  it('falls back to today when a resumed draft predates receivedOn', async () => {
+    const { result } = renderHook(() => useReceivingEntry(), {
+      wrapper: wrap({
+        getById: vi.fn(async () => draft({ invoiceNumber: null, receivedOn: null })),
+        update: vi.fn(async () => {}),
+      } as Partial<Container['receivingRepo']>),
+    });
+
+    await waitFor(() => expect(result.current.referenceNumber).toBe('RCV-20260829-001'));
+    expect(result.current.invoiceNumber).toBe('');
+    expect(result.current.receivedOn).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 });

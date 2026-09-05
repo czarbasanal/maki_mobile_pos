@@ -33,7 +33,11 @@ function signIn(role: UserRole = UserRole.admin) {
   });
 }
 
-function harness(onAdd = vi.fn(), initial: NewProductSpec | null = null) {
+function harness(
+  onAdd = vi.fn(),
+  initial: NewProductSpec | null = null,
+  initialName?: string,
+) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const categoryRepo: Partial<Container['categoryRepo']> = {
     watchAll: (kind, cb) => {
@@ -45,7 +49,7 @@ function harness(onAdd = vi.fn(), initial: NewProductSpec | null = null) {
   render(
     <DiProvider override={{ categoryRepo: categoryRepo as Container['categoryRepo'] }}>
       <QueryClientProvider client={qc}>
-        <NewProductDialog open onClose={() => {}} onAdd={onAdd} initial={initial} />
+        <NewProductDialog open onClose={() => {}} onAdd={onAdd} initial={initial} initialName={initialName} />
       </QueryClientProvider>
     </DiProvider>,
   );
@@ -183,6 +187,28 @@ describe('NewProductDialog — edit mode', () => {
     expect(onAdd).toHaveBeenCalledWith(
       expect.objectContaining({ name: 'Squid Large', sku: 'SQ-9', cost: 90, price: 130, quantity: 3 }),
     );
+  });
+});
+
+describe('NewProductDialog — initialName prefill (no-results create-new)', () => {
+  it('seeds Name from initialName in create mode', async () => {
+    signIn();
+    harness(vi.fn(), null, 'Nonexistent Widget');
+
+    expect(screen.getByLabelText('Name')).toHaveValue('Nonexistent Widget');
+  });
+
+  it('is ignored in edit mode — the queued spec\'s own name wins', async () => {
+    signIn();
+    const spec: NewProductSpec = {
+      name: 'Squid', sku: 'SQ-9', autoGenerateSku: false, category: 'Snacks', unit: 'pcs',
+      cost: 90, price: 130, quantity: 3, reorderLevel: 1, autoSkuCategoryCode: null,
+      barcodes: [], notes: null, sellingOptions: [],
+    };
+    harness(vi.fn(), spec, 'Should not apply');
+
+    expect(await screen.findByDisplayValue('Squid')).toBeInTheDocument();
+    expect(screen.queryByDisplayValue('Should not apply')).not.toBeInTheDocument();
   });
 });
 
