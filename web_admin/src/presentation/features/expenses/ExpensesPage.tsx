@@ -36,7 +36,7 @@ import { TableFooter } from '@/presentation/components/ui/TableFooter';
 import { toast } from '@/presentation/components/ui/toast';
 import { toCsv, downloadCsv } from '@/core/utils/csv';
 import { formatMoney } from '@/core/utils/money';
-import { cn } from '@/core/utils/cn';
+import { BreakdownCard } from '@/presentation/components/ui/BreakdownCard';
 import type { Expense } from '@/domain/entities';
 
 type DatePreset = Extract<RangePreset, 'today' | 'last7' | 'thisMonth'> | 'custom';
@@ -236,50 +236,29 @@ export function ExpensesPage() {
           </div>
         </div>
 
-        <div
-          data-testid="by-category-card"
-          className="flex flex-col gap-[11px] rounded-card border border-line bg-surface px-[17px] py-[15px] shadow-card"
-        >
-          <div className="flex items-baseline gap-[9px]">
-            <span className="text-[11.5px] font-medium text-ink-2">By category</span>
-            <span className="ml-auto font-mono text-[11.5px] text-ink-3">{rangeLabel}</span>
-          </div>
-          {byCategory.length > 0 ? (
-            <div className="flex h-2 gap-[2px] overflow-hidden rounded-[4px]">
-              {byCategory.map((c) => (
-                <div key={c.name} style={{ width: `${c.pct}%`, background: c.color }} />
-              ))}
-            </div>
-          ) : null}
-          <div className="flex flex-col gap-[7px]">
-            {byCategory.length === 0 ? (
-              <span className="text-[12px] text-ink-3">Nothing in range</span>
-            ) : (
-              byCategory.map((c) => {
-                const active = effectiveCategory === c.name;
-                return (
-                  <button
-                    key={c.name}
-                    type="button"
-                    aria-pressed={active}
-                    onClick={() => {
-                      setCategory(active ? '' : c.name);
-                      setPage(1);
-                    }}
-                    className="flex items-center gap-2 py-[2px] text-left"
-                  >
-                    <span aria-hidden className="h-[7px] w-[7px] shrink-0 rounded-[2px]" style={{ background: c.color }} />
-                    <span className={cn('text-[12px]', active ? 'font-semibold text-ink' : 'font-medium text-ink-2')}>
-                      {c.name}
-                    </span>
-                    <span className="ml-auto font-mono text-[10.5px] text-ink-3">{c.pct.toFixed(0)}%</span>
-                    <span className="font-mono text-[12.5px] font-semibold text-ink">{formatMoney(c.amount)}</span>
-                  </button>
-                );
-              })
-            )}
-          </div>
-        </div>
+        <BreakdownCard
+          testId="by-category-card"
+          label="By category"
+          total={rangeLabel}
+          bar={byCategory.map((c) => ({ key: c.name, color: c.color, pct: c.pct }))}
+          emptyText="Nothing in range"
+          rows={byCategory.map((c) => ({
+            key: c.name,
+            label: c.name,
+            color: c.color,
+            active: effectiveCategory === c.name,
+            onClick: () => {
+              setCategory(effectiveCategory === c.name ? '' : c.name);
+              setPage(1);
+            },
+            value: (
+              <>
+                <span className="font-mono text-[10.5px] text-ink-3">{c.pct.toFixed(0)}%</span>
+                <span className="font-mono text-[12.5px] font-semibold text-ink">{formatMoney(c.amount)}</span>
+              </>
+            ),
+          }))}
+        />
 
         <MoneyCard
           label="Entries"
