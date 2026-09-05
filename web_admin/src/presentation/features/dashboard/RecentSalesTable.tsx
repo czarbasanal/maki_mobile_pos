@@ -65,7 +65,13 @@ export function RecentSalesTable({ sales, loading }: { sales: Sale[]; loading: b
       headerAction={
         <>
           <SearchInput value={query} onChange={setQuery} placeholder="Search sale no." />
-          <Link to={RoutePaths.daySales} className="text-ctl-sm font-medium text-ink-2 hover:text-ink">View all</Link>
+          {/* The Sales report on Today — it reads ?range= and lists every sale of the day. */}
+          <Link
+            to={{ pathname: RoutePaths.salesReport, search: '?range=today' }}
+            className="text-ctl-sm font-medium text-ink-2 hover:text-ink"
+          >
+            View all
+          </Link>
         </>
       }
       padding="sm"

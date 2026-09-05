@@ -1,8 +1,10 @@
 // The one table for the whole admin (spec §7). Never write a bare <table>
 // in a screen again — extend this instead.
 import { clsx } from 'clsx';
-import type { ReactNode } from 'react';
+import { Fragment, type ReactNode } from 'react';
+import { ChevronRightIcon } from '@heroicons/react/24/outline';
 import { Checkbox } from './Checkbox';
+import { IconButton } from './IconButton';
 import { EmptyState } from './EmptyState';
 import { Skeleton } from './Skeleton';
 
@@ -38,6 +40,16 @@ export interface DataTableProps<T> {
   };
   /** Extra class for a row (e.g. greying an unselected line). */
   rowClassName?: (row: T) => string | undefined;
+  /** Expandable rows (Sales report's lines-under-the-sale): a leading chevron
+   *  column toggles a full-width band under the row. The chevron never fires
+   *  the row's own click. */
+  expansion?: {
+    isExpanded: (row: T) => boolean;
+    onToggle: (row: T) => void;
+    render: (row: T) => ReactNode;
+    /** Accessible name for the toggle, e.g. "Show lines for SALE-…". */
+    label: (row: T) => string;
+  };
   /** Optional summary row (e.g. Expenses' "Total shown") rendered in a
    *  <tfoot> — a plain <tr> of <td>s, so the caller controls colSpan and
    *  alignment. Hidden whenever rows.length === 0 (the component returns
@@ -59,6 +71,7 @@ export function DataTable<T>({
   minWidth,
   selection,
   rowClassName,
+  expansion,
   foot,
 }: DataTableProps<T>) {
   if (!loading && rows.length === 0) {
@@ -70,11 +83,14 @@ export function DataTable<T>({
   const someSelected =
     !!selection && !allSelected && rows.some((r) => selection.selectedKeys.has(rowKey(r)));
 
+  const leadingCells = (selection ? 1 : 0) + (expansion ? 1 : 0);
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full border-collapse" style={minWidth ? { minWidth } : undefined}>
         <thead>
           <tr className="border-y border-line bg-surface-2">
+            {expansion ? <th className="w-[36px] px-2 py-2" /> : null}
             {selection ? (
               <th className="w-[38px] px-4 py-2">
                 <Checkbox
@@ -100,6 +116,11 @@ export function DataTable<T>({
           {loading
             ? Array.from({ length: skeletonRows }, (_, i) => (
                 <tr key={i} className="border-b border-line-2 last:border-b-0">
+                  {expansion ? (
+                    <td className="px-2 py-2.5">
+                      <Skeleton width="14px" height="12px" />
+                    </td>
+                  ) : null}
                   {selection ? (
                     <td className="px-4 py-2.5">
                       <Skeleton height="12px" />
@@ -112,9 +133,11 @@ export function DataTable<T>({
                   ))}
                 </tr>
               ))
-            : rows.map((row) => (
+            : rows.map((row) => {
+                const open = expansion?.isExpanded(row) ?? false;
+                return (
+                <Fragment key={rowKey(row)}>
                 <tr
-                  key={rowKey(row)}
                   onClick={onRowClick ? () => onRowClick(row) : undefined}
                   onKeyDown={
                     onRowClick
@@ -132,9 +155,26 @@ export function DataTable<T>({
                   className={clsx(
                     'border-b border-line-2 last:border-b-0',
                     onRowClick && 'cursor-pointer hover:bg-surface-2 focus:outline-none focus-visible:bg-surface-2',
+                    open && 'border-b-0',
                     rowClassName?.(row),
                   )}
                 >
+                  {expansion ? (
+                    <td className="px-2 py-2.5 align-top">
+                      <IconButton
+                        title={expansion.label(row)}
+                        aria-expanded={open}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          expansion.onToggle(row);
+                        }}
+                      >
+                        <ChevronRightIcon
+                          className={clsx('h-3.5 w-3.5 transition-transform', open && 'rotate-90')}
+                        />
+                      </IconButton>
+                    </td>
+                  ) : null}
                   {selection ? (
                     <td className="px-4 py-2.5">
                       <Checkbox
@@ -158,7 +198,16 @@ export function DataTable<T>({
                     </td>
                   ))}
                 </tr>
-              ))}
+                {open && expansion ? (
+                  <tr data-expansion className="border-b border-line-2 last:border-b-0">
+                    <td colSpan={columns.length + leadingCells} className="border-t border-line-2 bg-surface-2 px-4 py-3">
+                      {expansion.render(row)}
+                    </td>
+                  </tr>
+                ) : null}
+                </Fragment>
+                );
+              })}
         </tbody>
         {foot && !loading ? <tfoot>{foot}</tfoot> : null}
       </table>

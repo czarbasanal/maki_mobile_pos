@@ -195,3 +195,46 @@ describe('SalesReportPage — default range', () => {
     expect(end.getTime() - start.getTime()).toBeLessThan(DAY_MS);
   });
 });
+
+describe('SalesReportPage — lines expand under the sale number', () => {
+  const s = sale({
+    items: [
+      item({ productId: 'plug', name: 'Spark Plug', sku: 'SKU-PLUG', unitPrice: 100, unitCost: 60, quantity: 2 }),
+      item({ productId: 'oil', name: 'Engine Oil', sku: 'SKU-OIL', unitPrice: 330, unitCost: 287, quantity: 3, optionId: 'o', optionLabel: 'By 3', optionPieces: 3 }),
+    ],
+    laborLines: [{ id: 'l1', description: 'Tune-up', fee: 450 }],
+  });
+
+  it('the chevron reveals every item with qty and option, plus labor, and hides them again', async () => {
+    harness([s]);
+    const toggle = await screen.findByRole('button', { name: 'Show lines for OR-0001' });
+    // Product names also sit in the Top products card — assert on the band itself.
+    expect(screen.queryByTestId('sale-lines-s1')).not.toBeInTheDocument();
+    await userEvent.click(toggle);
+    const band = screen.getByTestId('sale-lines-s1');
+    expect(within(band).getByText('Spark Plug')).toBeInTheDocument();
+    expect(within(band).getByText('Engine Oil')).toBeInTheDocument();
+    expect(within(band).getByText('· By 3')).toBeInTheDocument();
+    expect(within(band).getByText('3')).toBeInTheDocument();
+    expect(within(band).getByText('Tune-up')).toBeInTheDocument();
+    expect(within(band).getByRole('link', { name: 'Open sale →' })).toHaveAttribute('href', '/reports/sale/s1');
+    await userEvent.click(toggle);
+    expect(screen.queryByTestId('sale-lines-s1')).not.toBeInTheDocument();
+  });
+
+  it('the chevron does not open the sale detail (the row click still does)', async () => {
+    harness([s]);
+    await userEvent.click(await screen.findByRole('button', { name: 'Show lines for OR-0001' }));
+    // Still on the report: its KPI strip is present, the detail page never mounted.
+    expect(screen.getByText('Gross sales')).toBeInTheDocument();
+  });
+
+  it('Expand all opens every row on the page; Collapse all closes them', async () => {
+    harness([s, sale({ id: 's2', saleNumber: 'OR-0002' })]);
+    await userEvent.click(await screen.findByRole('button', { name: 'Expand all' }));
+    expect(screen.getByTestId('sale-lines-s1')).toBeInTheDocument();
+    expect(screen.getByTestId('sale-lines-s2')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Collapse all' }));
+    expect(screen.queryByTestId('sale-lines-s1')).not.toBeInTheDocument();
+  });
+});

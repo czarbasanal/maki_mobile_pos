@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { useState } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { DataTable, type Column } from './DataTable';
@@ -112,5 +113,59 @@ describe('DataTable', () => {
     );
     expect(screen.queryByText('Total shown')).not.toBeInTheDocument();
     expect(container.querySelector('tfoot')).toBeNull();
+  });
+});
+
+describe('DataTable — expandable rows', () => {
+  type Row = { id: string; name: string };
+  const columns: Array<Column<Row>> = [{ key: 'name', header: 'Name', render: (r) => r.name }];
+  const rows: Row[] = [{ id: 'a', name: 'Alpha' }, { id: 'b', name: 'Beta' }];
+
+  function Host({ onRowClick }: { onRowClick?: (r: Row) => void }) {
+    const [open, setOpen] = useState<Set<string>>(new Set());
+    return (
+      <DataTable
+        columns={columns}
+        rows={rows}
+        rowKey={(r) => r.id}
+        onRowClick={onRowClick}
+        expansion={{
+          isExpanded: (r) => open.has(r.id),
+          onToggle: (r) =>
+            setOpen((s) => {
+              const n = new Set(s);
+              if (n.has(r.id)) n.delete(r.id);
+              else n.add(r.id);
+              return n;
+            }),
+          render: (r) => <div>Lines of {r.name}</div>,
+          label: (r) => `Show lines for ${r.name}`,
+        }}
+      />
+    );
+  }
+
+  it('the chevron toggles a full-width band under the row and flips aria-expanded', async () => {
+    render(<Host />);
+    const toggle = screen.getByRole('button', { name: 'Show lines for Alpha' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByText('Lines of Alpha')).not.toBeInTheDocument();
+    await userEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    const band = screen.getByText('Lines of Alpha').closest('tr') as HTMLElement;
+    expect(band).toHaveAttribute('data-expansion');
+    expect((band.querySelector('td') as HTMLTableCellElement).colSpan).toBe(2);
+    await userEvent.click(toggle);
+    expect(screen.queryByText('Lines of Alpha')).not.toBeInTheDocument();
+  });
+
+  it('the chevron never fires the row click', async () => {
+    const onRowClick = vi.fn();
+    render(<Host onRowClick={onRowClick} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Show lines for Beta' }));
+    expect(onRowClick).not.toHaveBeenCalled();
+    expect(screen.getByText('Lines of Beta')).toBeInTheDocument();
+    await userEvent.click(screen.getByText('Beta'));
+    expect(onRowClick).toHaveBeenCalledWith(rows[1]);
   });
 });

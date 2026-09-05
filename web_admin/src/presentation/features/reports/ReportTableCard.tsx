@@ -7,11 +7,14 @@ export function ReportTableCard({
   title,
   count,
   note,
+  action,
   children,
 }: {
   title: string;
   count?: number;
   note?: string;
+  /** Right-aligned control (e.g. Expand all). Sits after the note. */
+  action?: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -24,6 +27,7 @@ export function ReportTableCard({
           </span>
         ) : null}
         {note ? <span className="ml-auto text-[11.5px] text-ink-3">{note}</span> : null}
+        {action ? <div className={note ? 'flex items-center' : 'ml-auto flex items-center'}>{action}</div> : null}
       </div>
       {children}
     </section>

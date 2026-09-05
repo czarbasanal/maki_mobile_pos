@@ -30,9 +30,11 @@ import { CopyButton } from '@/presentation/components/ui/CopyButton';
 import { Badge } from '@/presentation/components/ui/Badge';
 import { Chip } from '@/presentation/components/ui/Chip';
 import { Skeleton } from '@/presentation/components/ui/Skeleton';
+import { Button } from '@/presentation/components/ui/Button';
 import { ErrorState } from '@/presentation/components/ui/ErrorState';
 import { ReportHeader } from './ReportHeader';
 import { ReportTableCard } from './ReportTableCard';
+import { SaleLines } from './SaleLines';
 import { EmptyRangeState } from '@/presentation/components/ui/EmptyRangeState';
 import { useReportRange } from '@/presentation/hooks/useReportRange';
 import { csvFileName, pctLabel, whenLabel } from '@/core/utils/reportFormat';
@@ -53,6 +55,8 @@ export function SalesReportPage() {
   const top = useMemo(() => topProductsBy(f.products, effectiveLens), [f.products, effectiveLens]);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = usePageSize('salesReport');
+  // Lines expanded in place under a sale (DataTable expansion).
+  const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
   usePageClamp(page, setPage, sales.length, pageSize);
 
   useEffect(() => {
@@ -64,6 +68,14 @@ export function SalesReportPage() {
   }, [range.effectiveRange]);
 
   const paged = useMemo(() => sales.slice((page - 1) * pageSize, page * pageSize), [sales, page, pageSize]);
+  const allOpen = paged.length > 0 && paged.every((s) => expanded.has(s.id));
+  const toggleLines = (s: Sale) =>
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(s.id)) next.delete(s.id);
+      else next.add(s.id);
+      return next;
+    });
   // Voided sales stay listed (struck through) for the audit trail but are
   // out of every figure — the chip and the foot say so.
   const voidedCount = sales.length - f.count;
@@ -230,12 +242,29 @@ export function SalesReportPage() {
         title="Sales"
         count={isLoading ? undefined : f.count}
         note={!isLoading && voidedCount > 0 ? `${voidedCount} voided` : undefined}
+        action={
+          paged.length > 0 ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setExpanded(allOpen ? new Set() : new Set(paged.map((s) => s.id)))}
+            >
+              {allOpen ? 'Collapse all' : 'Expand all'}
+            </Button>
+          ) : null
+        }
       >
         <DataTable
           columns={columns}
           rows={paged}
           rowKey={(s) => s.id}
           onRowClick={(s) => navigate(`/reports/sale/${s.id}`)}
+          expansion={{
+            isExpanded: (s) => expanded.has(s.id),
+            onToggle: toggleLines,
+            render: (s) => <SaleLines sale={s} />,
+            label: (s) => `Show lines for ${s.saleNumber}`,
+          }}
           loading={isLoading}
           minWidth="720px"
           foot={
