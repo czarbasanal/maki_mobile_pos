@@ -87,7 +87,8 @@ export function UsersListPage() {
 
   const columns: Array<Column<User>> = [
     {
-      key: 'user', header: 'User',
+      // Fixed so it can't balloon on wide screens; name and email truncate.
+      key: 'user', header: 'User', width: '300px',
       render: (u) => {
         const c = roleColor[u.role];
         return (
@@ -101,8 +102,8 @@ export function UsersListPage() {
               </span>
             </div>
             <div className="flex min-w-0 flex-col gap-0.5">
-              <div className="flex items-center gap-[7px]">
-                <span className="text-[13px] font-semibold tracking-[-0.15px] text-ink">{u.displayName || '—'}</span>
+              <div className="flex min-w-0 items-center gap-[7px]">
+                <span className="truncate text-[13px] font-semibold tracking-[-0.15px] text-ink">{u.displayName || '—'}</span>
                 {me && u.id === me.id ? (
                   <span className="rounded-[5px] bg-accent-soft px-1.5 py-[2px] text-[9.5px] font-bold tracking-[0.8px] text-accent-text">YOU</span>
                 ) : null}
@@ -115,11 +116,12 @@ export function UsersListPage() {
     },
     { key: 'role', header: 'Role', width: '110px', render: (u) => <RoleBadge role={u.role} /> },
     {
-      key: 'seen', header: 'Last sign-in', width: '176px',
+      // No fixed width: this column absorbs the slack, and its two lines never wrap.
+      key: 'seen', header: 'Last sign-in',
       render: (u) => {
         const s = signInStaleness(u.lastLoginAt, now);
         return (
-          <div className="flex flex-col gap-0.5">
+          <div className="flex flex-col gap-0.5 whitespace-nowrap">
             <span className="font-mono text-[12px] text-ink-2">{u.lastLoginAt ? formatShopDateTime(u.lastLoginAt) : 'Never'}</span>
             <span className={cn('text-[10.5px]', staleCls[s.tone])}>{s.label}</span>
           </div>
@@ -128,7 +130,7 @@ export function UsersListPage() {
     },
     {
       key: 'added', header: 'Added', width: '118px', mono: true,
-      render: (u) => <span className="text-[11.5px] text-ink-3">{formatInShopZone(u.createdAt, { month: 'short', day: 'numeric', year: 'numeric' })}</span>,
+      render: (u) => <span className="whitespace-nowrap text-[11.5px] text-ink-3">{formatInShopZone(u.createdAt, { month: 'short', day: 'numeric', year: 'numeric' })}</span>,
     },
     {
       key: 'status', header: 'Status', width: '104px',

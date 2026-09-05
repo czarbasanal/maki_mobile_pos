@@ -142,6 +142,14 @@ describe('UsersListPage — rows', () => {
     expect(within(rowOf('Jeric')).getByText('invite not accepted').className).toContain('text-neg');
   });
 
+  it('the last sign-in cell never wraps and the User column is fixed-width', () => {
+    harness(roster);
+    const seen = within(rowOf('Belle')).getByText('today').parentElement as HTMLElement;
+    expect(seen.className).toContain('whitespace-nowrap');
+    const userHeader = screen.getByRole('columnheader', { name: 'User' }) as HTMLElement;
+    expect(userHeader.style.width).toBe('300px');
+  });
+
   it('Manage and the row open the manage modal route; Add user opens the add route', async () => {
     harness(roster);
     await userEvent.click(within(rowOf('Belle')).getByRole('button', { name: 'Manage' }));
