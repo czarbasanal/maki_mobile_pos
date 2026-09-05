@@ -244,7 +244,7 @@ describe('ReceivingEntryPage — SKU column and units wording (protected)', () =
     harness();
     await userEvent.click(screen.getByRole('button', { name: /New product/ }));
     await userEvent.type(screen.getByLabelText('Name'), 'Squid');
-    await userEvent.click(screen.getByText('Auto-generate SKU from category'));
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Auto' }));
     await userEvent.type(screen.getByLabelText('SKU'), 'MANUAL-1');
     await userEvent.type(screen.getByLabelText('Cost'), '90');
     await userEvent.type(screen.getByLabelText('Price'), '130');

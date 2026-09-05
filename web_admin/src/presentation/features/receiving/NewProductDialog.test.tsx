@@ -56,12 +56,18 @@ function harness(
   return onAdd;
 }
 
+/** SelectFilter replaced the native category select — open it, pick a row. */
+async function pickCategory(name: string) {
+  await userEvent.click(screen.getByRole('button', { name: /^Category/ }));
+  await userEvent.click(await screen.findByRole('option', { name }));
+}
+
 describe('NewProductDialog auto-SKU', () => {
   it('shows no code for an auto-SKU row — the SKU is assigned on save', async () => {
     signIn();
     harness();
 
-    await userEvent.selectOptions(screen.getByLabelText('Category'), 'Brakes');
+    await pickCategory('Brakes');
 
     // Peeking the registry produced a number that looked authoritative and was
     // identical for every row added before saving, so three new products in a
@@ -77,7 +83,7 @@ describe('NewProductDialog auto-SKU', () => {
     signIn();
     harness();
 
-    await userEvent.selectOptions(screen.getByLabelText('Category'), 'Snacks');
+    await pickCategory('Snacks');
 
     expect(screen.getByLabelText('SKU')).toHaveValue('');
     expect(
@@ -89,7 +95,7 @@ describe('NewProductDialog auto-SKU', () => {
     signIn();
     const onAdd = harness();
 
-    await userEvent.selectOptions(screen.getByLabelText('Category'), 'Brakes');
+    await pickCategory('Brakes');
     await waitFor(() =>
       expect(screen.getByLabelText('SKU')).toHaveValue('Assigned when saved'),
     );
@@ -116,7 +122,7 @@ describe('NewProductDialog full fields', () => {
     const onAdd = harness();
 
     await userEvent.type(screen.getByLabelText('Name'), 'Brake shoe');
-    await userEvent.click(screen.getByText('Auto-generate SKU from category'));
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Auto' }));
     await userEvent.type(screen.getByLabelText('SKU'), 'MANUAL-9');
     await userEvent.type(screen.getByLabelText('Cost'), '90');
     await userEvent.type(screen.getByLabelText('Price'), '130');
@@ -137,7 +143,7 @@ describe('NewProductDialog full fields', () => {
     const onAdd = harness();
 
     await userEvent.type(screen.getByLabelText('Name'), 'Brake shoe');
-    await userEvent.click(screen.getByText('Auto-generate SKU from category'));
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Auto' }));
     await userEvent.type(screen.getByLabelText('SKU'), 'MANUAL-9');
     await userEvent.type(screen.getByLabelText('Cost'), '90');
     await userEvent.type(screen.getByLabelText('Price'), '130');
@@ -215,7 +221,7 @@ describe('NewProductDialog — initialName prefill (no-results create-new)', () 
 describe('NewProductDialog — reorder level default', () => {
   async function fillRequired() {
     await userEvent.type(screen.getByLabelText(/name/i), 'Squid');
-    await userEvent.selectOptions(screen.getByLabelText('Category'), 'Brakes');
+    await pickCategory('Brakes');
     await userEvent.type(screen.getByLabelText(/cost/i), '90');
     await userEvent.type(screen.getByLabelText(/price/i), '130');
     await userEvent.type(screen.getByLabelText(/quantity/i), '3');

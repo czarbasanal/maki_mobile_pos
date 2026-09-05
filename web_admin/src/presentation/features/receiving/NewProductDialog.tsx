@@ -4,15 +4,21 @@
 // data to Firestore, and a pending image file would silently vanish on
 // save-as-draft; photos are added from the product drawer after receiving).
 //
+// Skin: the inventory ProductModal's — shared Modal shell, formKit controls,
+// SelectFilter for Unit/Category, the same section grids and the live margin
+// tile — so "new product" looks the same wherever it is asked for.
+//
 // Auto-SKU is the category-driven kind, matching the New Product page: picking
 // a coded category peeks the next sequence for a PREVIEW, and the real claim
 // happens inside the receive transaction (executeReceivePlan scans forward
 // under the category code) — the retired name-based generator is not used.
 // Nothing is created here: the dialog only queues a pendingNewProduct line;
 // the product exists once the receiving is completed.
-import { useEffect, useMemo, useState } from 'react';
-import { XMarkIcon } from '@heroicons/react/24/outline';
-import { Dialog } from '@/presentation/components/common/Dialog';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { CubeIcon } from '@heroicons/react/24/outline';
+import { Modal } from '@/presentation/components/ui/Modal';
+import { SelectFilter } from '@/presentation/components/ui/SelectFilter';
+import { controlH, inputCls, Field, SectionLabel } from '@/presentation/components/ui/formKit';
 import { SellingOptionsEditor } from '@/presentation/features/inventory/SellingOptionsEditor';
 import { useActiveCategories } from '@/presentation/hooks/useCategories';
 import { useAuthStore } from '@/presentation/stores/authStore';
@@ -21,11 +27,10 @@ import { UserRole } from '@/domain/enums';
 import { composeAutoSku, matchesAutoPattern } from '@/domain/products/sku';
 import { PENDING_SKU_LABEL } from '@/domain/receiving/skuPreview';
 import { validateSellingOptions } from '@/domain/products/sellingOptions';
+import { marginPct, marginToneClass } from '@/domain/products/margin';
+import { cn } from '@/core/utils/cn';
 import type { Category, SellingOption } from '@/domain/entities';
 import type { NewProductSpec } from './useReceivingEntry';
-
-const inputCls =
-  'w-full rounded-md border border-light-border bg-light-card px-tk-md py-tk-sm text-bodySmall text-light-text outline-none focus:border-light-text';
 
 interface NewProductDialogProps {
   open: boolean;
@@ -131,6 +136,15 @@ export function NewProductDialog({
     [sellingOptions],
   );
 
+  // Same live margin the inventory modal shows: the buyer should never have
+  // to compute the one number that decides whether the price is right.
+  const liveMargin = useMemo(() => {
+    const c = Number(cost);
+    const p = Number(price);
+    if (!Number.isFinite(c) || !Number.isFinite(p) || price.trim() === '') return null;
+    return marginPct(p, c);
+  }, [cost, price]);
+
   const commitBarcode = () => {
     const code = barcodeDraft.trim();
     if (!code) return;
@@ -146,7 +160,10 @@ export function NewProductDialog({
     setNotes(''); setSellingOptions([]); setError(null);
   };
 
-  const submit = () => {
+  const requestClose = () => { reset(); onClose(); };
+
+  const submit = (e?: FormEvent) => {
+    e?.preventDefault();
     const n = name.trim();
     const s = sku.trim();
     const q = Number(quantity);
@@ -190,137 +207,173 @@ export function NewProductDialog({
     onClose();
   };
 
-  return (
-    <Dialog
-      open={open}
-      onClose={() => { reset(); onClose(); }}
-      title={initial ? 'Edit product' : 'New product'}
-      description="Added to inventory when this receiving is completed. Photo can be added afterward from the product page."
-      className="max-w-2xl"
-    >
-      <div className="max-h-[70vh] space-y-tk-md overflow-y-auto pr-tk-xs">
-        {error ? (
-          <p className="rounded-md border border-error-light bg-error-light/40 px-tk-md py-tk-sm text-bodySmall text-error-dark">
-            {error}
-          </p>
-        ) : null}
+  const unitOptions = useMemo(() => {
+    const names = (units ?? []).map((u) => u.name);
+    return names.includes(unit) ? names : [...names, unit];
+  }, [units, unit]);
 
+  return (
+    <Modal
+      open={open}
+      onClose={requestClose}
+      title={initial ? 'Edit product' : 'New product'}
+      subtitle="Added to inventory when this receiving is completed. Photo can be added afterward from the product page."
+      icon={
+        <div
+          aria-hidden
+          className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[10px] bg-accent-soft text-accent-text"
+        >
+          <CubeIcon className="h-[18px] w-[18px]" />
+        </div>
+      }
+      widthClassName="max-w-[680px]"
+      footer={
+        <>
+          <span className="ml-auto" />
+          <button
+            type="button"
+            onClick={requestClose}
+            className="rounded-ctl border border-line px-tk-md py-tk-sm text-ctl-sm text-ink-2 hover:bg-surface-2"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            form="receiving-new-product"
+            className="rounded-ctl bg-accent px-tk-md py-tk-sm text-ctl-sm font-semibold text-accent-ink hover:brightness-95"
+          >
+            {initial ? 'Save changes' : 'Add to receiving'}
+          </button>
+        </>
+      }
+    >
+      {error ? (
+        <p className="rounded-ctl border border-neg bg-neg-soft px-tk-md py-tk-sm text-ctl-sm text-neg">
+          {error}
+        </p>
+      ) : null}
+
+      <form id="receiving-new-product" onSubmit={submit} noValidate className="flex flex-col gap-[18px]">
         <Field label="Name">
-          <input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} />
+          <input
+            data-autofocus
+            type="text"
+            className={inputCls(false)}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
         </Field>
 
-        <div className="grid grid-cols-1 gap-tk-md sm:grid-cols-2">
-          <Field label="Category">
-            <select
-              className={inputCls}
-              aria-label="Category"
-              value={category ?? ''}
-              onChange={(e) => {
-                const v = e.target.value || null;
-                setCategory(v);
-                applyCategoryForSku(v ? categoryEntityForName(v) : undefined, autoSku);
-              }}
-            >
-              <option value="">—</option>
-              {(productCats ?? []).map((c) => (
-                <option key={c.id} value={c.name}>{c.name}</option>
-              ))}
-            </select>
-          </Field>
-          <Field label="SKU">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-3">
+          <div className="flex flex-col gap-[6px]">
+            {/* Auto sits right AFTER the SKU label — pushed to the column edge
+                it lands nearer "Barcodes" and reads as a barcode control. */}
+            <span className="flex items-center gap-[9px] text-[11.5px] font-semibold text-ink-2">
+              SKU
+              <label className="flex cursor-pointer items-center gap-1.5 font-medium text-ink-3">
+                <input
+                  type="checkbox"
+                  className="h-3.5 w-3.5"
+                  checked={autoSku}
+                  onChange={(e) => {
+                    const on = e.target.checked;
+                    setAutoSku(on);
+                    if (on) {
+                      applyCategoryForSku(categoryEntityForName(category ?? ''), true);
+                    } else {
+                      setSkuHint(null);
+                    }
+                  }}
+                />
+                Auto
+              </label>
+            </span>
+            {/* readOnly, not disabled: while auto is on the field is genuinely
+                locked, and its text stays legible on the --surface-3 fill.
+                An auto row shows the pending label, never the seed — the seed
+                is not the code the product ends up with. */}
             <input
-              className={inputCls}
+              type="text"
+              readOnly={autoSku}
               aria-label="SKU"
-              /* An auto row has no SKU yet — showing the seed would be showing
-                 a code that is not the one the product ends up with. */
+              className={cn(inputCls(false), 'font-mono', autoSku && 'cursor-default bg-surface-3')}
               value={autoSku && sku ? PENDING_SKU_LABEL : sku}
-              disabled={autoSku}
               onChange={(e) => setSku(e.target.value)}
             />
-            <label className="mt-tk-xs flex items-center gap-tk-xs text-bodySmall text-light-text">
-              <input
-                type="checkbox"
-                checked={autoSku}
-                onChange={(e) => {
-                  const on = e.target.checked;
-                  setAutoSku(on);
-                  if (on) {
-                    applyCategoryForSku(categoryEntityForName(category ?? ''), true);
-                  } else {
-                    setSkuHint(null);
-                  }
-                }}
-              />
-              Auto-generate SKU from category
-            </label>
-            {skuHint ? (
-              <p className="mt-tk-xs text-[12px] text-light-text-hint">{skuHint}</p>
-            ) : null}
-          </Field>
-          <Field label="Unit">
-            <select className={inputCls} aria-label="Unit" value={unit}
-              onChange={(e) => setUnit(e.target.value)}>
-              {(units ?? []).map((u) => <option key={u.id} value={u.name}>{u.name}</option>)}
-              {(units ?? []).every((u) => u.name !== unit) ? (
-                <option value={unit}>{unit}</option>
+            {skuHint ? <span className="text-[11.5px] text-ink-3">{skuHint}</span> : null}
+          </div>
+
+          <Field group label="Barcodes">
+            <div className="flex flex-col gap-2">
+              {barcodes.length ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {barcodes.map((code) => (
+                    <span
+                      key={code}
+                      className="inline-flex items-center gap-1.5 rounded-pill bg-surface-2 px-2.5 py-[2px] text-[12px] text-ink"
+                    >
+                      <span className="font-mono">{code}</span>
+                      <button
+                        type="button"
+                        onClick={() => setBarcodes((list) => list.filter((x) => x !== code))}
+                        className="text-ink-3 hover:text-neg"
+                        aria-label={`Remove barcode ${code}`}
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
               ) : null}
-            </select>
-          </Field>
-          <Field label="Reorder level">
-            <input type="number" className={inputCls} aria-label="Reorder level"
-              placeholder="1"
-              value={reorderLevel} onChange={(e) => setReorderLevel(e.target.value)} />
-          </Field>
-          <Field label="Cost">
-            <input type="number" step="0.01" className={inputCls} aria-label="Cost"
-              value={cost} onChange={(e) => setCost(e.target.value)} />
-          </Field>
-          <Field label="Price">
-            <input type="number" step="0.01" className={inputCls} aria-label="Price"
-              value={price} onChange={(e) => setPrice(e.target.value)} />
-          </Field>
-          <Field label="Quantity received">
-            <input type="number" className={inputCls} aria-label="Quantity received"
-              value={quantity} onChange={(e) => setQuantity(e.target.value)} />
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  aria-label="Add barcode"
+                  value={barcodeDraft}
+                  onChange={(e) => setBarcodeDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') { e.preventDefault(); commitBarcode(); }
+                  }}
+                  placeholder="Scan or type, then Enter"
+                  className={cn(inputCls(false), 'font-mono')}
+                />
+                <button
+                  type="button"
+                  onClick={commitBarcode}
+                  className="shrink-0 rounded-ctl border border-line px-tk-md py-2.5 text-ctl-sm text-ink hover:bg-surface-2"
+                >
+                  Add
+                </button>
+              </div>
+            </div>
           </Field>
         </div>
 
-        <Field label="Barcodes">
-          <div className="flex gap-tk-sm">
-            <input
-              className={inputCls}
-              aria-label="Add barcode"
-              value={barcodeDraft}
-              onChange={(e) => setBarcodeDraft(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') { e.preventDefault(); commitBarcode(); }
-              }}
-              placeholder="Scan or type, then Enter"
-            />
-            <button type="button" onClick={commitBarcode}
-              className="shrink-0 rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle">
-              Add
-            </button>
-          </div>
-          {barcodes.length > 0 ? (
-            <div className="mt-tk-sm flex flex-wrap gap-tk-xs">
-              {barcodes.map((b) => (
-                <span key={b}
-                  className="inline-flex items-center gap-tk-xs rounded-full bg-light-subtle px-tk-sm py-[2px] font-mono text-[12px] text-light-text">
-                  {b}
-                  <button type="button" aria-label={`Remove barcode ${b}`}
-                    onClick={() => setBarcodes((list) => list.filter((x) => x !== b))}
-                    className="text-light-text-hint hover:text-error">
-                    <XMarkIcon className="h-3 w-3" />
-                  </button>
-                </span>
-              ))}
+        <section className="flex flex-col gap-2">
+          <SectionLabel>Pricing</SectionLabel>
+          <div className={threeColGrid}>
+            <Field label="Cost">
+              <input type="number" step="0.01" className={inputCls(false)}
+                value={cost} onChange={(e) => setCost(e.target.value)} />
+            </Field>
+            <Field label="Price">
+              <input type="number" step="0.01" className={inputCls(false)}
+                value={price} onChange={(e) => setPrice(e.target.value)} />
+            </Field>
+            {/* Label and value on ONE line, same height as the inputs, so the
+                tile reads as the row's third member — not a card. */}
+            <div className={cn(controlH, 'flex items-center gap-2.5 rounded-ctl bg-surface-2 px-3')}>
+              <span className="text-[10px] font-semibold uppercase tracking-[1px] text-ink-3">Margin</span>
+              <span className={cn('ml-auto font-mono text-[17px] font-semibold leading-none', marginToneClass(liveMargin))}>
+                {liveMargin === null ? '—' : `${liveMargin}%`}
+              </span>
             </div>
-          ) : null}
-        </Field>
+          </div>
+        </section>
 
         {isAdmin ? (
-          <Field label="Selling options">
+          <section className="flex flex-col gap-2">
+            <SectionLabel>Selling options</SectionLabel>
             <SellingOptionsEditor
               value={sellingOptions}
               onChange={setSellingOptions}
@@ -329,34 +382,64 @@ export function NewProductDialog({
               showMargin
               error={sellingOptionsError}
             />
-          </Field>
+          </section>
         ) : null}
 
+        <section className="flex flex-col gap-2">
+          <SectionLabel>Stock &amp; classification</SectionLabel>
+          <div className={threeColGrid}>
+            <Field label="Quantity received">
+              <input type="number" className={inputCls(false)}
+                value={quantity} onChange={(e) => setQuantity(e.target.value)} />
+            </Field>
+            <Field label="Reorder level">
+              <input type="number" placeholder="1" className={inputCls(false)}
+                value={reorderLevel} onChange={(e) => setReorderLevel(e.target.value)} />
+            </Field>
+          </div>
+          <div className={threeColGrid}>
+            <Field group label="Unit">
+              <SelectFilter
+                label="Unit"
+                // No allLabel: a unit is required, so no "no filter" row
+                // exists and '' is never offered.
+                value={unit}
+                options={unitOptions.map((u) => ({ value: u, label: u }))}
+                onChange={setUnit}
+                triggerClassName={formSelectCls}
+              />
+            </Field>
+            <Field group label="Category">
+              <SelectFilter
+                label="Category"
+                value={category ?? ''}
+                options={(productCats ?? []).map((c) => ({ value: c.name, label: c.name }))}
+                allLabel="(none)"
+                onChange={(v) => {
+                  const next = v || null;
+                  setCategory(next);
+                  applyCategoryForSku(next ? categoryEntityForName(next) : undefined, autoSku);
+                }}
+                triggerClassName={formSelectCls}
+              />
+            </Field>
+          </div>
+        </section>
+
         <Field label="Notes">
-          <textarea rows={2} className={`${inputCls} resize-y leading-relaxed`}
-            aria-label="Notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
+          <textarea
+            rows={3}
+            className={cn(inputCls(false), 'min-h-[74px] resize-y leading-normal')}
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+          />
         </Field>
-
-        <div className="flex justify-end gap-tk-sm pt-tk-sm">
-          <button type="button" onClick={() => { reset(); onClose(); }}
-            className="rounded-md border border-light-border px-tk-md py-tk-sm text-bodySmall text-light-text hover:bg-light-subtle">
-            Cancel
-          </button>
-          <button type="button" onClick={submit}
-            className="rounded-md bg-light-text px-tk-md py-tk-sm text-bodySmall font-semibold text-light-background hover:bg-primary-dark">
-            {initial ? 'Save changes' : 'Add to receiving'}
-          </button>
-        </div>
-      </div>
-    </Dialog>
+      </form>
+    </Modal>
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block">
-      <span className="mb-tk-xs block text-bodySmall text-light-text-secondary">{label}</span>
-      {children}
-    </label>
-  );
-}
+// The product modal's shared row rule: three columns on one set of vertical
+// edges; 186px floors the tracks so SelectFilter's min width can't overflow.
+const threeColGrid = 'grid grid-cols-[repeat(auto-fit,minmax(186px,1fr))] items-end gap-3';
+const formSelectCls = `${controlH} w-full bg-surface-2 shadow-none`;
