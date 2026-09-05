@@ -35,6 +35,8 @@ const receipt = (o: Partial<Receiving> = {}): Receiving => ({
   createdByName: 'Bern',
   completedBy: 'u1',
   version: 0,
+  invoiceNumber: null,
+  receivedOn: null,
   ...o,
 });
 

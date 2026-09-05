@@ -134,6 +134,50 @@ describe('receivingConverter.fromFirestore', () => {
   });
 });
 
+describe('receivingConverter — invoiceNumber/receivedOn', () => {
+  it('round-trips both fields through toFirestore/fromFirestore', () => {
+    const written = receivingConverter.toFirestore({
+      id: 'rcv-8',
+      referenceNumber: 'RCV-20260905-001',
+      supplierId: null,
+      supplierName: null,
+      items: [],
+      totalCost: 0,
+      totalQuantity: 0,
+      status: 'draft',
+      notes: null,
+      createdAt: new Date('2026-09-05T08:00:00Z'),
+      completedAt: null,
+      createdBy: 'u1',
+      createdByName: 'Czar',
+      completedBy: null,
+      version: 0,
+      invoiceNumber: 'INV-4471',
+      receivedOn: '2026-09-05',
+    } as never);
+    expect(written).toMatchObject({ invoiceNumber: 'INV-4471', receivedOn: '2026-09-05' });
+
+    const read = receivingConverter.fromFirestore(snap('rcv-8', { ...written, createdAt: new Date('2026-09-05T08:00:00Z') }), opts);
+    expect(read.invoiceNumber).toBe('INV-4471');
+    expect(read.receivedOn).toBe('2026-09-05');
+  });
+
+  it('defaults both to null on a doc written before the fields existed', () => {
+    const r = receivingConverter.fromFirestore(
+      snap('rcv-9', {
+        referenceNumber: 'RCV-20260608-009',
+        status: 'draft',
+        createdAt: new Date('2026-06-08T10:00:00Z'),
+        createdBy: 'u1',
+        createdByName: 'Czar',
+      }),
+      opts,
+    );
+    expect(r.invoiceNumber).toBeNull();
+    expect(r.receivedOn).toBeNull();
+  });
+});
+
 describe('receivingConverter — unitPrice on items', () => {
   it('parses a stored unitPrice and defaults pre-field items to null', () => {
     const r = receivingConverter.fromFirestore(

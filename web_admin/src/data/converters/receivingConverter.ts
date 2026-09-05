@@ -86,6 +86,8 @@ export const receivingConverter: FirestoreDataConverter<Receiving> = {
       createdBy: r.createdBy,
       createdByName: r.createdByName,
       completedBy: r.completedBy,
+      invoiceNumber: r.invoiceNumber,
+      receivedOn: r.receivedOn,
     };
   },
   fromFirestore(snapshot: QueryDocumentSnapshot<DocumentData>): Receiving {
@@ -108,6 +110,10 @@ export const receivingConverter: FirestoreDataConverter<Receiving> = {
       createdBy: d.createdBy ?? '',
       createdByName: d.createdByName ?? '',
       completedBy: d.completedBy ?? null,
+      // Old docs predate both fields — default to null rather than ''  so
+      // the builder/detail page can tell "not recorded" from "recorded blank".
+      invoiceNumber: (d.invoiceNumber as string | null) ?? null,
+      receivedOn: (d.receivedOn as string | null) ?? null,
     };
   },
 };

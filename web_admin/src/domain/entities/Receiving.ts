@@ -58,4 +58,12 @@ export interface Receiving {
   completedBy: string | null;
   /** Optimistic-concurrency counter; 0 on docs written before versioning. */
   version: number;
+  /** The supplier's paperwork number for this delivery — optional, so
+   *  drafts written before this field existed (and receipts with none) read
+   *  as null rather than an empty string. */
+  invoiceNumber: string | null;
+  /** The shop-calendar day the delivery physically arrived, as a raw
+   *  `YYYY-MM-DD` string (never a Date/toISOString — see shopIsoDate). Null
+   *  for pre-field docs. */
+  receivedOn: string | null;
 }

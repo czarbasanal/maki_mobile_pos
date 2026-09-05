@@ -220,6 +220,8 @@ export class FirestoreReceivingRepository implements ReceivingRepository {
       createdAt: serverTimestamp(),
       completedAt: null,
       version: 0,
+      invoiceNumber: input.invoiceNumber,
+      receivedOn: input.receivedOn,
     });
     const snap = await getDoc(ref.withConverter(receivingConverter));
     return snap.data()!;
@@ -256,6 +258,8 @@ export class FirestoreReceivingRepository implements ReceivingRepository {
         notes: input.notes,
         updatedBy: actorId,
         version: nextReceivingVersion(current),
+        invoiceNumber: input.invoiceNumber,
+        receivedOn: input.receivedOn,
       });
     });
   }
@@ -318,6 +322,9 @@ export class FirestoreReceivingRepository implements ReceivingRepository {
         throw new Error(RECEIVING_CONFLICT_MESSAGE);
       }
       await executeReceivePlan(tx, this.db, plan, actor);
+      // invoiceNumber/receivedOn are deliberately absent below — Firestore's
+      // update() only touches the fields named here, so whatever create()/
+      // update() last wrote for them survives completion untouched.
       tx.update(ref, {
         items: plan.items,
         version: nextReceivingVersion(receiving.version),
