@@ -9,6 +9,7 @@ import { useShopFees } from '@/presentation/hooks/useShopFees';
 import { CHARGE_ITEM_FEE_NAME, type FeeLine, type ShopFee } from '@/domain/entities';
 import { IconButton } from '@/presentation/components/ui/IconButton';
 import { Button } from '@/presentation/components/ui/Button';
+import { SelectFilter } from '@/presentation/components/ui/SelectFilter';
 
 export function FeeSection({ store }: { store: CartStore }) {
   const feeLines = store((s) => s.feeLines);
@@ -85,21 +86,18 @@ function FeeRow({
   return (
     <div className="space-y-tk-xs">
       <div className="flex items-center gap-tk-sm">
-        <select
-          aria-label="Shop fee"
-          value={line.name || ''}
-          onChange={(e) => pick(e.target.value)}
-          className="min-w-0 flex-1 rounded-field border border-line bg-surface-2 px-2.5 py-1.5 text-ctl-sm text-ink outline-none"
-        >
-          <option value="" disabled>
-            Select fee…
-          </option>
-          {options.map((name) => (
-            <option key={name} value={name}>
-              {name}
-            </option>
-          ))}
-        </select>
+        {/* No allLabel: a fee must be picked, so no empty row is offered —
+            the unpicked state only shows placeholder trigger text. */}
+        <div className="min-w-0 flex-1">
+          <SelectFilter
+            label="Fee"
+            value={line.name || ''}
+            options={options.map((name) => ({ value: name, label: name }))}
+            allTriggerLabel="Select fee…"
+            onChange={pick}
+            triggerClassName="w-full min-w-0 bg-surface-2 shadow-none px-2.5 py-1.5"
+          />
+        </div>
         <input
           type="text"
           inputMode="decimal"

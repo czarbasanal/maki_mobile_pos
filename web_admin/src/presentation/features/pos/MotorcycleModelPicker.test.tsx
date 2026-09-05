@@ -40,10 +40,16 @@ function harness(store = createCartStore(), repoOver: Partial<Container['motorcy
   return { store, motorcycleModelRepo };
 }
 
+/** SelectFilter replaced the native select — open the trigger, pick a row. */
+async function pickModel(optionName: RegExp | string) {
+  await userEvent.click(screen.getByRole('button', { name: /^Motorcycle/ }));
+  await userEvent.click(await screen.findByRole('option', { name: optionName }));
+}
+
 describe('MotorcycleModelPicker', () => {
   it('picking an existing model snapshots its name on the ticket', async () => {
     const { store } = harness();
-    await userEvent.selectOptions(screen.getByLabelText(/motorcycle/i), 'Nmax 155');
+    await pickModel('Nmax 155');
     expect(store.getState().motorcycleModel).toBe('Nmax 155');
   });
 
@@ -51,13 +57,13 @@ describe('MotorcycleModelPicker', () => {
     const store = createCartStore();
     store.getState().setMotorcycleModel('Nmax 155');
     harness(store);
-    await userEvent.selectOptions(screen.getByLabelText(/motorcycle/i), '');
+    await pickModel('None');
     expect(store.getState().motorcycleModel).toBeNull();
   });
 
   it('Add model resolves through pick-or-add and stores the canonical name', async () => {
     const { store, motorcycleModelRepo } = harness();
-    await userEvent.selectOptions(screen.getByLabelText(/motorcycle/i), '__add__');
+    await pickModel(/add model/i);
     await userEvent.type(screen.getByPlaceholderText(/model name/i), '  mio   i125 ');
     await userEvent.click(screen.getByRole('button', { name: /^add$/i }));
     expect(motorcycleModelRepo.create).toHaveBeenCalledWith('  mio   i125 ', 'u1');
@@ -70,17 +76,18 @@ describe('MotorcycleModelPicker', () => {
     const { store, motorcycleModelRepo } = harness(createCartStore(), {
       findByNormalizedKey: vi.fn(async () => existing),
     });
-    await userEvent.selectOptions(screen.getByLabelText(/motorcycle/i), '__add__');
+    await pickModel(/add model/i);
     await userEvent.type(screen.getByPlaceholderText(/model name/i), 'NMAX 155');
     await userEvent.click(screen.getByRole('button', { name: /^add$/i }));
     expect(motorcycleModelRepo.create).not.toHaveBeenCalled();
     expect(store.getState().motorcycleModel).toBe('Nmax 155');
   });
 
-  it('keeps a ticket model that is missing from the active list selectable', () => {
+  it('keeps a ticket model that is missing from the active list selectable', async () => {
     const store = createCartStore();
     store.getState().setMotorcycleModel('Old Archived Model');
     harness(store);
-    expect(screen.getByRole('option', { name: /old archived model/i })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /^Motorcycle/ }));
+    expect(await screen.findByRole('option', { name: /old archived model/i })).toBeInTheDocument();
   });
 });

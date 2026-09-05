@@ -70,7 +70,7 @@ describe('JobOrderEditPage', () => {
   it('offers the motorcycle model picker (web can set it now)', async () => {
     harness({ getById: vi.fn().mockResolvedValue(jobOrder({ motorcycleModel: null })) });
     await waitFor(() =>
-      expect(screen.getByRole('combobox', { name: /motorcycle/i })).toBeInTheDocument(),
+      expect(screen.getByRole('button', { name: /^Motorcycle/ })).toBeInTheDocument(),
     );
   });
 
@@ -232,7 +232,7 @@ describe('JobOrderEditPage — motorcycle model persists (review blocker)', () =
       update,
     });
     await waitFor(() =>
-      expect(screen.getByRole('combobox', { name: /motorcycle/i })).toBeInTheDocument(),
+      expect(screen.getByRole('button', { name: /^Motorcycle/ })).toBeInTheDocument(),
     );
     // Simulate a pick landing in the edit store (the picker's own behavior is
     // covered by MotorcycleModelPicker.test) then save.

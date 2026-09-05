@@ -3,6 +3,7 @@
 // the canonical list is shared and cashier-extendable.
 import { useState } from 'react';
 import type { CartStore } from '@/presentation/stores/cartStore';
+import { SelectFilter } from '@/presentation/components/ui/SelectFilter';
 import {
   useMotorcycleModels,
   useResolveOrCreateModel,
@@ -40,30 +41,24 @@ export function MotorcycleModelPicker({ store }: { store: CartStore }) {
 
   return (
     <div className="space-y-tk-xs pt-tk-sm">
-      <label className="flex items-center gap-tk-sm">
-        <span className="text-micro-caps uppercase text-ink-3">Motorcycle</span>
-        <select
-          value={adding ? ADD_SENTINEL : motorcycleModel ?? ''}
-          onChange={(e) => {
-            const v = e.target.value;
-            if (v === ADD_SENTINEL) {
-              setAdding(true);
-              return;
-            }
-            setAdding(false);
-            setMotorcycleModel(v === '' ? null : v);
-          }}
-          className="rounded-field border border-line bg-surface-2 px-tk-sm py-[6px] text-ctl-sm text-ink outline-none"
-        >
-          <option value="">None</option>
-          {options.map((name) => (
-            <option key={name} value={name}>
-              {name}
-            </option>
-          ))}
-          <option value={ADD_SENTINEL}>➕ Add model…</option>
-        </select>
-      </label>
+      <SelectFilter
+        label="Motorcycle"
+        value={adding ? ADD_SENTINEL : motorcycleModel ?? ''}
+        options={[
+          ...options.map((name) => ({ value: name, label: name })),
+          { value: ADD_SENTINEL, label: '➕ Add model…' },
+        ]}
+        allLabel="None"
+        onChange={(v) => {
+          if (v === ADD_SENTINEL) {
+            setAdding(true);
+            return;
+          }
+          setAdding(false);
+          setMotorcycleModel(v === '' ? null : v);
+        }}
+        triggerClassName="bg-surface-2 shadow-none px-tk-sm py-[6px]"
+      />
       {adding ? (
         <div className="flex items-center gap-tk-sm">
           <input

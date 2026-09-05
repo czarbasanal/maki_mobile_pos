@@ -44,8 +44,10 @@ describe('NewJobOrderDialog', () => {
   it('creates an empty-items JO with the picked model and mechanic', async () => {
     const { create, onClose } = harness();
     expect(screen.getByText('JO-090126-004')).toBeInTheDocument();
-    await userEvent.selectOptions(screen.getByLabelText(/motorcycle model/i), 'Nmax 155');
-    await userEvent.selectOptions(screen.getByLabelText(/mechanic/i), 'mek1');
+    await userEvent.click(screen.getByRole('button', { name: /^Motorcycle model/ }));
+    await userEvent.click(await screen.findByRole('option', { name: 'Nmax 155' }));
+    await userEvent.click(screen.getByRole('button', { name: /^Mechanic/ }));
+    await userEvent.click(await screen.findByRole('option', { name: 'Berto' }));
     await userEvent.click(screen.getByRole('button', { name: /^create$/i }));
     await waitFor(() => expect(create).toHaveBeenCalled());
     const input = create.mock.calls[0][0];

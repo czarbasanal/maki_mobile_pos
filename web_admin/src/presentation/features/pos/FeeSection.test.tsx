@@ -26,11 +26,17 @@ function harness(store = createCartStore(), catalog: ShopFee[] = fees) {
   return store;
 }
 
+/** SelectFilter replaced the native select — open the trigger, pick a row. */
+async function pickFee(name: string) {
+  await userEvent.click(screen.getByRole('button', { name: /^Fee/ }));
+  await userEvent.click(await screen.findByRole('option', { name }));
+}
+
 describe('FeeSection — inline rows', () => {
   it('Add fee appends a row; picking a fee prefills its default amount', async () => {
     const store = harness();
     await userEvent.click(screen.getByRole('button', { name: /add fee/i }));
-    await userEvent.selectOptions(screen.getByLabelText('Shop fee'), 'Tire changer');
+    await pickFee('Tire changer');
     expect(store.getState().feeLines[0]).toMatchObject({ name: 'Tire changer', amount: 50 });
     expect(screen.getByDisplayValue('50.00')).toBeInTheDocument();
   });
@@ -38,7 +44,7 @@ describe('FeeSection — inline rows', () => {
   it('the amount edits inline after picking', async () => {
     const store = harness();
     await userEvent.click(screen.getByRole('button', { name: /add fee/i }));
-    await userEvent.selectOptions(screen.getByLabelText('Shop fee'), 'Tire changer');
+    await pickFee('Tire changer');
     const amount = screen.getByDisplayValue('50.00');
     await userEvent.clear(amount);
     await userEvent.type(amount, '80');
@@ -48,7 +54,7 @@ describe('FeeSection — inline rows', () => {
   it('Charge Item grows an inline description input and stores it', async () => {
     const store = harness();
     await userEvent.click(screen.getByRole('button', { name: /add fee/i }));
-    await userEvent.selectOptions(screen.getByLabelText('Shop fee'), 'Charge Item');
+    await pickFee('Charge Item');
     expect(screen.getByText(/enter an amount/i)).toBeInTheDocument();
     await userEvent.type(screen.getByPlaceholderText(/what's being charged/i), 'Outside part');
     expect(store.getState().feeLines[0].description).toBe('Outside part');
@@ -57,7 +63,7 @@ describe('FeeSection — inline rows', () => {
   it('warns until a Charge Item is described', async () => {
     harness();
     await userEvent.click(screen.getByRole('button', { name: /add fee/i }));
-    await userEvent.selectOptions(screen.getByLabelText('Shop fee'), 'Charge Item');
+    await pickFee('Charge Item');
     const amount = screen.getByPlaceholderText('₱');
     await userEvent.type(amount, '120');
     expect(screen.getByText(/describe what's being charged/i)).toBeInTheDocument();
@@ -77,12 +83,13 @@ describe('FeeSection — inline rows', () => {
     expect(screen.getByText(/no shop fees configured/i)).toBeInTheDocument();
   });
 
-  it('a carried fee name missing from the catalog stays selectable', () => {
+  it('a carried fee name missing from the catalog stays selectable', async () => {
     const store = createCartStore();
     store.getState().addFeeLine();
     const row = store.getState().feeLines[0];
     store.getState().setFeeLine(row.id, { name: 'Legacy Disposal', amount: 30 });
     harness(store);
-    expect(screen.getByRole('option', { name: 'Legacy Disposal' })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /^Fee/ }));
+    expect(await screen.findByRole('option', { name: 'Legacy Disposal' })).toBeInTheDocument();
   });
 });

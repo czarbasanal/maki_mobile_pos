@@ -3,6 +3,7 @@
 // items — parts get added later by resuming or editing the ticket.
 import { useState } from 'react';
 import { Dialog } from '@/presentation/components/common/Dialog';
+import { SelectFilter } from '@/presentation/components/ui/SelectFilter';
 import { toast } from '@/presentation/components/ui/toast';
 import { useSaveJobOrder } from '@/presentation/hooks/useJobOrderMutations';
 import { useMotorcycleModels } from '@/presentation/hooks/useMotorcycleModels';
@@ -74,37 +75,31 @@ export function NewJobOrderDialog({
           </div>
         </div>
 
-        <label className="block space-y-tk-xs">
+        {/* div, not label: a label wrapping the SelectFilter trigger button
+            would steal its accessible name (same rule as formKit's Field). */}
+        <div className="space-y-tk-xs">
           <span className="text-cell text-ink-2">Motorcycle model</span>
-          <select
+          <SelectFilter
+            label="Motorcycle model"
             value={model}
-            onChange={(e) => setModel(e.target.value)}
-            className="w-full rounded-field border border-line bg-surface-2 px-2.5 py-2 text-ctl-sm text-ink outline-none"
-          >
-            <option value="">— Optional —</option>
-            {(models ?? []).map((m) => (
-              <option key={m.id} value={m.name}>
-                {m.name}
-              </option>
-            ))}
-          </select>
-        </label>
+            options={(models ?? []).map((m) => ({ value: m.name, label: m.name }))}
+            allLabel="None"
+            onChange={setModel}
+            triggerClassName="w-full bg-surface-2 shadow-none"
+          />
+        </div>
 
-        <label className="block space-y-tk-xs">
+        <div className="space-y-tk-xs">
           <span className="text-cell text-ink-2">Mechanic</span>
-          <select
+          <SelectFilter
+            label="Mechanic"
             value={mechanicId}
-            onChange={(e) => setMechanicId(e.target.value)}
-            className="w-full rounded-field border border-line bg-surface-2 px-2.5 py-2 text-ctl-sm text-ink outline-none"
-          >
-            <option value="">— Optional —</option>
-            {(mechanics ?? []).map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.name}
-              </option>
-            ))}
-          </select>
-        </label>
+            options={(mechanics ?? []).map((m) => ({ value: m.id, label: m.name }))}
+            allLabel="None"
+            onChange={setMechanicId}
+            triggerClassName="w-full bg-surface-2 shadow-none"
+          />
+        </div>
 
         {save.error ? <p className="text-ctl-sm text-neg">{save.error.message}</p> : null}
 
