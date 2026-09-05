@@ -18,6 +18,7 @@ export interface ReportData {
   capped: boolean;
   isLoading: boolean;
   error: Error | null;
+  refetch: () => void;
 }
 
 export function useReportData(range: DateRange): ReportData {
@@ -36,5 +37,6 @@ export function useReportData(range: DateRange): ReportData {
     capped: sales.length >= SALES_FETCH_CAP,
     isLoading: query.isLoading,
     error: (query.error as Error) ?? null,
+    refetch: () => void query.refetch(),
   };
 }

@@ -1,96 +1,117 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowLeftIcon } from '@heroicons/react/24/outline';
-import { RoutePaths } from '@/presentation/router/routePaths';
-import { resolvePreset, type DateRange } from '@/domain/reports/dateRange';
+// Labor report (reports guide §1): "Jobs with labor" is a COUNT (the old
+// "Service Sales 42" read like money), plus a derived Avg per job. The
+// mechanic table carries a share-of-labor bar, and a one-row breakdown says
+// why it is one row.
+import { useEffect, useMemo } from 'react';
+import { WrenchIcon } from '@heroicons/react/24/outline';
 import { useReportData } from '@/presentation/hooks/useReportData';
-import { summarizeLabor } from '@/domain/sales/laborReport';
+import { deriveReportFigures } from '@/domain/reports/reportFigures';
+import type { LaborByMechanic } from '@/domain/sales/laborReport';
+import { toCsv, downloadCsv } from '@/core/utils/csv';
 import { formatMoney } from '@/core/utils/money';
-import { DateRangePicker } from '@/presentation/components/common/DateRangePicker';
-import { SummaryCard } from '@/presentation/features/dashboard/SummaryCard';
-import { DailyLockNotice } from './DailyLockNotice';
 import { useAuthStore } from '@/presentation/stores/authStore';
 import { hasPermission, Permission } from '@/domain/permissions/Permission';
-import { LoadingView } from '@/presentation/components/common/LoadingView';
-import { ErrorView } from '@/presentation/components/common/ErrorView';
+import { StatCard } from '@/presentation/components/ui/StatCard';
+import { DataTable, type Column } from '@/presentation/components/ui/DataTable';
+import { MiniBar } from '@/presentation/components/ui/MiniBar';
+import { ErrorState } from '@/presentation/components/ui/ErrorState';
+import { ReportHeader } from './ReportHeader';
+import { ReportTableCard } from './ReportTableCard';
+import { EmptyRangeState } from './EmptyRangeState';
+import { useReportRange } from './useReportRange';
+import { csvFileName, pctLabel } from './reportFormat';
 
 export function LaborReportPage() {
   const user = useAuthStore((st) => st.user);
   const dailyOnly = !!user && hasPermission(user.role, Permission.viewDailySalesOnly);
-  const [range, setRange] = useState<DateRange>(() => resolvePreset('last7'));
-  const effectiveRange = useMemo(
-    () => (dailyOnly ? resolvePreset('today') : range),
-    [dailyOnly, range],
-  );
-  const { sales, isLoading, error } = useReportData(effectiveRange);
-  const report = useMemo(() => summarizeLabor(sales), [sales]);
+  const range = useReportRange('last7', dailyOnly);
+  const { sales, isLoading, error, refetch } = useReportData(range.effectiveRange);
+  const f = useMemo(() => deriveReportFigures(sales), [sales]);
+  const report = f.laborReport;
+  const mechanics = report.byMechanic.length;
+  const share = (m: LaborByMechanic) => (report.totalLabor > 0 ? m.laborTotal / report.totalLabor : null);
 
   useEffect(() => {
     document.title = 'Labor report · MAKI POS Admin';
   }, []);
 
-  return (
-    <div className="space-y-tk-xl">
-      <header className="flex flex-wrap items-end justify-between gap-tk-md">
-        <Link
-          to={RoutePaths.reports}
-          className="inline-flex items-center gap-tk-xs text-bodySmall text-light-text-secondary hover:text-light-text"
-        >
-          <ArrowLeftIcon className="h-3.5 w-3.5" /> Reports
-        </Link>
-        {dailyOnly ? (
-          <DailyLockNotice>
-            {"Showing today's labor only. Contact an admin for historical reports."}
-          </DailyLockNotice>
-        ) : (
-          <DateRangePicker onChange={setRange} />
-        )}
-      </header>
+  const exportCsv = () =>
+    downloadCsv(
+      csvFileName('labor', range.effectiveRange),
+      toCsv(
+        ['Mechanic', 'Jobs', 'Labor', 'Avg per job', 'Share %'],
+        report.byMechanic.map((m) => [
+          m.mechanicName, m.jobCount, m.laborTotal.toFixed(2),
+          (m.laborTotal / m.jobCount).toFixed(2), ((share(m) ?? 0) * 100).toFixed(1),
+        ]),
+      ),
+    );
 
-      {error ? (
-        <ErrorView title="Could not load labor" message={error.message} />
-      ) : isLoading ? (
-        <div className="h-32">
-          <LoadingView label="Loading…" />
+  const columns: Array<Column<LaborByMechanic>> = [
+    { key: 'name', header: 'Mechanic', render: (m) => <span className="text-ctl-md font-medium text-ink">{m.mechanicName}</span> },
+    {
+      key: 'share', header: 'Share of labor', width: '44%',
+      render: (m) => (
+        <div className="flex items-center gap-2.5 pr-4">
+          <MiniBar pct={(share(m) ?? 0) * 100} color="var(--accent)" />
+          <span className="font-mono text-[11px] text-ink-3">{pctLabel(share(m))}</span>
         </div>
-      ) : (
-        <>
-          <div className="grid grid-cols-1 gap-tk-md sm:grid-cols-2 lg:grid-cols-4">
-            <SummaryCard title="Total Labor" value={formatMoney(report.totalLabor)} emphasized />
-            <SummaryCard title="Service Sales" value={String(report.serviceSaleCount)} />
-          </div>
+      ),
+    },
+    { key: 'jobs', header: 'Jobs', align: 'right', width: '80px', mono: true, render: (m) => <span className="text-ctl-md text-ink">{m.jobCount}</span> },
+    { key: 'avg', header: 'Avg / job', align: 'right', width: '112px', mono: true, render: (m) => <span className="text-ctl-md text-ink-2">{formatMoney(m.laborTotal / m.jobCount)}</span> },
+    { key: 'labor', header: 'Labor', align: 'right', width: '126px', mono: true, render: (m) => <span className="text-[13px] font-semibold text-ink">{formatMoney(m.laborTotal)}</span> },
+  ];
 
-          <section className="rounded-lg border border-light-hairline bg-light-card p-tk-lg">
-            <h2 className="mb-tk-md text-bodyMedium font-semibold text-light-text">
-              Labor by mechanic
-            </h2>
-            {report.byMechanic.length === 0 ? (
-              <p className="text-bodySmall text-light-text-hint">
-                No labor recorded in this range.
-              </p>
-            ) : (
-              <table className="w-full text-bodySmall">
-                <thead className="text-light-text-secondary">
-                  <tr>
-                    <th className="py-tk-xs text-left font-medium">Mechanic</th>
-                    <th className="py-tk-xs text-right font-medium">Jobs</th>
-                    <th className="py-tk-xs text-right font-medium">Labor</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-light-hairline">
-                  {report.byMechanic.map((m) => (
-                    <tr key={m.mechanicId ?? '__unassigned__'}>
-                      <td className="py-tk-xs">{m.mechanicName}</td>
-                      <td className="py-tk-xs text-right tabular-nums">{m.jobCount}</td>
-                      <td className="py-tk-xs text-right tabular-nums">{formatMoney(m.laborTotal)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </section>
-        </>
-      )}
+  const footnote =
+    mechanics !== 1 || isLoading
+      ? null
+      : report.byMechanic[0].mechanicId === null
+        ? 'No mechanic is recorded on these jobs. Assign mechanics on the job order to break this down.'
+        : 'One mechanic is recorded on every job in this range. Assign mechanics on the job order to break this down.';
+
+  if (error) return <ErrorState message="Could not load labor." onRetry={refetch} />;
+
+  return (
+    <div className="flex flex-col gap-3">
+      <ReportHeader
+        range={range}
+        lock={dailyOnly ? "Showing today's labor only. Contact an admin for historical reports." : undefined}
+        onExport={exportCsv}
+        exportDisabled={mechanics === 0}
+      />
+
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3">
+        <StatCard lead label="Total labor" value={report.totalLabor} format="currency" note={range.rangeNote} loading={isLoading} />
+        <StatCard label="Jobs with labor" value={report.serviceSaleCount} format="number" note="service tickets billed" loading={isLoading} />
+        <StatCard label="Avg per job" format="currency" loading={isLoading}
+          value={report.serviceSaleCount > 0 ? report.totalLabor / report.serviceSaleCount : 0}
+          note={`across ${mechanics} ${mechanics === 1 ? 'mechanic' : 'mechanics'}`} />
+      </div>
+
+      <ReportTableCard title="Labor by mechanic" note={range.rangeNote}>
+        <DataTable
+          columns={columns}
+          rows={report.byMechanic}
+          rowKey={(m) => m.mechanicId ?? '__unassigned__'}
+          loading={isLoading}
+          minWidth="640px"
+          empty={
+            <EmptyRangeState
+              icon={<WrenchIcon className="h-[22px] w-[22px] text-ink-3" />}
+              title="No labor in this range"
+              description={`No service was billed ${range.rangeNote}. Labor is recorded when a job order with labor lines is billed out.`}
+              onWiden={range.widen}
+              widenLabel={range.widenLabel}
+            />
+          }
+        />
+        {footnote ? (
+          <div className="flex items-center gap-2.5 border-t border-line bg-surface-2 px-5 py-[13px]">
+            <span className="text-[11.5px] text-ink-3 [text-wrap:pretty]">{footnote}</span>
+          </div>
+        ) : null}
+      </ReportTableCard>
     </div>
   );
 }

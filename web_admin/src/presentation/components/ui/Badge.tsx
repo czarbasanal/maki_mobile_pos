@@ -15,14 +15,18 @@ const toneCls: Record<Tone, string> = {
 export function Badge({
   tone = 'neutral',
   shape = 'pill',
+  title,
   children,
 }: {
   tone?: Tone;
   shape?: BadgeShape;
+  /** Hover detail when the badge is a grouping of a rawer value (e.g. a reason group). */
+  title?: string;
   children: ReactNode;
 }) {
   return (
     <span
+      title={title}
       className={clsx(
         'inline-flex items-center whitespace-nowrap',
         shape === 'pill' && 'rounded-pill px-2.5 py-0.5 text-pill',

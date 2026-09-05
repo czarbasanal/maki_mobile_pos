@@ -49,3 +49,21 @@ describe('StatCard', () => {
     expect(screen.getByText('0.0%')).toBeInTheDocument();
   });
 });
+
+describe('StatCard — lead variant (reports guide §1)', () => {
+  it('a lead card takes the accent tint, accent-line border and accent-text label + note', () => {
+    render(<StatCard label="Gross sales" value={20000} format="currency" note="in the last 7 days" lead />);
+    const card = screen.getByText('Gross sales').closest('section') as HTMLElement;
+    expect(card.className).toContain('bg-accent-soft');
+    expect(card.className).toContain('border-accent-line');
+    expect(screen.getByText('Gross sales').className).toContain('text-accent-text');
+    expect(screen.getByText('in the last 7 days').className).toContain('text-accent-text');
+  });
+
+  it('a non-lead card stays on the plain surface', () => {
+    render(<StatCard label="Parts" value={1} format="currency" note="x" />);
+    const card = screen.getByText('Parts').closest('section') as HTMLElement;
+    expect(card.className).not.toContain('bg-accent-soft');
+    expect(screen.getByText('x').className).toContain('text-ink-3');
+  });
+});

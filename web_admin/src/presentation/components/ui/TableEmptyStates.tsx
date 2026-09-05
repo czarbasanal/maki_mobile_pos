@@ -3,15 +3,20 @@
 // actions — condition is total count, never the filtered count) and the
 // NO-MATCHES state whose copy points back at the filters.
 import type { ReactNode } from 'react';
+import { cn } from '@/core/utils/cn';
 
 export function FirstRunState({
   icon,
   title,
   description,
   children,
+  tone = 'accent',
 }: {
-  /** A ~24px glyph, rendered inside the accent tile. */
+  /** A ~24px glyph, rendered inside the tile. */
   icon: ReactNode;
+  /** 'accent' is the first-run teach; 'muted' is the reports empty-RANGE
+   *  state (surface-2 tile, plain border) — "nothing happened", not "get started". */
+  tone?: 'accent' | 'muted';
   title: string;
   description: string;
   /** Primary action(s); omit when the viewer lacks the permission. */
@@ -19,7 +24,12 @@ export function FirstRunState({
 }) {
   return (
     <div className="flex flex-col items-center gap-[5px] px-6 py-16 text-center">
-      <div className="mb-[9px] flex h-[52px] w-[52px] items-center justify-center rounded-[15px] border border-accent-line bg-accent-soft">
+      <div
+        className={cn(
+          'mb-[9px] flex h-[52px] w-[52px] items-center justify-center rounded-[15px] border',
+          tone === 'muted' ? 'border-line bg-surface-2' : 'border-accent-line bg-accent-soft',
+        )}
+      >
         {icon}
       </div>
       <span className="text-[14.5px] font-semibold tracking-[-0.2px] text-ink">{title}</span>

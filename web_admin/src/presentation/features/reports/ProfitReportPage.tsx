@@ -1,96 +1,110 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowLeftIcon } from '@heroicons/react/24/outline';
-import { RoutePaths } from '@/presentation/router/routePaths';
-import { resolvePreset, type DateRange } from '@/domain/reports/dateRange';
+// Profit report (reports guide §1): four cards in ONE row, Gross profit
+// (net parts − COGS; labor is its own track and never in gross) leading with
+// its margin as the note; margin is a column with a MiniBar,
+// coloured by band (≥50% pos · 25–49% text-2 · <25% neg). The table lists
+// every product in range by profit so its columns reconcile with the KPIs.
+import { useEffect, useMemo } from 'react';
+import { ArrowTrendingUpIcon } from '@heroicons/react/24/outline';
 import { useReportData } from '@/presentation/hooks/useReportData';
+import { deriveReportFigures, type ProductFigures } from '@/domain/reports/reportFigures';
+import { toCsv, downloadCsv } from '@/core/utils/csv';
+import { csvSku } from '@/domain/products/sku';
 import { formatMoney } from '@/core/utils/money';
-import { DateRangePicker } from '@/presentation/components/common/DateRangePicker';
-import { SummaryCard } from '@/presentation/features/dashboard/SummaryCard';
-import { LoadingView } from '@/presentation/components/common/LoadingView';
-import { ErrorView } from '@/presentation/components/common/ErrorView';
+import { cn } from '@/core/utils/cn';
+import { marginToneClass } from '@/domain/products/margin';
+import { StatCard } from '@/presentation/components/ui/StatCard';
+import { DataTable, type Column } from '@/presentation/components/ui/DataTable';
+import { MiniBar } from '@/presentation/components/ui/MiniBar';
+import { ErrorState } from '@/presentation/components/ui/ErrorState';
+import { ReportHeader } from './ReportHeader';
+import { ReportTableCard } from './ReportTableCard';
+import { EmptyRangeState } from './EmptyRangeState';
+import { useReportRange } from './useReportRange';
+import { csvFileName, pctLabel } from './reportFormat';
+
+/** The app-wide margin bands (domain/products/margin.ts) as text class + the matching fill var. */
+function marginBand(margin: number): { text: string; fill: string } {
+  const text = marginToneClass(Math.round(margin * 100));
+  const fill = text === 'text-pos' ? 'var(--pos)' : text === 'text-neg' ? 'var(--neg)' : 'var(--text-2)';
+  return { text, fill };
+}
 
 export function ProfitReportPage() {
-  const [range, setRange] = useState<DateRange>(() => resolvePreset('last7'));
-  const { summary, topProducts, isLoading, error } = useReportData(range);
-
-  // Top products by PROFIT (the report's lens), not revenue.
-  const byProfit = useMemo(
-    () => [...topProducts].sort((a, b) => b.totalProfit - a.totalProfit),
-    [topProducts],
-  );
+  const range = useReportRange('last7');
+  const { sales, isLoading, error, refetch } = useReportData(range.effectiveRange);
+  const f = useMemo(() => deriveReportFigures(sales), [sales]);
 
   useEffect(() => {
     document.title = 'Profit report · MAKI POS Admin';
   }, []);
 
+  const exportCsv = () =>
+    downloadCsv(
+      csvFileName('profit', range.effectiveRange),
+      toCsv(
+        ['Product', 'SKU', 'Qty', 'Revenue', 'Cost', 'Profit', 'Margin %'],
+        f.products.map((p) => [
+          p.name, csvSku(p.sku), p.qty, p.revenue.toFixed(2), p.cost.toFixed(2), p.profit.toFixed(2),
+          p.margin === null ? '' : (p.margin * 100).toFixed(1),
+        ]),
+      ),
+    );
+
+  const columns: Array<Column<ProductFigures>> = [
+    { key: 'name', header: 'Product', render: (p) => <span className="text-ctl-md font-medium text-ink">{p.name}</span> },
+    { key: 'qty', header: 'Qty', align: 'right', width: '62px', mono: true, render: (p) => <span className="text-[12px] text-ink-2">{p.qty}</span> },
+    { key: 'rev', header: 'Revenue', align: 'right', width: '112px', mono: true, render: (p) => <span className="text-ctl-md text-ink-2">{formatMoney(p.revenue)}</span> },
+    { key: 'cost', header: 'Cost', align: 'right', width: '112px', mono: true, render: (p) => <span className="text-ctl-md text-ink-2">{formatMoney(p.cost)}</span> },
+    { key: 'profit', header: 'Profit', align: 'right', width: '112px', mono: true, render: (p) => <span className="text-[13px] font-semibold text-ink">{formatMoney(p.profit)}</span> },
+    {
+      key: 'margin', header: 'Margin', align: 'right', width: '86px',
+      render: (p) => {
+        if (p.margin === null) return <span className="font-mono text-[12px] text-ink-3">—</span>;
+        const band = marginBand(p.margin);
+        return (
+          <div className="flex items-center justify-end gap-2">
+            <MiniBar pct={Math.max(0, p.margin) * 100} color={band.fill} width="34px" />
+            <span className={cn('w-[34px] text-right font-mono text-[12px] font-semibold', band.text)}>{pctLabel(p.margin)}</span>
+          </div>
+        );
+      },
+    },
+  ];
+
+  if (error) return <ErrorState message="Could not load profit." onRetry={refetch} />;
+
   return (
-    <div className="space-y-tk-xl">
-      <header className="flex flex-wrap items-end justify-between gap-tk-md">
-        <Link
-          to={RoutePaths.reports}
-          className="inline-flex items-center gap-tk-xs text-bodySmall text-light-text-secondary hover:text-light-text"
-        >
-          <ArrowLeftIcon className="h-3.5 w-3.5" /> Reports
-        </Link>
-        <DateRangePicker onChange={setRange} />
-      </header>
+    <div className="flex flex-col gap-3">
+      <ReportHeader range={range} onExport={exportCsv} exportDisabled={f.products.length === 0} />
 
-      {error ? (
-        <ErrorView title="Could not load profit" message={error.message} />
-      ) : isLoading ? (
-        <div className="h-32">
-          <LoadingView label="Loading…" />
-        </div>
-      ) : (
-        <>
-          <div className="grid grid-cols-1 gap-tk-md sm:grid-cols-2 lg:grid-cols-4">
-            <SummaryCard title="Gross Sales" value={formatMoney(summary.grossAmount)} />
-            <SummaryCard title="Total COGS" value={formatMoney(summary.totalCost)} />
-            <SummaryCard
-              title="Gross Profit"
-              value={formatMoney(summary.totalProfit)}
-              emphasized
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3">
+        <StatCard lead label="Gross profit" value={f.profit} format="currency" loading={isLoading}
+          note={`${pctLabel(f.margin, 1)} margin`} />
+        <StatCard label="Gross sales" value={f.gross} format="currency" loading={isLoading}
+          note={f.discounts > 0 ? `${formatMoney(f.net)} after discounts` : range.rangeNote} />
+        <StatCard label="Total COGS" value={f.cogs} format="currency" loading={isLoading}
+          note={f.net > 0 ? `${pctLabel(f.cogs / f.net, 1)} of sales` : '—'} />
+        <StatCard label="Service / labor profit" value={f.labor} format="currency" note="no cost of goods · not in gross" loading={isLoading} />
+      </div>
+
+      <ReportTableCard title="Top products by profit" note={range.rangeNote}>
+        <DataTable
+          columns={columns}
+          rows={f.products}
+          rowKey={(p) => p.productId}
+          loading={isLoading}
+          minWidth="820px"
+          empty={
+            <EmptyRangeState
+              icon={<ArrowTrendingUpIcon className="h-[22px] w-[22px] text-ink-3" />}
+              title="No sales in this range"
+              description={`Nothing was sold ${range.rangeNote}, so there is no cost of goods to report.`}
+              onWiden={range.widen}
+              widenLabel={range.widenLabel}
             />
-            <SummaryCard title="Margin" value={`${summary.profitMargin.toFixed(1)}%`} />
-          </div>
-          <div className="grid grid-cols-1 gap-tk-md sm:grid-cols-2">
-            <SummaryCard title="Service / Labor profit" value={formatMoney(summary.laborProfit)} />
-          </div>
-
-          <section className="rounded-lg border border-light-hairline bg-light-card p-tk-lg">
-            <h2 className="mb-tk-md text-bodyMedium font-semibold text-light-text">
-              Top products by profit
-            </h2>
-            {byProfit.length === 0 ? (
-              <p className="text-bodySmall text-light-text-hint">No products sold in this range.</p>
-            ) : (
-              <table className="w-full text-bodySmall">
-                <thead className="text-light-text-secondary">
-                  <tr>
-                    <th className="py-tk-xs text-left font-medium">Product</th>
-                    <th className="py-tk-xs text-right font-medium">Qty</th>
-                    <th className="py-tk-xs text-right font-medium">Revenue</th>
-                    <th className="py-tk-xs text-right font-medium">Cost</th>
-                    <th className="py-tk-xs text-right font-medium">Profit</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-light-hairline">
-                  {byProfit.map((p) => (
-                    <tr key={p.sku}>
-                      <td className="py-tk-xs">{p.name}</td>
-                      <td className="py-tk-xs text-right tabular-nums">{p.quantitySold}</td>
-                      <td className="py-tk-xs text-right tabular-nums">{formatMoney(p.totalRevenue)}</td>
-                      <td className="py-tk-xs text-right tabular-nums">{formatMoney(p.totalCost)}</td>
-                      <td className="py-tk-xs text-right tabular-nums">{formatMoney(p.totalProfit)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </section>
-        </>
-      )}
+          }
+        />
+      </ReportTableCard>
     </div>
   );
 }

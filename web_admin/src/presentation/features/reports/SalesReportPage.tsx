@@ -1,44 +1,56 @@
+// Sales report (reports guide §1): KPI strip with Gross sales (parts only —
+// labor is its own track, client decision 2026-09-05) leading, the payment
+// split as a segmented BreakdownCard with the revenue split beneath, top
+// products with a Qty / Revenue / Margin lens and proportional bars, then
+// the sales table with its "Total shown" foot. Every figure comes from
+// deriveReportFigures over the one scoped fetch; the empty range explains
+// itself and offers a way out.
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ChartBarIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
-import { RoutePaths } from '@/presentation/router/routePaths';
-import { resolvePreset, type DateRange } from '@/domain/reports/dateRange';
+import { useNavigate } from 'react-router-dom';
+import { ChartBarIcon } from '@heroicons/react/24/outline';
 import { SALES_FETCH_CAP, useReportData } from '@/presentation/hooks/useReportData';
+import { deriveReportFigures, PAYMENT_COLOR, topProductsBy, type TopProductLens } from '@/domain/reports/reportFigures';
+import { saleGrandTotal, saleIsVoided, saleTotalItemCount, type Sale } from '@/domain/entities';
+import { paymentMethodDisplayName } from '@/domain/enums';
 import { salesToCsv, downloadCsv } from '@/core/utils/csv';
 import { formatMoney } from '@/core/utils/money';
-import { DateRangePicker } from '@/presentation/components/common/DateRangePicker';
-import { DailyLockNotice } from './DailyLockNotice';
+import { cn } from '@/core/utils/cn';
 import { useAuthStore } from '@/presentation/stores/authStore';
 import { hasPermission, Permission } from '@/domain/permissions/Permission';
-import { SummaryCard } from '@/presentation/features/dashboard/SummaryCard';
-import { SalesTable } from './SalesTable';
-import { LoadingView } from '@/presentation/components/common/LoadingView';
-import { ErrorView } from '@/presentation/components/common/ErrorView';
-import { CappedNotice } from '@/presentation/components/common/CappedNotice';
-import { Pager } from '@/presentation/components/common/Pager';
 import { usePageClamp } from '@/presentation/hooks/usePageClamp';
 import { usePageSize } from '@/presentation/hooks/usePageSize';
-
-const fileStamp = (d: Date) =>
-  `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(
-    d.getDate(),
-  ).padStart(2, '0')}`;
+import { CappedNotice } from '@/presentation/components/common/CappedNotice';
+import { StatCard } from '@/presentation/components/ui/StatCard';
+import { Card } from '@/presentation/components/ui/Card';
+import { BreakdownCard } from '@/presentation/components/ui/BreakdownCard';
+import { MiniBar } from '@/presentation/components/ui/MiniBar';
+import { DataTable, type Column } from '@/presentation/components/ui/DataTable';
+import { TableFooter } from '@/presentation/components/ui/TableFooter';
+import { CopyButton } from '@/presentation/components/ui/CopyButton';
+import { Badge } from '@/presentation/components/ui/Badge';
+import { Chip } from '@/presentation/components/ui/Chip';
+import { Skeleton } from '@/presentation/components/ui/Skeleton';
+import { ErrorState } from '@/presentation/components/ui/ErrorState';
+import { ReportHeader } from './ReportHeader';
+import { ReportTableCard } from './ReportTableCard';
+import { EmptyRangeState } from './EmptyRangeState';
+import { useReportRange } from './useReportRange';
+import { csvFileName, pctLabel, whenLabel } from './reportFormat';
 
 export function SalesReportPage() {
+  const navigate = useNavigate();
   const user = useAuthStore((st) => st.user);
   const dailyOnly = !!user && hasPermission(user.role, Permission.viewDailySalesOnly);
+  // Margin derives from product cost — admin-only (viewProductCost).
   const canSeeCost = !!user && hasPermission(user.role, Permission.viewProductCost);
-  // Today, not a week: this page is opened to answer "how are we doing today",
-  // and a 7-day default silently answered a different question. The picker's
-  // own default must match, or the chip and the figures disagree.
-  const [range, setRange] = useState<DateRange>(() => resolvePreset('today'));
-  // Daily-only roles are clamped to today regardless of picker state —
-  // derived, not forced into state (the query is keyed by timestamps).
-  const effectiveRange = useMemo(
-    () => (dailyOnly ? resolvePreset('today') : range),
-    [dailyOnly, range],
-  );
-  const { sales, summary, topProducts, capped, isLoading, error } = useReportData(effectiveRange);
+  // Today, not a week: this page is opened to answer "how are we doing today".
+  const range = useReportRange('today', dailyOnly);
+  const { sales, capped, isLoading, error, refetch } = useReportData(range.effectiveRange);
+  const f = useMemo(() => deriveReportFigures(sales), [sales]);
+
+  const [lens, setLens] = useState<TopProductLens>('revenue');
+  const effectiveLens: TopProductLens = lens === 'margin' && !canSeeCost ? 'revenue' : lens;
+  const top = useMemo(() => topProductsBy(f.products, effectiveLens), [f.products, effectiveLens]);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = usePageSize('salesReport');
   usePageClamp(page, setPage, sales.length, pageSize);
@@ -46,168 +58,216 @@ export function SalesReportPage() {
   useEffect(() => {
     document.title = 'Sales report · MAKI POS Admin';
   }, []);
-
-  // Date range changed — a page number from the previous range may now
-  // point past the end (or simply be stale), so snap back to page 1.
+  // A page number from the previous range may now point past the end.
   useEffect(() => {
     setPage(1);
-  }, [range]);
+  }, [range.effectiveRange]);
 
-  const pagedSales = useMemo(
-    () => sales.slice((page - 1) * pageSize, page * pageSize),
-    [sales, page, pageSize],
-  );
+  const paged = useMemo(() => sales.slice((page - 1) * pageSize, page * pageSize), [sales, page, pageSize]);
+  // Voided sales stay listed (struck through) for the audit trail but are
+  // out of every figure — the chip and the foot say so.
+  const voidedCount = sales.length - f.count;
+
+  // Per-lens row treatment: the lens value is the bold figure and drives the
+  // bar; the other figure rides beside it dimmed. Margin's bar is absolute
+  // (a 90% margin is 90% of the rail), the others are relative to the top row.
+  const lensMax = top.reduce((m, p) => Math.max(m, effectiveLens === 'qty' ? p.qty : p.revenue), 0);
+  const lensRow = (p: (typeof top)[number]) => {
+    if (effectiveLens === 'qty') {
+      return { primary: `${p.qty} sold`, secondary: formatMoney(p.revenue), pct: lensMax > 0 ? (p.qty / lensMax) * 100 : 0 };
+    }
+    if (effectiveLens === 'margin') {
+      return { primary: pctLabel(p.margin), secondary: formatMoney(p.profit), pct: (p.margin ?? 0) * 100 };
+    }
+    return { primary: formatMoney(p.revenue), secondary: `×${p.qty}`, pct: lensMax > 0 ? (p.revenue / lensMax) * 100 : 0 };
+  };
+  const lenses: Array<{ value: TopProductLens; label: string }> = [
+    { value: 'qty', label: 'Qty' },
+    { value: 'revenue', label: 'Revenue' },
+    ...(canSeeCost ? [{ value: 'margin' as const, label: 'Margin' }] : []),
+  ];
+
+  const columns: Array<Column<Sale>> = [
+    {
+      key: 'no', header: 'Sale no.', mono: true,
+      render: (s) => {
+        const voided = saleIsVoided(s);
+        return (
+          <div className="flex items-center gap-[7px]">
+            <span className={cn('whitespace-nowrap font-mono text-ctl-md font-medium', voided ? 'text-ink-3 line-through' : 'text-ink')}>
+              {s.saleNumber}
+            </span>
+            <CopyButton value={s.saleNumber} label="sale number" />
+            {voided ? <Badge tone="neutral" shape="chip">Void</Badge> : null}
+          </div>
+        );
+      },
+    },
+    { key: 'when', header: 'When', mono: true, render: (s) => <span className="text-[12px] text-ink-2">{whenLabel(s.createdAt)}</span> },
+    { key: 'paid', header: 'Paid via', render: (s) => <span className="text-ink-2">{paymentMethodDisplayName[s.paymentMethod]}</span> },
+    { key: 'items', header: 'Items', align: 'right', width: '80px', mono: true, render: (s) => <span className="text-[12px] text-ink-2">{saleTotalItemCount(s)}</span> },
+    {
+      key: 'total', header: 'Total', align: 'right', width: '126px', mono: true,
+      render: (s) => (
+        <span className={cn('text-[13px] font-semibold', saleIsVoided(s) ? 'text-ink-3 line-through' : 'text-ink')}>
+          {formatMoney(saleGrandTotal(s))}
+        </span>
+      ),
+    },
+  ];
+
+  if (error) return <ErrorState message="Could not load sales." onRetry={refetch} />;
 
   return (
-    <div className="space-y-tk-xl">
-      <header className="flex flex-wrap items-end justify-between gap-tk-md">
-        <Link
-          to={RoutePaths.reports}
-          className="inline-flex items-center gap-tk-xs text-bodySmall text-light-text-secondary hover:text-light-text"
-        >
-          <ArrowLeftIcon className="h-3.5 w-3.5" /> Reports
-        </Link>
-        {dailyOnly ? (
-          <DailyLockNotice>
-            {"Showing today's sales only. Contact an admin for historical reports."}
-          </DailyLockNotice>
+    <div className="flex flex-col gap-3">
+      <ReportHeader
+        range={range}
+        lock={dailyOnly ? "Showing today's sales only. Contact an admin for historical reports." : undefined}
+        onExport={() => downloadCsv(csvFileName('sales', range.effectiveRange), salesToCsv(sales))}
+        exportDisabled={sales.length === 0}
+      />
+
+      <CappedNotice capped={capped}>
+        Showing the most recent {SALES_FETCH_CAP.toLocaleString('en-US')} sales — narrow the date range for exact totals.
+      </CappedNotice>
+
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3">
+        <StatCard lead label="Gross sales" value={f.gross} format="currency" note={`parts ${range.rangeNote}`} loading={isLoading} />
+        <StatCard label="Net sales" value={f.net} format="currency" loading={isLoading}
+          note={f.discounts > 0 ? `after ${formatMoney(f.discounts)} in discounts` : 'no discounts given'} />
+        <StatCard label="Service / labor" value={f.labor} format="currency" loading={isLoading}
+          note="reported separately from gross" />
+        <StatCard label="Avg order" value={f.avgOrder} format="currency" loading={isLoading}
+          note={f.count > 0 ? `net parts across ${f.count} ${f.count === 1 ? 'sale' : 'sales'}` : 'no sales yet'} />
+      </div>
+
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] items-stretch gap-3">
+        {isLoading ? (
+          <>
+            <Skeleton height="260px" />
+            <Skeleton height="260px" />
+          </>
         ) : (
-          <DateRangePicker onChange={setRange} defaultPreset="today" />
+          <>
+            <BreakdownCard
+              testId="by-payment-card"
+              label="By payment method"
+              total={formatMoney(f.tendered)}
+              bar={f.byPaymentMethod.map((m) => ({ key: m.method, color: PAYMENT_COLOR[m.method], pct: (m.share ?? 0) * 100 }))}
+              rows={f.byPaymentMethod.map((m) => ({
+                key: m.method,
+                label: m.label,
+                color: PAYMENT_COLOR[m.method],
+                value: (
+                  <>
+                    <span className="font-mono text-[10.5px] text-ink-3">{pctLabel(m.share)}</span>
+                    <span className="font-mono text-ctl-md font-semibold text-ink">{formatMoney(m.amount)}</span>
+                  </>
+                ),
+              }))}
+              footer={
+                <div className="flex flex-col gap-[9px] pt-1">
+                  <span className="text-micro-caps uppercase text-ink-3">Revenue split</span>
+                  {[
+                    ['Parts', f.net],
+                    ['Service / Labor', f.labor],
+                    ['Shop fees', f.fees],
+                  ].map(([name, value]) => (
+                    <div key={name} className="flex items-center gap-[9px]">
+                      <span className="text-ctl-md text-ink-2">{name}</span>
+                      <span className="ml-auto font-mono text-ctl-md font-semibold text-ink">{formatMoney(value as number)}</span>
+                    </div>
+                  ))}
+                </div>
+              }
+            />
+
+            <Card
+              title="Top products"
+              headerAction={
+                <div className="flex gap-1">
+                  {lenses.map((l) => (
+                    <Chip key={l.value} active={effectiveLens === l.value} onClick={() => setLens(l.value)}>
+                      {l.label}
+                    </Chip>
+                  ))}
+                </div>
+              }
+            >
+              {top.length === 0 ? (
+                <div className="flex flex-col gap-[5px] px-3 py-10 text-center">
+                  <span className="text-ctl-md font-medium text-ink-2">No products sold in this range</span>
+                  <span className="text-kpi-label font-normal text-ink-3">
+                    {dailyOnly ? 'Nothing sold yet today.' : 'Widen the range above to see movement.'}
+                  </span>
+                </div>
+              ) : (
+                <div data-testid="top-products" className="flex h-full flex-col justify-between gap-[13px]">
+                  {top.map((p, i) => {
+                    const row = lensRow(p);
+                    return (
+                      <div key={p.productId} className="flex flex-col gap-1.5">
+                        <div className="flex items-baseline gap-[9px]">
+                          <span className="w-4 shrink-0 font-mono text-[10.5px] text-ink-3">{String(i + 1).padStart(2, '0')}</span>
+                          <span data-testid="top-product-name" className="min-w-0 truncate text-ctl-md font-medium text-ink">{p.name}</span>
+                          <span className="ml-auto font-mono text-[10.5px] text-ink-3">{row.secondary}</span>
+                          <span className="font-mono text-ctl-md font-semibold text-ink">{row.primary}</span>
+                        </div>
+                        <div className="flex pl-[25px]">
+                          <MiniBar pct={row.pct} color="var(--accent)" />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </Card>
+          </>
         )}
-      </header>
+      </div>
 
-      {error ? (
-        <ErrorView title="Could not load sales" message={error.message} />
-      ) : isLoading ? (
-        <div className="h-32">
-          <LoadingView label="Loading sales…" />
-        </div>
-      ) : (
-        <>
-          <CappedNotice capped={capped}>
-            Showing the most recent {SALES_FETCH_CAP.toLocaleString('en-US')} sales — narrow the
-            date range for exact totals.
-          </CappedNotice>
-
-          <div className="grid grid-cols-1 gap-tk-md sm:grid-cols-2 lg:grid-cols-4">
-            <SummaryCard title="Gross Sales" value={formatMoney(summary.grossAmount)} emphasized />
-            <SummaryCard title="Net" value={formatMoney(summary.netAmount)} />
-            <SummaryCard title="Avg order" value={formatMoney(summary.averageSaleAmount)} />
-            <SummaryCard title="Sales count" value={String(summary.totalSalesCount)} />
-          </div>
-
-          <div className="grid grid-cols-1 gap-tk-lg lg:grid-cols-3">
-            <Panel title="By payment method">
-              <dl className="space-y-tk-sm text-bodySmall">
-                {(['cash', 'gcash', 'maya', 'salmon'] as const).map((m) => (
-                  <div key={m} className="flex justify-between">
-                    <dt className="capitalize text-light-text-secondary">{m}</dt>
-                    <dd className="tabular-nums">{formatMoney(summary.byPaymentMethod[m])}</dd>
-                  </div>
-                ))}
-                <div className="flex justify-between border-t border-light-hairline pt-tk-sm">
-                  <dt className="text-light-text-secondary">Service / Labor</dt>
-                  <dd className="tabular-nums">{formatMoney(summary.laborRevenue)}</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="text-light-text-secondary">Shop fees</dt>
-                  <dd className="tabular-nums">{formatMoney(summary.feesRevenue)}</dd>
-                </div>
-              </dl>
-            </Panel>
-            <Panel title="Top products" className="lg:col-span-2">
-              <TopProducts rows={topProducts} showProfit={canSeeCost} />
-            </Panel>
-          </div>
-
-          <section className="space-y-tk-md">
-            <div className="flex items-center justify-between">
-              <h2 className="text-bodyMedium font-semibold text-light-text">
-                Sales ({sales.length})
-              </h2>
-              <button
-                type="button"
-                disabled={sales.length === 0}
-                onClick={() =>
-                  downloadCsv(
-                    `sales-${fileStamp(range.start)}-${fileStamp(range.end)}.csv`,
-                    salesToCsv(sales),
-                  )
-                }
-                className="inline-flex items-center gap-tk-xs rounded-md border border-light-border px-tk-md py-[8px] text-bodySmall text-light-text hover:bg-light-subtle disabled:opacity-50"
-              >
-                <ChartBarIcon className="h-4 w-4" />
-                Download CSV
-              </button>
-            </div>
-            <SalesTable sales={pagedSales} />
-            <Pager total={sales.length} page={page} onPage={setPage} pageSize={pageSize}
+      <ReportTableCard
+        title="Sales"
+        count={isLoading ? undefined : f.count}
+        note={!isLoading && voidedCount > 0 ? `${voidedCount} voided` : undefined}
+      >
+        <DataTable
+          columns={columns}
+          rows={paged}
+          rowKey={(s) => s.id}
+          onRowClick={(s) => navigate(`/reports/sale/${s.id}`)}
+          loading={isLoading}
+          minWidth="720px"
+          foot={
+            <tr className="border-t border-line bg-surface-2">
+              <td colSpan={4} className="px-5 py-3 text-[12px] font-semibold text-ink-2">
+                Total tendered
+                {voidedCount > 0 ? <span className="ml-2 font-normal text-ink-3">excl. {voidedCount} voided</span> : null}
+              </td>
+              <td data-testid="total-shown" className="px-5 py-3 text-right font-mono text-[15px] font-semibold tracking-[-0.5px] text-ink">
+                {formatMoney(f.tendered)}
+              </td>
+            </tr>
+          }
+          empty={
+            <EmptyRangeState
+              icon={<ChartBarIcon className="h-[22px] w-[22px] text-ink-3" />}
+              title="No sales in this range"
+              description={
+                dailyOnly
+                  ? 'The register recorded nothing today. Check whether the shift was opened.'
+                  : `The register recorded nothing ${range.rangeNote}. Try ${range.widenLabel ? range.widenLabel.replace('Show l', 'L') : 'a wider range'}, or check whether the shift was opened.`
+              }
+              onWiden={range.widen}
+              widenLabel={range.widenLabel}
+            />
+          }
+        />
+        {sales.length > 0 && !isLoading ? (
+          <TableFooter total={sales.length} page={page} pageSize={pageSize} onPage={setPage}
             onPageSize={(n) => { setPageSize(n); setPage(1); }} />
-          </section>
-        </>
-      )}
+        ) : null}
+      </ReportTableCard>
     </div>
-  );
-}
-
-function TopProducts({
-  rows,
-  showProfit,
-}: {
-  rows: {
-    sku: string;
-    name: string;
-    quantitySold: number;
-    totalRevenue: number;
-    totalProfit: number;
-  }[];
-  // Profit derives from product costs — admin-only (viewProductCost).
-  showProfit: boolean;
-}) {
-  if (rows.length === 0) {
-    return <p className="text-bodySmall text-light-text-hint">No products sold in this range.</p>;
-  }
-  return (
-    <table className="w-full text-bodySmall">
-      <thead className="text-light-text-secondary">
-        <tr>
-          <th className="py-tk-xs text-left font-medium">Product</th>
-          <th className="py-tk-xs text-right font-medium">Qty</th>
-          <th className="py-tk-xs text-right font-medium">Revenue</th>
-          {showProfit ? <th className="py-tk-xs text-right font-medium">Profit</th> : null}
-        </tr>
-      </thead>
-      <tbody className="divide-y divide-light-hairline">
-        {rows.map((p) => (
-          <tr key={p.sku}>
-            <td className="py-tk-xs">{p.name}</td>
-            <td className="py-tk-xs text-right tabular-nums">{p.quantitySold}</td>
-            <td className="py-tk-xs text-right tabular-nums">{formatMoney(p.totalRevenue)}</td>
-            {showProfit ? (
-              <td className="py-tk-xs text-right tabular-nums">{formatMoney(p.totalProfit)}</td>
-            ) : null}
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-}
-
-function Panel({
-  title,
-  className,
-  children,
-}: {
-  title: string;
-  className?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section
-      className={`rounded-lg border border-light-hairline bg-light-card p-tk-lg ${className ?? ''}`}
-    >
-      <h2 className="mb-tk-md text-bodyMedium font-semibold text-light-text">{title}</h2>
-      {children}
-    </section>
   );
 }

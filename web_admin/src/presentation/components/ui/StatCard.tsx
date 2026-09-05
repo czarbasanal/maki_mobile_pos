@@ -1,3 +1,4 @@
+import { clsx } from 'clsx';
 import { formatMoney } from '@/core/utils/money';
 import { Badge, type Tone } from './Badge';
 import { Skeleton } from './Skeleton';
@@ -14,6 +15,9 @@ export interface StatCardProps {
   chip?: { label: string; tone: Tone };
   note?: string;
   loading?: boolean;
+  /** The screen's headline metric (reports guide §1): accent tint + accent-line
+   *  border, label and note in accent-text. Replaces the old solid-black card. */
+  lead?: boolean;
 }
 
 function formatValue(value: number, format: StatFormat): string {
@@ -29,12 +33,17 @@ function deltaChip(delta: number): { label: string; tone: Tone } {
   return { label: '0.0%', tone: 'neutral' };
 }
 
-export function StatCard({ label, value, format, delta, chip, note, loading = false }: StatCardProps) {
+export function StatCard({ label, value, format, delta, chip, note, loading = false, lead = false }: StatCardProps) {
   const resolvedChip = chip ?? (delta != null ? deltaChip(delta) : null);
   return (
-    <section className="rounded-card border border-line bg-surface p-4 shadow-card">
+    <section
+      className={clsx(
+        'rounded-card border p-4 shadow-card',
+        lead ? 'border-accent-line bg-accent-soft' : 'border-line bg-surface',
+      )}
+    >
       <div className="flex items-start justify-between gap-2">
-        <span className="text-kpi-label text-ink-2">{label}</span>
+        <span className={clsx('text-kpi-label', lead ? 'text-accent-text' : 'text-ink-2')}>{label}</span>
         {!loading && resolvedChip && (
           <Badge tone={resolvedChip.tone} shape="chip">
             {resolvedChip.label}
@@ -44,7 +53,9 @@ export function StatCard({ label, value, format, delta, chip, note, loading = fa
       <div className="tnum mt-1.5 font-mono text-kpi text-ink">
         {loading ? <Skeleton width="90px" height="23px" /> : formatValue(value, format)}
       </div>
-      {note && !loading && <p className="mt-1 text-micro text-ink-3">{note}</p>}
+      {note && !loading && (
+        <p className={clsx('mt-1 text-micro', lead ? 'text-accent-text' : 'text-ink-3')}>{note}</p>
+      )}
     </section>
   );
 }

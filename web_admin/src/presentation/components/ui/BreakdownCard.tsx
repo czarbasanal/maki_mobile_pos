@@ -31,6 +31,7 @@ export function BreakdownCard({
   rows,
   bar,
   emptyText,
+  footer,
   testId,
 }: {
   label: string;
@@ -41,6 +42,8 @@ export function BreakdownCard({
   bar?: BreakdownBarSegment[];
   /** Shown instead of the rows list when `rows` is empty. */
   emptyText?: ReactNode;
+  /** Sub-section under the rows (Sales report's "Revenue split"). */
+  footer?: ReactNode;
   testId?: string;
 }) {
   return (
@@ -106,6 +109,7 @@ export function BreakdownCard({
           })}
         </div>
       )}
+      {footer}
     </div>
   );
 }
